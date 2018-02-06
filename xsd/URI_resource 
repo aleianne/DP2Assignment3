@@ -1,0 +1,22 @@
+// this file contain all the information about the resource for the webserver 
+// list of resource in which is possible to do a GET method
+
+/ 			--> root resource 
+/vnfs		--> resource for getting all the virtual function collection 
+/vnfs/{ID}
+
+/nffgs				--> resource for getting the collection of nffg graphs
+/nffgs/{ID}			--> resource for getting a single nffg given the graph id
+/nffgs/{ID}/nodes	--> resource for getting the entire collection of nodes in the nffg graph
+/nffg/{ID}/nodes/{ID}/reachable-host	--> resource for getting the host where the node is deployed
+/nffgs/{ID}/nodes/{ID} 					--> resource for getting a single node inside the specified graph 
+
+// this resource are not used because too fine coarsed
+/nfv/nffg/{ID}/nodes/{ID}/links				--> resource for getting the information about a single link inside the graph
+/nfv/nffg/{ID}/nodes/{ID}/links/{ID}	--> resource for getting the information abour a single link inside the graph
+
+/nfv/hosts				--> resource for getting the collection of host inside the server
+/nfv/hosts/{ID}/		--> resource for getting a single host inside the collection of host
+
+/nfv/connections				--> resource that refer to a collection of connection
+/nfv/connections/{ID}			--> resource for getting a single connection 
