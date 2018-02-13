@@ -20,12 +20,12 @@ public class ConnectionResourceService {
 		}
 	}
 	
-	public List<ConnectionType> getConnection() {
+	public List<ConnectionType> getConnections() {
 		List<ConnectionType> connList = new ArrayList<ConnectionType>(connDao.readAllConnections());
 		return connList;
 	}
 	
-	public ConnectionType queryConnection(String host1, String host2) {
-		return connDao.queryConnection(host1, host2);
+	public ConnectionType getConnection(String host1, String host2) {
+		return connDao.readConnection(host1, host2);
 	}
 }

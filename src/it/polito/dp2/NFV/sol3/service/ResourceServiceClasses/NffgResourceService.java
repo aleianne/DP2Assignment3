@@ -69,10 +69,8 @@ public class NffgResourceService {
 		return graphDao.readGraph(nffgId);	
 	}
 	
+	// synchronize the access to the hostDao in order to avoid race condition 
 	public String deployNewNffgGraph(GraphType newGraph) throws ServiceException, AllocationException {
-		// synchronize this method in order to avoid 
-		// the deployment of differente network nodes into the same host
-		
 		VnfType nodeFunction;
 		GraphDeployer newGraphDeployer = new GraphDeployer();
 		
@@ -80,8 +78,6 @@ public class NffgResourceService {
 		
 		// synchronize the access to the the host interface during the allocation phase
 		synchronized(hostDao) {								
-			
-			// for each node in the list try to find a suitable host
 			for(NodeType node: nodeList) {
 				nodeFunction = catalogDao.readVnf(node.getVNF());
 							
@@ -149,7 +145,6 @@ public class NffgResourceService {
 			int reqMemory = nodeFunction.getRequiredMemory().intValue();
 			
 			if(newNode.getHostname() != null) {
-				
 				HostType host = hostDao.readHost(newNode.getHostname());
 				if(host.getAvailableMemory().intValue() > reqStorage && host.getAvailableStorage().intValue() > reqMemory) {
 					// if the host can contain this function 
@@ -166,8 +161,9 @@ public class NffgResourceService {
 		
 			hostDao.updateHostDetail(targetHost.getHostname(), nodeFunction, true);
 			
-			// update the graph in memory and send it to Neo4j
-			graphDao.updateGraph(graphId, newNode);
+			synchronized(graphDao) {
+				graphDao.updateGraph(graphId, newNode);
+			}
 			
 			hostDao.updateHostDeployedNode(targetHost.getHostname(), newNode.getName());
 		}
@@ -176,29 +172,10 @@ public class NffgResourceService {
 	}
 
 	public String addLink(String graphId, LinkType newLink) throws ServiceException, AllocationException {
-		
-		GraphType graph = graphDao.readGraph(graphId);
-		
-		if(graph == null) {
-			logger.log(Level.WARNING, "there isn't a correspondence between the nffgId and a graph in the system", new Object[] {graphId});
-			throw new AllocationException();	
-		}
-		
-		List<LinkType> graphLinkList = graph.getLinks().getLink();
-		
-		// filter the list in order to check if the link is already in the graph
-		Predicate<LinkType> linkPredicate = p-> p.getSourceNode() == newLink.getDestinationNode() && p.getSourceNode() == newLink.getSourceNode();
-		
-		// update only if is necessary
-		if(graphLinkList.stream().filter(linkPredicate).findFirst().get() == null ) {
+		synchronized(graphDao) {
 			graphDao.updateGraph(graphId, newLink);
-		} else if(newLink.isOverwrite()){
-			graphDao.updateGraph(graphId, newLink);
-		} else {
-			logger.log(Level.INFO, "the link is already inside the graph");
-		}
-		
-		return newLink.getLinkName();	
+			return newLink.getName();
+		}	
 	}
 
 	/* method used to get all the reachable host */
@@ -206,14 +183,12 @@ public class NffgResourceService {
 	public List<HostType> getReachableHost(String nffgId) throws ServiceException {
 		Neo4jForwarder neo4jForwarder = new Neo4jForwarder();
 		Nodes receivedNodes = neo4jForwarder.getReachableHost(nffgId);
-		
 		List<HostType> hostList = new ArrayList<HostType>();
 		
 		for(Node newNode: receivedNodes.getNode()) {
 			HostType newHost = hostDao.readHost(newNode.getProperties().getProperty().get(0).getValue());
 			hostList.add(newHost);
 		}
-		
 		return hostList;
 	}
 

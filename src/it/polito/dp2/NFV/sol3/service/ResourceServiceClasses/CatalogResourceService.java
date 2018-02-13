@@ -8,17 +8,13 @@ import java.util.List;
 import java.util.Set;
 
 public class CatalogResourceService {
-
-	private VnfDao virtualFunctionDao;
 	
 	public CatalogResourceService() {
-		virtualFunctionDao = VnfDao.getInstance();
 	}
 	
 	// read the vnf catalog from the dao class
 	public CatalogType getCatalog() {		
-		List<VnfType> vnfList = new ArrayList<VnfType> (virtualFunctionDao.readAllVnfs());
-		
+		List<VnfType> vnfList = new ArrayList<VnfType> (VnfDao.getInstance().readAllVnfs());
 		CatalogType catalog = new CatalogType();
 		catalog.getVnf().addAll(vnfList);
 		return catalog;
@@ -27,7 +23,7 @@ public class CatalogResourceService {
 	// add a list of function inside the the system
 	public void setVnfsAtStartup(List<VnfType> functionList) {
 		for(VnfType function: functionList) {
-			virtualFunctionDao.createVnf(function);
+			VnfDao.getInstance().createVnf(function);
 		}
 	}
 	

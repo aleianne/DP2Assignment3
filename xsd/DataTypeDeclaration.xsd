@@ -72,13 +72,16 @@
 				represent the link entity in the nfv system
 			</xsd:documentation>
 		</xsd:annotation>
-		<xsd:attribute name="link-name" type="xsd:string" use="optional"/>
-		<xsd:attribute name="destinationNode" type="xsd:string" use="required"/>
-		<xsd:attribute name="sourceNode" type="xsd:string" use="required"/>
-		<xsd:attribute name="latency" type="nfv:positiveInt" use="optional"/>
-		<xsd:attribute name="throughput" type="nfv:throughput-type" use="optional"/>
-		<xsd:attribute name="overwrite" type="xsd:boolean" use="required"/>
-		<xsd:attribute name="nffgId" type="xsd:string" use="optional"/>
+		<xsd:sequence>
+			<xsd:element name="link-name" type="xsd:string"/>
+			<xsd:element name="destinationNode" type="xsd:string"/>
+			<xsd:element name="sourceNode" type="xsd:string"/>
+			<xsd:element name="latency" type="nfv:positiveInt"/>
+			<xsd:element name="throughput" type="nfv:throughput-type"/>
+			<xsd:element name="overwrite" type="xsd:boolean"/>
+			<xsd:element name="nffgId" type="xsd:string"/>
+		</xsd:sequence>
+		
 	</xsd:complexType>
 
 

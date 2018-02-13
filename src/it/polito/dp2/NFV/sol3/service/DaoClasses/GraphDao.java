@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import it.polito.dp2.NFV.lab3.ServiceException;
 
@@ -25,7 +26,7 @@ public class GraphDao {
 	private static final String nodeBaseName = "Node";
 	private static final String linkBaseName = "Link";
 	
-	private Neo4jForwarder neo4jXMLclient;
+	private Neo4jServiceManager neo4jXMLclient;
 	
 	private static GraphDao graphDao = new GraphDao();
 	
@@ -36,12 +37,10 @@ public class GraphDao {
 	/* DAO methods */
 	
 	/*
-	 * create a new graph inside the local hashmap
-	 * create a new graph inside the database
+	 * allocate the graph into the system and put it into the neo4j database and into the hashmap
 	 */
 	public void createGraph(GraphType newGraph) throws ServiceException {
-		
-		neo4jXMLclient = Neo4jForwarder.getInstance();
+		neo4jXMLclient = Neo4jServiceManager.getInstance();
 		
 		List<LinkType> linkList = newGraph.getLinks().getLink();
 		List<NodeType> nodeList = newGraph.getNodes().getNode();
@@ -69,7 +68,6 @@ public class GraphDao {
 			link.setLinkName(linkName);
 		}
 		
-		// insert in the hashmap the graph just created
 		graphMap.put(newGraph.getNffgId(), newGraph);
 		
 		// forward all the information about the graph to Neo4jSimpleXML
@@ -93,15 +91,12 @@ public class GraphDao {
 			// modify the second label that represent the name of the node
 			String nodeName = nodeLabel.getLabel().get(1);
 			nodeName = node.getName();
-			
-			// forward the node to Neo4jSimpleXML
 			neo4jXMLclient.sendNode(neo4jNode, nodeLabel);
 			
 			// set the relationship info between the node and the host
 			neo4jRelationship.setDstNode(node.getHostname());
 			neo4jRelationship.setSrcNode(node.getName());
 			neo4jRelationship.setType("ForwardTo");
-			
 			neo4jXMLclient.sendRelationship(neo4jRelationship);
 		}
 		
@@ -110,8 +105,6 @@ public class GraphDao {
 			neo4jRelationship.setDstNode(link.getDestinationNode());
 			neo4jRelationship.setSrcNode(link.getSourceNode());
 			neo4jRelationship.setType("ForwardTo");
-				
-			// forward the relationship between the nodes
 			neo4jXMLclient.sendRelationship(neo4jRelationship);
 		}
 	}
@@ -129,47 +122,40 @@ public class GraphDao {
 	public boolean updateGraph(String nffgId, NodeType newNode) throws ServiceException {
 		GraphType graph = graphMap.get(nffgId);
 		
-		neo4jXMLclient = Neo4jForwarder.getInstance();
-		
 		if(graph == null) {
 			return false;
 		} else {
-			
+			neo4jXMLclient = Neo4jServiceManager.getInstance();
 			String nodeName = nodeBaseName;
 			nodeName.concat(Integer.toString(nodeCounter.incrementAndGet()));
-			
+				
 			// genetate a new node name
 			newNode.setName(nodeName);
-			
+				
 			// create a ne4j node for the forwarding
 			Node neo4jNode = new Node();
 			Property nodeProperty = new Property();
 			Labels nodeLabels = new Labels();
-			
+				
 			nodeProperty.setName("name");
 			nodeProperty.setValue(newNode.getName());
-			
+				
 			nodeLabels.getLabel().add("Node");
 			nodeLabels.getLabel().add(nffgId);
-			
+				
 			neo4jNode.setProperties(new Properties());
 			neo4jNode.getProperties().getProperty().add(nodeProperty);
-			
-			// load the node into the graph locally
+				
 			graph.getNodes().getNode().add(newNode);
-			
-			// forward the node to Neo4jSimpleXml
 			neo4jXMLclient.sendNode(neo4jNode, nodeLabels);
-			
+				
 			// set the link information between two nodes
 			Relationship neo4jRelationship = new Relationship();
-			
 			neo4jRelationship.setDstNode(newNode.getHostname());
 			neo4jRelationship.setSrcNode(newNode.getName());
 			neo4jRelationship.setType("FrowardTo");
-			
 			neo4jXMLclient.sendRelationship(neo4jRelationship);
-			
+				
 			return true;
 		}
 	}
@@ -183,11 +169,18 @@ public class GraphDao {
 		if(graph == null) {
 			return false;
 		} else {
-			
-			// generate the name 
 			String linkName = linkBaseName;
-			newLink.setLinkName(linkName.concat(Integer.toString(linkCounter.incrementAndGet())));
 			
+			
+			// TODO check if the link is already in the database
+			List<LinkType> graphLinkList = graph.getLinks().getLink();
+			// filter the list in order to check if the link is already in the graph
+			Predicate<LinkType> linkPredicate = p-> p.getSourceNode() == newLink.getDestinationNode() && p.getSourceNode() == newLink.getSourceNode();
+			
+			if(graphLinkList.stream().filter(linkPredicate).findFirst().get() == null && !newLink.isOverwrite()) 
+				return false;
+
+			newLink.setLinkName(linkName.concat(Integer.toString(linkCounter.incrementAndGet())));
 			// load the link into the graph locally
 			graph.getLinks().getLink().add(newLink);
 			
@@ -195,9 +188,7 @@ public class GraphDao {
 			Relationship neo4jRelationship = new Relationship();
 			neo4jRelationship.setDstNode(newLink.getDestinationNode());
 			neo4jRelationship.setSrcNode(newLink.getSourceNode());
-			neo4jRelationship.setType("FrowardTo");
-						
-			// forward the link to Neo4jSimpleXML
+			neo4jRelationship.setType("FrowardTo");	
 			neo4jXMLclient.sendRelationship(neo4jRelationship);
 			
 			return true;

@@ -29,26 +29,23 @@ public class CatalogResource {
 
 	
 	/*
-	 * response with the list of the available vnf on the system
+	 * this resource will responde with the list of all the available vnf into the system
 	 */
 	@GET
     @ApiOperation(	value = "get the catalog", notes = "return to the client the entire catalog of VNF that are available into the web service")
     @ApiResponses(	value = {
-    		@ApiResponse(code = 201, message = "OK"),
+    		@ApiResponse(code = 200, message = "OK"),
     		@ApiResponse(code = 204, message = "No Content"),
     		@ApiResponse(code = 500, message = "Internal Server Error")
     	})
 	@Produces(MediaType.APPLICATION_XML)
 	public Response getCatalog() {
-		vnfDao = VnfDao.getInstance();
-		
-		CatalogType newCatalog = new CatalogType();
-		newCatalog.getVnf().addAll(vnfDao.readAllVnfs());
-		
-		if(newCatalog.getVnf().isEmpty()) {
+		CatalogResourceService catalogServer = new CatalogResourceService();
+		CatalogType catalogXmlElement = catalogServer.getCatalog();
+		if(catalogXmlElement.getVnf().isEmpty()) {
 			return Response.noContent().build();
 		} else {
-			JAXBElement<CatalogType> catalogElement = objFactory.createCatalog(newCatalog);
+			JAXBElement<CatalogType> catalogElement = objFactory.createCatalog(catalogXmlElement);
 			return Response.ok(catalogElement, MediaType.APPLICATION_XML).build();
 		}
 	}

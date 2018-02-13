@@ -26,7 +26,6 @@ public class ConnectionDao {
 			String host1 = conn.getHostname1();
 			String host2 = conn.getHostname2();
 			StringPair newStringPair = new StringPair(host1, host2);
-
 			connectionMap.put(newStringPair, conn);
 		}
 	}
@@ -35,7 +34,6 @@ public class ConnectionDao {
 		String host1 = newConnection.getHostname1();
 		String host2 = newConnection.getHostname2();
 		StringPair newStringPair = new StringPair(host1, host2);
-		
 		connectionMap.put(newStringPair, newConnection);
 	}
 	
@@ -43,12 +41,12 @@ public class ConnectionDao {
 		return connectionMap.values();
 	}
 	
-	public void updateConnection() {}
-	
-	public void deleteConnection() {}
-	
-	public ConnectionType queryConnection(String host1, String host2) {
+	public ConnectionType readConnection(String host1, String host2) {
 		StringPair newStringPair = new StringPair(host1, host2);
 		return connectionMap.get(newStringPair);
 	}
+	
+	public void updateConnection() {}
+	
+	public void deleteConnection() {}
 }

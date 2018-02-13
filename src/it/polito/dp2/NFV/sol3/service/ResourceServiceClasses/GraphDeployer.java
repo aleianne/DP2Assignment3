@@ -64,7 +64,7 @@ public class GraphDeployer {
 			minNode = Integer.MAX_VALUE;
 			
 			// find the host that have the minimum number of deployed network node
-			for(HostType host: selectedHost) 
+			for(HostType host: selectedHost) {
 				if(minNode > host.getTotalDeployedNode().intValue() &&
 						host.getTotalDeployedNode().intValue() < host.getMaxVNF().intValue()) {
 	
@@ -84,9 +84,7 @@ public class GraphDeployer {
 				newNode.setHostname(hostFound.getHostname());
 				return true;
 			}
-		
 		} 
-	
 		// if the database query return an empty set return false
 		logger.log(Level.INFO, "the set is empty");
 		return false;

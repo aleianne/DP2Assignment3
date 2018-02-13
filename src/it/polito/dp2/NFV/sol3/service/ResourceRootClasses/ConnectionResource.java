@@ -16,6 +16,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 
 import io.swagger.annotations.Api;
@@ -38,25 +39,26 @@ public class ConnectionResource {
 	 * return the connection between the host1 and host2
 	 */
 	@GET
-	@ApiOperation(	value = "get the hosts", notes = "return all host that are available inside the web service")
+	@ApiOperation(	value = "get the connnection parameter", notes = "return the connection parameters between two host into the system")
     @ApiResponses(	value = {
-    		@ApiResponse(code = 201, message = "OK"),
+    		@ApiResponse(code = 200, message = "OK"),
     		@ApiResponse(code = 400, message = "Bad Request"),
     		@ApiResponse(code = 500, message = "Internal Server Error")
     	})
 	@Produces(MediaType.APPLICATION_XML)
-	public JAXBElement<ConnectionType> getConnections(@QueryParam("host1") String host1, @QueryParam("host2") String host2) {
-		
-		// check if the query parameter null
+	public Response getConnections(@QueryParam("host1") String host1, @QueryParam("host2") String host2) {
 		if(host1 == null || host2 == null)  {
 			logger.log(Level.WARNING, "one of the parameters is null", new Object[] {host1, host2} );
 			throw new BadRequestException();
 		}
-		
-		// get the instance of the connection dao class
-		connDao = ConnectionDao.getInstance();
-		
-		return objFactory.createConnection(connDao.queryConnection(host1, host2));
+		ConnectionResurceService connectionService = new ConnectionResourceService();
+		ConnectionType connectionXmlElement= connectionService.getConnection(host1, host2);
+		if(connectionXmlElement == null) {
+			return Response.noContent().build();
+		} else {
+			JAXBElement<ConnectionType> connectionElement = objFactory.createConnection(connectionService.getConnection(host1, host2));
+			return Response.ok(connectionElement, MediaType.APPLICATION_XML).build();
+		}	
 	}
 	
 }
