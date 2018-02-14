@@ -35,9 +35,7 @@ public class HostDao {
 	 * insertion of data inside the local hashmap
 	 */
 	public void createHost(List<HostType> hostList) throws ServiceException {
-		
-		// get the forwarder
-		Neo4jForwarder neo4jXMLclient = Neo4jForwarder.getInstance();
+		Neo4jServiceManager neo4jXMLclient = Neo4jServiceManager.getInstance();
 		
 		Node neo4jNode = new Node();
 		Property neo4jProperty = new Property();
@@ -51,14 +49,11 @@ public class HostDao {
 		hostLabel.getLabel().add("host");
 		
 		for(HostType host: hostList) {
-			// load the element in memory 
 			hostMap.put(host.getHostname(), host);
 			
 			// set the neo4j node property a and forward it
 			neo4jNode.getProperties().getProperty().get(0).setName("name");
 			neo4jNode.getProperties().getProperty().get(0).setValue(host.getHostname());
-			
-			// forward the host to neo4j
 			neo4jXMLclient.sendNode(neo4jNode, hostLabel);
 		}
 	}

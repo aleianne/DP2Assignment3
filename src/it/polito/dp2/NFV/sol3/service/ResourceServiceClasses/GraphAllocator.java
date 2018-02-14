@@ -25,23 +25,15 @@ import javax.xml.datatype.DatatypeFactory;
 import it.polito.dp2.NFV.lab3.AllocationException;
 import it.polito.dp2.NFV.lab3.ServiceException;
 public class GraphAllocator {
-
-	private HostDao hostDao;
-	private NffgDao nffgDao;
-	private GraphDao graphDao;
 	
-	private List<String> targetHostList; 
+	private Map<Integer, String> targetHostMap;
 	private Map<String, List<VnfType>> allocatedNodeMap;
 	
 	private static Logger logger = Logger.getLogger(GraphAllocator.class.getName());
 	
 	public GraphAllocator() {
-		hostDao = HostDao.getInstance();
-		nffgDao = NffgDao.getInstance();
-		graphDao = GraphDao.getInstance();
-		
 		allocatedNodeMap = new HashMap<String, List<VnfType>> ();
-		targetHostList = new ArrayList<String> ();
+		targetHostMap = new HashMap<Integer, String> ();
 	}
 	
 	/*public boolean findSuitableHost(VnfType functionToBeDeployed, NodeType newNode) {
@@ -95,7 +87,12 @@ public class GraphAllocator {
 	}*/
 
 	
-	public void findSelectedHost(List<VnfType> vnfList, List<NodeType> nodeList, Map<String, HostType> hostmap) {
+	public void findSelectedHost(List<VnfType> vnfList, List<NodeType> nodeList, HostDao hostDao) {
+		
+		/* 
+		 * in this arrays at the same position there is a correspondance between the node and is virtual function
+		 */
+		
 		int index = 0;
 		int usedStorage, usedMemory, totalVNF;
 		List<Integer> indexList = new ArrayList<Integer> ();
@@ -104,43 +101,50 @@ public class GraphAllocator {
 			String hostname = node.getHostname();
 			
 			if(hostname != null) {
-				HostType host = hostmap.get(hostname);
-				usedStorage = host.getUsedStorage().intValue();
-				usedMemory = host.getUsedMemory().intValue();
-				totalVNF = host.getTotalVNFallocated().intValue();
+				HostType host = hostDao.readHost(hostname);
 				
-				List<VnfType> vnfAllocatedList = allocatedNodeMap.get(hostname);
-				if(vnfAllocatedList != null) {
-					for(VnfType virtulFunction: vnfAllocatedList) {
-						totalVNF++;
-						usedMemory += vnfAllocatedList.getRequiredMemory().intValue();
-						usedStorage += vnfAllocatedList.getRequiredStorage().gtintValue();
-					}
-				}
-				
-				if(totalVNF < host.getMaxVnf() &&
-						usedMemory + vnfList.get(index).getRequiredMemory().intValue() < host.getAvailableMemory().intValue() &&
-						usedStorage + vnfList.get(index).getRequiredStorage().getIntaValue() < host.getAvaialbleStorage().intValue()) {
+				if(host != null) {
+					usedStorage = host.getUsedStorage().intValue();
+					usedMemory = host.getUsedMemory().intValue();
+					totalVNF = host.getTotalVNFallocated().intValue();
 					
+					List<VnfType> vnfAllocatedList = allocatedNodeMap.get(hostname);
 					if(vnfAllocatedList != null) {
-						vnfAllocatedList.add(vnfList.get(index));
-					} else {
-						allocatedNodeMap.put(hostname, new ArrayList<VnfType>(vnfList.get(index)));
+						for(VnfType virtulFunction: vnfAllocatedList) {
+							totalVNF++;
+							usedMemory += vnfAllocatedList.getRequiredMemory().intValue();
+							usedStorage += vnfAllocatedList.getRequiredStorage().gtintValue();
+						}
 					}
-					// inser the index into the list 
-					indexList.add(index);
+					
+					if(totalVNF < host.getMaxVnf() &&
+							usedMemory + vnfList.get(index).getRequiredMemory().intValue() <= host.getAvailableMemory().intValue() &&
+							usedStorage + vnfList.get(index).getRequiredStorage().getIntaValue() <= host.getAvaialbleStorage().intValue()) {
+						
+						if(vnfAllocatedList != null) {
+							vnfAllocatedList.add(vnfList.get(index));
+						} else {
+							allocatedNodeMap.put(hostname, new ArrayList<VnfType>(vnfList.get(index)));
+						}
+						// insert the vnf into the list of elment ot be removed and add the hostname into the list of target
+						indexList.add(index);
+						targetHostMap.put(index, hostname);
+					}
 				}
 			}
+			index++;
 		}
-		// delete the allocated fuction from the list
+		// delete the allocated function from the list
 		for(Integer i: indexList) {
 			vnfList.remove(i.intValue());
 		}
 	}
 	
-	public void findBestHost(List<VnfType> vnfList, List<HostType> hostList) {
+	public void findBestHost(List<VnfType> vnfList, List<HostType> hostList) throws AllocationException{
 		int minVnfAllocated, numAllocatedNodes, usedMemory, usedStorage;
-		boolean isAllocated;
+		HostType targetHost;
+		List<VnfType> allocatedVnfList;
+		int index = 0;
 		
 		// TODO order the list 
 		Collection.sort(hostList, new Comparator() {
@@ -149,16 +153,16 @@ public class GraphAllocator {
 		
 		for(VnfType virtualFunction: vnfList) {
 			minVnfAllocated = Integer.MAX_VALUE;
-			isAllocated = false;
+			targetHost = null;
 			
 			for(HostType host: hostList) {
-				// add the value resource with the value stored into the hashmap
+				// initialize the resource value variables
 				numAllocatedNodes += host.getTotaVNFallocated().intValue();
 				usedMemory += host.getAvailableeStorage().intValue();
 				usedStorage += host.getAvailableMemory().intValue();
 				
 				// search the data into the hashMap
-				List<VnfType> allocatedVnfList = allocatedNodeMap.get(host.getName());
+				allocatedVnfList = allocatedNodeMap.get(host.getName());
 				if(vnfList != null) {
 					for(VnfType allocatedVnf: allocatedVnfList) {
 						numAllocatedNodes++;
@@ -168,44 +172,46 @@ public class GraphAllocator {
 				}
 				
 				// check if the host can contain such node
-				if(numAllocatedNodes < host.getMaxVNF().intValue()) {
+				if(numAllocatedNodes < host.getMaxVNF().intValue() &&
+						usedMemory + virtualFunction.getRequiredMemory().intValue() <= host.getAvailableMemory() &&
+						usedStorage + virtualFunction.getRequiredStorage().intValue() <= host.getAvailableStorage().intValue()) {
 					
-					if(usedMemory + virtualFunction.getRequiredMemory().intValue() < host.getAvailableMemory() 
-							&& usedStorage + virtualFunction.getRequiredStorage().intValue() < host.getAvailableStorage().intValue()) {
-						isAllocated = true;
+						if(numAllocatedNodes < minVnfAllocated) 
+							targetHost = host;
 						
-						// add the function into the map-lsit
-						allocatedVnfList = allocatedNodeMap.get(host.getName());
-						if(allocatedVnfList == null) {
-							allocatedNodeMap.put(host.getName(), new ArrayList<VnfType> (virtualFunction));
-						} else {
-							allocatedVnfList.add(virtualFunction);
-						}
-						
-						// set the host name into the target list 
-						targetHostList.add(host.getName());
-					}
 				}
 			}
-			
-			if(isAllocated) 
+		
+			// put the data into the map 
+			if(targetHost == null) 
 				throw new AllocationException("Impossible to find a suitable host for vnf " + virtualFunction.getType());
+			else {
+				allocatedVnfList = allocatedNodeMap.get(targetHost.getName());
+				if(allocatedVnfList == null) {
+					allocatedNodeMap.put(targetHost.getName(), new ArrayList<VnfType> (virtualFunction));
+				} else {
+					allocatedVnfList.add(virtualFunction);
+				}
+				// set the hostname into the target list 
+				targetHostMap.put(index, targetHost.getName());
+			}
+			
+			// update the index 
+			index++;
 		}
-	
 	}
 	
-	public void allocateGraph(, List<String> nodeNameList) throws InternalServerErrorException {
+	public void allocateGraph(List<NodeType> nodeList, HostDao hostDao) throws InternalServerErrorException {
 		int index = 0;
 		HostType host;
 		
 		int usedMemory, usedStorage;
 		int totalVNF;
 		
-		for(String nodeName: nodeNameList) {
-			String hostname = targetHostList.get(index);
-			usedMemory = usedStorage = totalVNF = 0;
+		for(NodeType node: nodeList) {
+			String hostname = targetHostMap.get(index);
+			host = hostDao.readHost(hostname);
 			
-			host = hostMap.get(hostname);
 			if(host == null) {
 				throw new InternalServerErrorException();
 			}
@@ -224,11 +230,12 @@ public class GraphAllocator {
 			host.setUsedStorage(usedStorage + host.getUsedStorage().intValue());
 			host.setTotalVNFallocated(vnfAllocated.length() + host.getTotalVNFallocated().intValue());
 			
-			// TODO important: remember insert the node into the host
+			// update the node
+			node.setHostname(hostname);
+			
+			index++;
 		}
 	}
-	
-
 	/*
 	public void commit(List<String> nodeNameList) throws AllocationException {
 		int index = 0;
@@ -279,6 +286,5 @@ public class GraphAllocator {
 	
 	public void addNewGraphToDB(GraphType graph) throws ServiceException {
 		graphDao.createGraph(graph);
-	}
-
-*/}
+	}*/
+}
