@@ -2,10 +2,10 @@
 <xsd:schema 
 	targetNamespace="http://www.example.com/NfvDeployer"	
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-	xmlns:nfv="http://www.example.com/NfvDeployer" 
+	xmlns:nfv="http://www.example.org/nfv" 
 	elementFormDefault="qualified">
 
-	<xsd:include schemaLocation="DataTypeDeclaration.xsd"/>
+	<!-- <xsd:include schemaLocation="DataTypeDeclaration.xsd"/>
 	
 	<xsd:annotation>
 		<xsd:documentation>
@@ -22,5 +22,48 @@
 	<xsd:element name="Hosts" type="nfv:hostsType"/>
 	<xsd:element name="Connection" type="nfv:connectionType"/>
 	<xsd:element name="Catalog" type="nfv:catalogType"/>
+	-->
 	
+	<xsd:include schemaLocation="nfvInfo.xsd"/>
+	
+	<xsd:element name="nffgs" type="nfv:nffgsType"/>
+	<xsd:element name="nffg" type="nfv:nffgType"/>
+	<xsd:element name="link" type="nfv:linkType"/>
+	<xsd:element name="node" type="nfv:nodeType"/>
+	<xsd:element name="connections" type="nfv:connectionsType"/>
+	<xsd:element name="connection" type="nfv:connectionType"/>
+	<xsd:element name="hosts" type="nfv:extendedHostsType"/>
+	<xsd:element name="host" type="nfv:extendedHostType"/>
+	
+	<xsd:complexType name="nffgsType">
+		<xsd:sequence>
+			<xsd:element name="nffg" type="nfv:nffgsType" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="extendedHostsType">
+		<xsd:sequence>
+			<xsd:element name="extendesHostType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="extendedHostType">
+		<xsd:complexContent>
+			<xsd:extension base="nfv:hostType">
+				<xsd:sequence>
+					<xsd:element name="totalVNFallocated" type="nfv:positiveInt"/>
+					<xsd:element name="storageUsed" type="nfv:positiveInt"/>
+					<xsd:element name="memoryUsed" type="nfv:positiveInt"/>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	
+	
+	<xsd:complexType name="connectionsType">
+		<xsd:sequence>
+			<xsd:element name="connection" type="nfv:connectionType" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
 </xsd:schema>

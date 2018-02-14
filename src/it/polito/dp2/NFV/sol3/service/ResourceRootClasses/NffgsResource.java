@@ -33,7 +33,7 @@ public class NffgsResource {
 
 	public NffgsResource() {}
 	
-	private NffgResourceService nffgServer = new NffgResourceService();
+	private NffgResourceService nffgServer;
 	
 	private static ObjectFactory objFactory = ObjectFactoryManager.getObjectFactory();
 	private static Logger logger = Logger.getLogger(NffgsResource.class.getName());
@@ -53,24 +53,21 @@ public class NffgsResource {
     	})
 	@Produces(MediaType.TEXT_PLAIN)
 	@Consumes(MediaType.APPLICATION_XML)
-	public String postNewNffg(JAXBElement<GraphType> reqBodyGraph) {
+	public String postNewNffg(JAXBElement<NffgType> reqBodyGraph) {
 		try {
-			
 			if(reqBodyGraph != null) {													
 				GraphType graphTobeDeployed = reqBodyGraph.getValue();								// create a new nodesType element
-			
 				if(graphTobeDeployed != null) {
+					nffgServer = new NffgResourceService();
 					return nffgServer.deployNewNffgGraph(graphTobeDeployed);						// return the the nffgID
 				} else {
 					logger.log(Level.SEVERE, "empty xml represeantion of graph to be deployed");
 					throw new InternalServerErrorException();
 				}
-				
 			} else {
 				logger.log(Level.SEVERE, "server received an empty request body");
 				throw new BadRequestException();
 			}
-			
 		} catch(ServiceException se) {
 			logger.log(Level.SEVERE, "Service Exception: " + se.getMessage());
 			throw new InternalServerErrorException();
@@ -80,33 +77,6 @@ public class NffgsResource {
 		}
 	}
 	
-	/*
-	 * return the entire collection of nffg that are saved inside the server
-	 */
-	@GET 
-	@Path("reachableHost/{nodeId}")
-    @ApiOperation(	value = "get reachable nodes", notes = "get the nodes that are reachable from the specified node")
-    @ApiResponses(	value = {
-    		@ApiResponse(code = 200, message = "OK"),
-    		@ApiResponse(code = 500, message = "Internal Server Error")
-    	})
-	@Produces(MediaType.APPLICATION_XML)
-	public JAXBElement<HostsType> getReachableNodes(@PathParam("nodeId") String nodeId) {
-		try {
-			
-			if(nodeId == null) 
-				throw new InternalServerErrorException();
-			
-			HostsType reachableHosts = new HostsType();
-			reachableHosts.getHost().addAll(nffgServer.getReachableHost(nodeId));
-			
-			return objFactory.createHosts(reachableHosts);
-			
-		} catch(ServiceException se) {
-			logger.log(Level.SEVERE, "Service Exception: " + se.getMessage());
-			throw new InternalServerErrorException();
-		}
-	}
 	
 	/*
 	 * return the entire collection of nffgs that are saved inside the server
@@ -118,32 +88,24 @@ public class NffgsResource {
     		@ApiResponse(code = 500, message = "Internal Server Error")
     	})
 	@Produces(MediaType.APPLICATION_XML)
-	public JAXBElement<NffgsType> getNffgs(@QueryParam("date") String date) {
-		
-	
+	public Response getNffgs(@QueryParam("date") String date) {
 		if(date == null) {
-			logger.log(Level.INFO, "return all the nffg stored in the system");
+			nffgServer = new NffgResourceService();
+			NffgsType nffgsWrapper = objFactory.createNffgsType();
 			
-			// create a new nffg element and put inside the list of retrivied nffgs
-			NffgsType nffgsElement = objFactory.createNffgsType();
-			// get the list of all nffg in the system
-			List<NffgType> nffgList = nffgServer.getNffgs();
+			// retrieve the list of all nffg graph deployed into the system
+			List<NffgType> queryListResult = nffgServer.getNffgs();
 			
-			if(nffgList.isEmpty()) 
+			if(queryListResult.isEmpty()) 
 				logger.log(Level.WARNING, "server returned an empty response becasue no one nffg has been found");
 			
 			// add the list returned into the XML representation of the response
-			nffgsElement.getNffg().addAll(nffgList);
-			
-			return objFactory.createNffgs(nffgsElement);
+			nffgsWrapper.getNffg().addAll(queryListResult);
+			JAXBElement<NffgsType> nffgsXmlElement = objFactory.createNffgs(nffgsWrapper);
+			return Response(nffgsXmlElement, MediaType.APPLICATION_XML);
 		} else {
-			
-			
-			
-			
+			logger.log(Level.Sever);
 		}
-		
-		
 		
 	}
 	
@@ -160,21 +122,23 @@ public class NffgsResource {
     		@ApiResponse(code = 500, message = "Internal Server Error")
     	})
 	@Produces(MediaType.APPLICATION_XML)
-	public JAXBElement<NffgType> getNffg(@PathParam("nffgId") String nffgId) {
-		
+	public Response getNffg(@PathParam("nffgId") String nffgId) {
 		if(nffgId == null) {
 			logger.log(Level.SEVERE, "the nffgId parameter received by the server id null");
 			throw new NotFoundException();
 		}
 		
-		NffgType nffgFound = nffgServer.getNffg(nffgId);												// query the database to obtain the nffg that correspond to the ID
-		if(nffgFound != null) {
-			return objFactory.createNffg(nffgFound);
+		// interrogate the database ot find the nffg graph
+		nffgServer = new NffgResourceService();
+		NffgType queryResult = nffgServer.getNffg(nffgId);												// query the database to obtain the nffg that correspond to the ID
+		
+		if(queryResult != null) {
+			JAXBElement<NffgType> nffgXmlElement = objFactory.cretaNffg(queryResult);
+			return Response.ok(nffgXmlElement, MediaType.APPLICATION_XML).build();
 		} else {
 			logger.log(Level.SEVERE, "the resource requested by the client doesn't exist");
 			throw new NotFoundException();
 		}
-		
 	}
 	
 	/*
@@ -205,11 +169,14 @@ public class NffgsResource {
 	    @ApiResponse(code = 500, message = "Internal Server Error")
 	   })
 	@Produces(MediaType.APPLICATION_XML)
-	public JAXBElement<GraphType> getGraph(@PathParam("nffgId") String nffgId) {
-		
-		GraphType graph = nffgServer.getGraph(nffgId);
-		if(graph != null) {
-			return objFactory.createGraph(graph);
+	public Response getGraph(@PathParam("nffgId") String nffgId) {
+		if(nffgId != null) {
+			GraphType graph = nffgServer.getGraph(nffgId);
+			if(graph != null) {
+				JAXBElement<GraphType> graphXmlElement = objFactory.creteGraph(graph);
+				return Response.ok(graphXmlElement, MediaType.APPLICATION_XML).build();
+			} else 
+				return Response.noContent().build();
 		} else {
 			logger.log(Level.SEVERE, "the resource requested by the client doesn't exist");
 			throw new NotFoundException();
@@ -233,27 +200,23 @@ public class NffgsResource {
 	@Consumes(MediaType.APPLICATION_XML)
 	public String createNewNode(JAXBElement<NodeType> reqBodyNode, @PathParam("nffgId") String nffgId) {
 		try {
-			
 			if(nffgId != null && reqBodyNode != null){
 				NodeType node = reqBodyNode.getValue();
 				if(node != null) {
-					
 					return nffgServer.addNode(nffgId, node);
-					
 				} else {
 					logger.log(Level.SEVERE, "the xml element is null");
 					throw new InternalServerErrorException();
 				}
 			} else {						
-				// if the parameter is null throw a new excption
 				logger.log(Level.SEVERE, "the parameter received by the server are null", new Object[] {reqBodyNode, nffgId});
 				throw new InternalServerErrorException();
 			}
-			
 		} catch(ServiceException se) {
 			logger.log(Level.SEVERE, "Service Exception" + se.getMessage());
 			throw new InternalServerErrorException();
 		} catch(AllocationException ae) {
+			logger.log(Level.SEVERE, "impossible to allocate all the nodes");
 			throw new ForbiddenException();
 		}
 	}
@@ -271,6 +234,40 @@ public class NffgsResource {
 	})
 	public void deleteNode(@PathParam("nodeId") String nodeId, @PathParam("nffgId") String nffgId) {
 		throw new ServiceUnavailableException();
+	}
+	
+	
+	/*
+	 * return all the reachable host starting from the node id
+	 */
+	@GET 
+	@Path("{nffgId}/graph/nodes/{nodeId}/reachableHost")
+    @ApiOperation(	value = "get all the reachable hosts ", notes = "get the hosts that are reachable from the specified node")
+    @ApiResponses(	value = {
+    		@ApiResponse(code = 200, message = "OK"),
+    		@ApiResponse(code = 204, message = "No Body"),
+    		@ApiResponse(code = 404, message = "Not Found"),
+    		@ApiResponse(code = 500, message = "Internal Server Error")
+    	})
+	@Produces(MediaType.APPLICATION_XML)
+	public Response getReachableNodes(@PathParam("nffgId") String nffgId, @PathParam("nodeId") String nodeId) {
+		try {
+			if(nodeId == null || nffgId == null) 
+				logger.log(Level.SEVERE, "the resource id passed are null");
+				throw new InternalServerErrorException();
+			
+			HostsType reachableHosts = new HostsType();
+			reachableHosts.getHost().addAll(nffgServer.getReachableHost(nodeId));
+			if(reachableHosts.getHost().isEmpty()) {
+				return Response.noContent().build();
+			} else {
+				JAXBElement<HostsType> hostsXmlElement = objFactory.createHosts(reachableHosts);
+				return Response.ok(hostsXmlElement, MediaType.APPLICATION_XML).build();
+			}
+		} catch(ServiceException se) {
+			logger.log(Level.SEVERE, "Service Exception: " + se.getMessage());
+			throw new InternalServerErrorException();
+		}
 	}
 	
 	/*

@@ -41,7 +41,6 @@ public class GraphDao {
 	 */
 	public void createGraph(GraphType newGraph) throws ServiceException {
 		neo4jXMLclient = Neo4jServiceManager.getInstance();
-		
 		List<LinkType> linkList = newGraph.getLinks().getLink();
 		List<NodeType> nodeList = newGraph.getNodes().getNode();
 		
@@ -170,8 +169,6 @@ public class GraphDao {
 			return false;
 		} else {
 			String linkName = linkBaseName;
-			
-			
 			// TODO check if the link is already in the database
 			List<LinkType> graphLinkList = graph.getLinks().getLink();
 			// filter the list in order to check if the link is already in the graph

@@ -36,31 +36,22 @@ public class NffgResourceService {
 	
 	/* method used for the nffgs resource */
 	
-	/*
-	 * return all the nffg deployed into the system
-	 */
+	// return all the nffgs inside the system
 	public List<NffgType> getNffgs() {
 		List<NffgType> nffgList = new ArrayList<NffgType>(nffgDao.readNffgs());		
 		return nffgList;
 	}
 	
-	/*
-	 * return the nffg given the nffg ID
-	 */
+	// return a selected nffg
 	public NffgType getNffg(String nffgId) {
 		NffgType nffg = nffgDao.queryNffg(nffgId);
 		return nffg;
 	}
 	
 	public List<Nffgs> selectNffgs(String date)  {
-		
-		
 		synchronized(nffgDao) {
-			
-			
-			
+				
 		}
-		
 	}
 	
 	/* method used for the graph resource */
@@ -72,31 +63,45 @@ public class NffgResourceService {
 	// synchronize the access to the hostDao in order to avoid race condition 
 	public String deployNewNffgGraph(GraphType newGraph) throws ServiceException, AllocationException {
 		VnfType nodeFunction;
-		GraphDeployer newGraphDeployer = new GraphDeployer();
+		List<VnfType> vnfList = new ArrayList<VnfType> ();
 		
+		GraphAllocator allocator = new GraphAllocator();
 		List<NodeType> nodeList = newGraph.getNodes().getNode();
 		
+		
+		
 		// synchronize the access to the the host interface during the allocation phase
-		synchronized(hostDao) {								
-			for(NodeType node: nodeList) {
-				nodeFunction = catalogDao.readVnf(node.getVNF());
-							
-				if(nodeFunction != null) {	
+		synchronized(hostDao) {		
+			try {
+				for(NodeType node: nodeList) {
+					nodeFunction = catalogDao.readVnf(node.getVNF());
+					if(nodeFunction == null) {
+						logger.log(Level.SEVERE, "the function specified is not available");
+						throw new ServiceException();
+					}
+					
+					vnfList.add(nodeFunction);
+				
+				/*if(nodeFunction != null) {	
 					// query the database in order to obtain the host 
 					if(!newGraphDeployer.findSuitableHost(nodeFunction, node)) {
 						// update the host deleting the node info
 						newGraphDeployer.rollback();
 						logger.log(Level.WARNING, "impossible to find an host for the network node", nodeFunction);
 						throw new AllocationException();
-					} else {
+					} else 
 						logger.log(Level.INFO, "host find correclty!");
-					}		
-				} else {
-					logger.log(Level.WARNING, "the VNF of the specified node is not defined in the catalog of this web-service", node.getVNF());
-				}
+				} else 
+					logger.log(Level.WARNING, "the VNF of the specified node is not defined in the catalog of this web-service", node.getVNF());*/
+				
 			}
+				
+			// TODO change the host map 
+			allocator.findSelectedHost(vnfList, nodeList, hostmap);
+			allocator.findBestHost(vnfList, hostList);
+			allocator.
 						
-			try {
+			/*try {
 				// create a new nffg
 				String nffgName = newGraphDeployer.createNewNffg();
 				newGraph.setNffgId(nffgName);
@@ -117,9 +122,11 @@ public class NffgResourceService {
 			} catch(ServiceException se) {
 				newGraphDeployer.rollback();
 				throw se;
-			}				
-						
-		} // release the lock on the hostDao object			
+			}	*/	
+			} catch() {
+				
+			}
+		}		
 	}
 
 	public String addNode(String graphId, NodeType newNode) throws ServiceException, AllocationException {
