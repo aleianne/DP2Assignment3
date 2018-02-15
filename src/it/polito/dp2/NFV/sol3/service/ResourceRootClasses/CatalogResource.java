@@ -42,7 +42,7 @@ public class CatalogResource {
 	public Response getCatalog() {
 		CatalogResourceService catalogServer = new CatalogResourceService();
 		CatalogType catalogXmlElement = catalogServer.getCatalog();
-		if(catalogXmlElement.getVnf().isEmpty()) {
+		if(catalogXmlElement.getFunction().isEmpty()) {
 			return Response.noContent().build();
 		} else {
 			JAXBElement<CatalogType> catalogElement = objFactory.createCatalog(catalogXmlElement);

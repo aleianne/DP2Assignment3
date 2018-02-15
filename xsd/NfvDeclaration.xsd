@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema 
-	targetNamespace="http://www.example.com/NfvDeployer"	
+	targetNamespace="http://www.example.com/nfv"	
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-	xmlns:nfv="http://www.example.org/nfv" 
+	xmlns:nfv="http://www.example.com/nfv" 
 	elementFormDefault="qualified">
 
 	<!-- <xsd:include schemaLocation="DataTypeDeclaration.xsd"/>
@@ -30,10 +30,25 @@
 	<xsd:element name="nffg" type="nfv:nffgType"/>
 	<xsd:element name="link" type="nfv:linkType"/>
 	<xsd:element name="node" type="nfv:nodeType"/>
+	<xsd:element name="catalog" type="nfv:catalogType"/>
 	<xsd:element name="connections" type="nfv:connectionsType"/>
 	<xsd:element name="connection" type="nfv:connectionType"/>
 	<xsd:element name="hosts" type="nfv:extendedHostsType"/>
 	<xsd:element name="host" type="nfv:extendedHostType"/>
+	<xsd:element name="nffgs-info" type="nfv:nffgsInfo"/>
+	
+	<xsd:complexType name="nffgsInfo">
+		<xsd:sequence>
+			<xsd:element name="nffg-info">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="nffg-name" type="nfv:nfvName"/>
+						<xsd:element name="deploy-date" type="xsd:date"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
 	
 	<xsd:complexType name="nffgsType">
 		<xsd:sequence>
@@ -59,10 +74,15 @@
 		</xsd:complexContent>
 	</xsd:complexType>
 	
-	
 	<xsd:complexType name="connectionsType">
 		<xsd:sequence>
 			<xsd:element name="connection" type="nfv:connectionType" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="hostsType">
+		<xsd:sequence>
+			<xsd:element name="host" type="nfv:hostType" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 

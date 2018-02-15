@@ -5,11 +5,10 @@ import java.util.List;
 
 import it.polito.dp2.NFV.lab3.AllocationException;
 import it.polito.dp2.NFV.lab3.ServiceException;
-import it.polito.dp2.NFV.sol3.service.HostType;
-import it.polito.dp2.NFV.sol3.service.NodeType;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.GraphDao;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.HostDao;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.VnfDao;
+import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 public class NodeResourceService {
 	public String addNode(String graphId, NodeType newNode) throws ServiceException, AllocationException {
@@ -19,18 +18,18 @@ public class NodeResourceService {
 		 * in this method use the same class used for the graph allocation 
 		 * so crete a list with only one element and a list 
 		 */
-		VnfType virtualFunction = VnfDao.getInstance().readVnf(newNode.getName());
-		if(virtualFucntion == null) 
+		FunctionType virtualFunction = VnfDao.getInstance().readVnf(newNode.getName());
+		if(virtualFunction == null) 
 			throw new AllocationException();
 				
-		List<VnfType> vnfList = new ArrayList<VnfType> ()
+		List<FunctionType> vnfList = new ArrayList<FunctionType> ();
 		List<NodeType> nodeList = new ArrayList<NodeType> (newNode);
 
 		
 		try {
 			GraphAllocator allocator = new GraphAllocator();
 			synchronized(hostDao) {
-				List<HostType> hostList = new ArrayList<HostType> (hostDao.readAllHosts());
+				List<ExtendedHostType> hostList = new ArrayList<ExtendedHostType> (hostDao.readAllHosts());
 				 
 				allocator.findSelectedHost(vnfList, nodeList);
 				allocator.findBestHost(vnfList, hostList);
@@ -43,12 +42,7 @@ public class NodeResourceService {
 			
 			
 			// TODO update the host with the name of the nodes
-			synchronized(hostDao) {
-				HostType host;
-				for(NodeType node: nodeList) {
-					host = hostDao.readHost(node.getHostname);
-				}
-			}
+		
 			
 		} catch(Exception e) {
 			
@@ -63,7 +57,7 @@ public class NodeResourceService {
 		}
 		
 		
-		VnfType nodeFunction = catalogDao.readVnf(newNode.getVNF());
+		FunctionType nodeFunction = catalogDao.readVnf(newNode.getVNF());
 	
 		if(nodeFunction == null) {
 			logger.log(Level.WARNING, "doesn't exist in the system a virtual function that corresponds to the function of the node", new Object[] {newNode});

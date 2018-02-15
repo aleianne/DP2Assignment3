@@ -35,7 +35,7 @@ public class NffgsResource {
 	
 	private NffgResourceService nffgServer;
 	
-	private static ObjectFactory objFactory = ObjectFactoryManager.getObjectFactory();
+	private static ObjectFactoryManager objFactory = ObjectFactoryManager.getObjectFactory();
 	private static Logger logger = Logger.getLogger(NffgsResource.class.getName());
 	
 	/*
@@ -87,6 +87,7 @@ public class NffgsResource {
     @ApiOperation(	value = "get nffgs collections", notes = "return the xml representation of the nffg graphs deployed into the system")
     @ApiResponses(	value = {
     		@ApiResponse(code = 200, message = "OK"),
+    		@ApiResponse(code = 404, message = "Not Found"),
     		@ApiResponse(code = 500, message = "Internal Server Error")
     	})
 	@Produces(MediaType.APPLICATION_XML)
@@ -98,15 +99,16 @@ public class NffgsResource {
 			// retrieve the list of all nffg graph deployed into the system
 			List<NffgType> queryListResult = nffgServer.getNffgs();
 			
-			if(queryListResult.isEmpty()) 
+			if(queryListResult.isEmpty()) {
 				logger.log(Level.WARNING, "server returned an empty response becasue no one nffg has been found");
-			
+			}
+				
 			// add the list returned into the XML representation of the response
 			nffgsWrapper.getNffg().addAll(queryListResult);
 			JAXBElement<NffgsType> nffgsXmlElement = objFactory.createNffgs(nffgsWrapper);
-			return Response(nffgsXmlElement, MediaType.APPLICATION_XML);
+			return Response.ok(nffgsXmlElement, MediaType.APPLICATION_XML).build();
 		} else {
-			logger.log(Level.Sever);
+			logger.log(Level.INFO, "");
 		}
 		
 	}
@@ -131,9 +133,9 @@ public class NffgsResource {
 		}
 		// interrogate the database to find the nffg graph
 		nffgServer = new NffgResourceService();
-		NffgType queryResult = nffgServer.getNffg(nffgId);												// query the database to obtain the nffg that correspond to the ID
-		if(queryResult != null) {
-			JAXBElement<NffgType> nffgXmlElement = objFactory.cretaNffg(queryResult);
+		NffgType queryResultNffg = nffgServer.getNffg(nffgId);												// query the database to obtain the nffg that correspond to the ID
+		if(queryResultNffg != null) {
+			JAXBElement<NffgType> nffgXmlElement = objFactory.createNffg(queryResultNffg);
 			return Response.ok(nffgXmlElement, MediaType.APPLICATION_XML).build();
 		} else {
 			logger.log(Level.SEVERE, "the resource requested by the client doesn't exist");
@@ -197,13 +199,14 @@ public class NffgsResource {
 	    })
 	@Produces(MediaType.TEXT_PLAIN)
 	@Consumes(MediaType.APPLICATION_XML)
-	public NodeType createNewNode(JAXBElement<NodeType> reqBodyNode, @PathParam("nffgId") String nffgId) {
+	public Response createNewNode(JAXBElement<NodeType> reqBodyNode, @PathParam("nffgId") String nffgId) {
 		try {
 			if(nffgId != null && reqBodyNode != null){
 				NodeType nodeXmlElement = reqBodyNode.getValue();
 				if(nodeXmlElement != null) {
-					nffgServer.addNode(nffgId, nodeXmlElement);
-					JAXBElement<NodeType> resBodyNode = objFactory.createNodeType(node);
+					NodeResourceService nodeServer = new NodeResourceService();
+					nodeServer.addNode(nffgId, nodeXmlElement);
+					JAXBElement<NodeType> resBodyNode = objFactory.createNode(nodeXmlElement);
 					return Response.ok(resBodyNode, MediaType.APPLICATION_XML).build();
 				} else {
 					logger.log(Level.SEVERE, "the xml element is null");
@@ -253,12 +256,15 @@ public class NffgsResource {
 	@Produces(MediaType.APPLICATION_XML)
 	public Response getReachableNodes(@PathParam("nffgId") String nffgId, @PathParam("nodeId") String nodeId) {
 		try {
-			if(nodeId == null || nffgId == null) 
+			if(nodeId == null || nffgId == null) {
 				logger.log(Level.SEVERE, "the resource id passed are null");
 				throw new InternalServerErrorException();
+			}
+		
+			NodeResourceService nodeServer = new NodeResourceService();
 			
 			HostsType reachableHosts = new HostsType();
-			reachableHosts.getHost().addAll(nffgServer.getReachableHost(nodeId));
+			reachableHosts.getHost().addAll(nodeServer.getReachableHost(nodeId));
 			if(reachableHosts.getHost().isEmpty()) {
 				return Response.noContent().build();
 			} else {
@@ -275,7 +281,7 @@ public class NffgsResource {
 	 * create a new link inside the nf-fg graph
 	 */
 	@POST
-	@Path("{nffgId}/links")
+	@Path("{nffgId}/nodes/{nodeId}/links")
 	@ApiOperation(	value = "create a new link", notes = "create a new link inside the graph")
 	@ApiResponses(	value = {
 	    @ApiResponse(code = 201, message = "Created"),
@@ -284,7 +290,7 @@ public class NffgsResource {
 	  })
 	@Produces(MediaType.TEXT_PLAIN)
 	@Consumes(MediaType.APPLICATION_XML)
-	public String createNewLink(JAXBElement<LinkType> reqBodyNode, @PathParam("nffgId") String nffgId) {
+	public String createNewLink(JAXBElement<LinkType> reqBodyNode, @PathParam("nffgId") String nffgId, @PathParam("nodeId") String nodeId) {
 		try {
 			if(nffgId != null && reqBodyNode != null) {
 				LinkType link = reqBodyNode.getValue();
@@ -310,14 +316,14 @@ public class NffgsResource {
 	 * this operation is mapped to a java method but is not necessary for the assignment
 	 */
 	@DELETE
-	@Path("{nffgId}/links/{linkId}")
+	@Path("{nffgId}/nodes/{nodeId}/links/{linkId}")
 	@ApiOperation( value = "delete a link", notes = "delete a nf-fg link")
 	@ApiResponses( value = {
 		@ApiResponse(code = 200, message = "Deleted"),
 		@ApiResponse(code = 404, message = "Not Found"),
 		@ApiResponse(code = 500, message = "Internal Server Error")
 		})
-	public void deleteLink(@PathParam("linkId") String linkId, @PathParam("nffgId") String nffgId) {
+	public void deleteLink(@PathParam("linkId") String linkId, @PathParam("nffgId") String nffgId, @PathParam("nodeId") String nodeId) {
 		throw new ServiceUnavailableException();
 	}
 

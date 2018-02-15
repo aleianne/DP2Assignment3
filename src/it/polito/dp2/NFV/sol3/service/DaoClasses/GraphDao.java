@@ -12,6 +12,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+import javax.ws.rs.InternalServerErrorException;
+
+import it.polito.dp2.NFV.lab3.LinkAlreadyPresentException;
 import it.polito.dp2.NFV.lab3.ServiceException;
 
 public class GraphDao {
@@ -22,9 +25,11 @@ public class GraphDao {
 	
 	private static AtomicInteger linkCounter = new AtomicInteger(0);
 	private static AtomicInteger nodeCounter = new AtomicInteger(0);
+	private static AtomicInteger nffgCounter = new AtomicInteger(0);
 	
-	private static final String nodeBaseName = "Node";
-	private static final String linkBaseName = "Link";
+	private static final String nodeBaseName = "Node-";
+	private static final String linkBaseName = "Link-";
+	private static final String nffgBaseName = "nffg-";
 	
 	private Neo4jServiceManager neo4jXMLclient;
 	
@@ -39,12 +44,18 @@ public class GraphDao {
 	/*
 	 * allocate the graph into the system and put it into the neo4j database and into the hashmap
 	 */
-	public void createNffg(NffgType newGraph) throws ServiceException {
+	public void createNffg(NffgType newNffg, Date deployDate) throws ServiceException {
 		neo4jXMLclient = Neo4jServiceManager.getInstance();
-		List<LinkType> linkList = newGraph.getLinks().getLink();
-		List<NodeType> nodeList = newGraph.getNodes().getNode();
 		
+		List<NodeType> nodeList = newNffg.getNode();
 		Map<String, String> nameResolverMap = new HashMap<String, String>();
+		
+		// TODO create the nffg name
+		String nffgName = nffgBaseName .concat(Integer.toString(nffgCounter.incrementAndGet()));
+		
+		// set the deploy date of the graph
+		newNffg.setDeployDate(deployDate);
+		newNffg.setNffgName(nffgName);
 		
 		// update the list of nodes
 		for(NodeType node: nodeList) {
@@ -52,22 +63,22 @@ public class GraphDao {
 			String oldNodeName = node.getName();
 			nameResolverMap.put(oldNodeName, newNodeName);
 			
-			node.setNffg(newGraph.getNffg());
+			node.setNfFg(newNffg.getNffgName());
 			node.setName(newNodeName);
-		}
-		
-		// update the list of links
-		for(LinkType link: linkList) {
-			String linkName = linkBaseName.concat(Integer.toString(linkCounter.incrementAndGet()));
-			String oldDestNodeName = link.getDestinationNode();
-			String oldSrcNodeName = link.getSourceNode();
 			
-			link.setDestinationNode(nameResolverMap.get(oldDestNodeName));
-			link.setSourceNode(nameResolverMap.get(oldSrcNodeName));
-			link.setLinkName(linkName);
+			// update the list of links
+			for(LinkType link: node.getLink()) {
+				String linkName = linkBaseName.concat(Integer.toString(linkCounter.incrementAndGet()));
+				String oldDestNodeName = link.getDestinationNode();
+				String oldSrcNodeName = link.getSourceNode();
+				
+				link.setDestinationNode(nameResolverMap.get(oldDestNodeName));
+				link.setSourceNode(nameResolverMap.get(oldSrcNodeName));
+				link.setLinkName(linkName);
+			}
 		}
 		
-		graphMap.put(newGraph.getNffgId(), newGraph);
+		graphMap.put(newNffg.getNffgName(), newNffg);
 		
 		// forward all the information about the graph to Neo4jSimpleXML
 		Node neo4jNode = new Node();	
@@ -90,28 +101,30 @@ public class GraphDao {
 			// modify the second label that represent the name of the node
 			String nodeName = nodeLabel.getLabel().get(1);
 			nodeName = node.getName();
-			neo4jXMLclient.sendNode(neo4jNode, nodeLabel);
+			neo4jXMLclient.postNode(neo4jNode, nodeLabel);
 			
 			// set the relationship info between the node and the host
 			neo4jRelationship.setDstNode(node.getHostname());
 			neo4jRelationship.setSrcNode(node.getName());
 			neo4jRelationship.setType("ForwardTo");
-			neo4jXMLclient.sendRelationship(neo4jRelationship);
+			neo4jXMLclient.postRelationship(neo4jRelationship);
+			
+			for(LinkType link: node.getLink()) {
+				// set the link information between two nodes
+				neo4jRelationship.setDstNode(link.getDestinationNode());
+				neo4jRelationship.setSrcNode(link.getSourceNode());
+				neo4jRelationship.setType("ForwardTo");
+				neo4jXMLclient.postRelationship(neo4jRelationship);
+			}
 		}
 		
-		for(LinkType link: linkList) {
-			// set the link information between two nodes
-			neo4jRelationship.setDstNode(link.getDestinationNode());
-			neo4jRelationship.setSrcNode(link.getSourceNode());
-			neo4jRelationship.setType("ForwardTo");
-			neo4jXMLclient.sendRelationship(neo4jRelationship);
-		}
+		
 	}
 	
 	/*
 	 * read a single graph given the nffgId
 	 */
-	public Type readGraph(String nffgId) {
+	public NffgType readGraph(String nffgId) {
 		return graphMap.get(nffgId);
 	}
 	
@@ -119,9 +132,9 @@ public class GraphDao {
 	 * update the list of nodes insied the graph, locally and into the database
 	 */
 	public boolean updateGraph(String nffgId, NodeType newNode) throws ServiceException {
-		NffgType queryResult = graphMap.get(nffgId);
+		NffgType queryResultGraph = graphMap.get(nffgId);
 		
-		if(queryResult == null) {
+		if(queryResultGraph == null) {
 			return false;
 		} else {
 			neo4jXMLclient = Neo4jServiceManager.getInstance();
@@ -145,19 +158,21 @@ public class GraphDao {
 			neo4jNode.setProperties(new Properties());
 			neo4jNode.getProperties().getProperty().add(nodeProperty);
 				
-			graph.getNodes().getNode().add(newNode);
-			neo4jXMLclient.sendNode(neo4jNode, nodeLabels);
+			queryResultGraph.getNode().add(newNode);
+			neo4jXMLclient.postNode(neo4jNode, nodeLabels);
 				
 			// set the link information between two nodes
 			Relationship neo4jRelationship = new Relationship();
 			neo4jRelationship.setDstNode(newNode.getHostname());
 			neo4jRelationship.setSrcNode(newNode.getName());
 			neo4jRelationship.setType("FrowardTo");
-			neo4jXMLclient.sendRelationship(neo4jRelationship);
+			neo4jXMLclient.postRelationship(neo4jRelationship);
 				
 			return true;
 		}
 	}
+	
+	// TODO to be changed
 	
 	/*
 	 * update the list of link
@@ -166,7 +181,7 @@ public class GraphDao {
 		NffgType queryResult = graphMap.get(nffgId);
 		
 		if(queryResult == null) {
-			throw InternalServeErrorException();
+			throw new InternalServerErrorException();
 		} else {
 			String linkName = linkBaseName;
 			
@@ -176,7 +191,7 @@ public class GraphDao {
 			Predicate<LinkType> linkPredicate = p-> p.getSourceNode() == newLink.getDestinationNode() && p.getSourceNode() == newLink.getSourceNode();
 			
 			if(graphLinkList.stream().filter(linkPredicate).findFirst().get() == null && !newLink.isOverwrite()) 
-				throw LinkAlreadyPresentException();
+				throw new LinkAlreadyPresentException();
 
 			// update the list of links
 			newLink.setLinkName(linkName.concat(Integer.toString(linkCounter.incrementAndGet())));
@@ -187,7 +202,7 @@ public class GraphDao {
 			neo4jRelationship.setDstNode(newLink.getDestinationNode());
 			neo4jRelationship.setSrcNode(newLink.getSourceNode());
 			neo4jRelationship.setType("FrowardTo");	
-			neo4jXMLclient.sendRelationship(neo4jRelationship);
+			neo4jXMLclient.postRelationship(neo4jRelationship);
 		}
 	}
 	

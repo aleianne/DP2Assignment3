@@ -13,7 +13,7 @@ public class VnfDao {
 
 	static VnfDao Vnfsdao = new VnfDao();
 
-	static private Map<String, VnfType> functionCatalogMap = new HashMap<String, VnfType>();
+	static private Map<String, FunctionType> functionCatalogMap = new HashMap<String, FunctionType>();
 	
 	public static VnfDao getInstance() {
 		return Vnfsdao;
@@ -21,21 +21,21 @@ public class VnfDao {
 	
 	/* DAO methods */
 	
-	public Collection<VnfType> readAllVnfs() {
+	public Collection<FunctionType> readAllVnfs() {
 		return functionCatalogMap.values();
 	}
 	
-	public VnfType readVnf(String vnfName) {
+	public FunctionType readVnf(String vnfName) {
 		return functionCatalogMap.get(vnfName);
 	}
 	
-	public void createVnfList(List<VnfType> functionList) {
-		for(VnfType function: functionList) {
+	public void createVnfList(List<FunctionType> functionList) {
+		for(FunctionType function: functionList) {
 			functionCatalogMap.put(function.getName(), function);
 		}
 	}
 	
-	public void createVnf(VnfType function) {
+	public void createVnf(FunctionType function) {
 		functionCatalogMap.put(function.getName(), function);
 	}
 

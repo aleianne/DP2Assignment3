@@ -67,22 +67,22 @@ public class NfvDeployer implements ApplicationEventListener{
 			ObjectFactory objFactory = ObjectFactoryManager.getObjectFactory();
 			
 			NfvReader monitor = NfvReaderFactory.newInstance().newNfvReader();
-			List<HostType> hostList = new ArrayList<HostType>();
+			List<ExtendedExtendedHostType> hostList = new ArrayList<ExtendedHostType>();
 			List<ConnectionType> connList = new ArrayList<ConnectionType>();
-			List<VnfType> functionList = new ArrayList<VnfType>();
+			List<FunctionType> functionList = new ArrayList<FunctionType>();
 			
 			logger.log(Level.INFO, "try to read the nfv info from the nfv reader interface");
 			
 			// first: read all the host from the interface
 			for(HostReader hr: monitor.getHosts()) {
-				HostType newHost = objFactory.createHostType();
+				ExtendedHostType newHost = objFactory.createExtendedHostType();
 				
-				// incapsulate the data from the reader interface into the HostType instance
+				// incapsulate the data from the reader interface into the ExtendedHostType instance
 				newHost.setAvailableMemory(BigInteger.valueOf(hr.getAvailableMemory()));
 				newHost.setAvailableStorage(BigInteger.valueOf(hr.getAvailableStorage()));
 				newHost.setHostname(hr.getName());
 				newHost.setMaxVNF(BigInteger.valueOf(hr.getMaxVNFs()));
-				newHost.setTotalDeployedNode(BigInteger.valueOf(0));
+				newHost.setTotalVNFallocated(BigInteger.valueOf(0));
 				
 				hostList.add(newHost);
 			}
@@ -94,9 +94,9 @@ public class NfvDeployer implements ApplicationEventListener{
 			// deploy the network functions
 			Set<VNFTypeReader> vnfCatalog = monitor.getVNFCatalog();
 			for(VNFTypeReader function: vnfCatalog) {
-				VnfType newFunction = new VnfType();
+				FunctionType newFunction = new FunctionType();
 				
-				// put the info inside the VnfType function
+				// put the info inside the FunctionType function
 				newFunction.setName(function.getName());
 				newFunction.setType(FunctionEnumeration.fromValue(function.getFunctionalType().toString()));
 				newFunction.setRequiredMemory(BigInteger.valueOf(function.getRequiredMemory()));
@@ -140,11 +140,10 @@ public class NfvDeployer implements ApplicationEventListener{
 			
 			// deploy the first graph
 			NffgReader nfgr = monitor.getNffg("Nffg0");
-			GraphType newGraph = new GraphType();
-			newGraph.setNodes(new NodesType());
-			newGraph.setLinks(new LinksType());
-			List<NodeType> nodeList = newGraph.getNodes().getNode();
-			List<LinkType> linkList = newGraph.getLinks().getLink();
+			NffgType newGraph = new NffgType();
+			
+			List<NodeType> nodeList = newGraph.getNode();
+			List<LinkType> linkList;
 			
 			for(NodeReader nr: nfgr.getNodes()) {
 				NodeType newNode = new NodeType();
@@ -153,9 +152,9 @@ public class NfvDeployer implements ApplicationEventListener{
 				newNode.setName(nr.getName());
 				
 				nodeList.add(newNode);
+				linkList = newNode.getLink();
 				
 				for(LinkReader lr: nr.getLinks()) {
-					
 					LinkType newLink = new LinkType();
 					
 					newLink.setDestinationNode(lr.getDestinationNode().getName());
@@ -164,7 +163,6 @@ public class NfvDeployer implements ApplicationEventListener{
 					newLink.setThroughput(lr.getThroughput());
 					newLink.setLinkName(lr.getName());
 					newLink.setOverwrite(false);
-					newLink.setNffgId(nfgr.getName());
 					
 					linkList.add(newLink);
 				}

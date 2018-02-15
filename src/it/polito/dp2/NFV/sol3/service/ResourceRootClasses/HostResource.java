@@ -43,15 +43,15 @@ public class HostResource {
 	public Response getHosts(@QueryParam("nameList") List<String> nameList, 
 			@QueryParam("minMemory") int minMemory, @QueryParam("minStorage") int minStorage) {
 		
-		HostsType hostsXMLelement = objFactory.createHostsType();
+		ExtendedHostsType hostsXMLelement = objFactory.createHost();
 		
-		List<HostType> hostList = hostServer.queryAvailableHost(minMemory, minStorage);
+		List<ExtendedHostsType> hostList = hostServer.queryAvailableHost(minMemory, minStorage);
 		hostsXMLelement.getHost().addAll(hostList);
  
 		if(hostList.isEmpty()) {
 			return Response.noContent().build();
 		} else {
-			JAXBElement<HostsType> hostResponse = objFactory.createHosts(hostsXMLelement);
+			JAXBElement<ExtendedHostsType> hostResponse = objFactory.createHost(hostsXMLelement);
 			return Response.ok(hostResponse, MediaType.APPLICATION_XML).build();
 		}
 	}
@@ -68,13 +68,14 @@ public class HostResource {
     		@ApiResponse(code = 500, message = "Internal Server Error")
     	})
 	@Produces(MediaType.APPLICATION_XML)
-	public JAXBElement<HostType> getHost(@PathParam("{hostId}") String hostname) {
-		HostType host = hostServer.getSingleHost(hostname);
+	public Response getHost(@PathParam("{hostId}") String hostname) {
+		ExtendedHostType host = hostServer.getSingleHost(hostname);
 		
 		if(host == null) {
 			throw new NotFoundException();
 		} else {
-			return objFactory.createHost(host);											// return a host XML representation
+			JAXBElement<ExtendedHostType> hostResponse = objFactory.createHost(host);
+			return Response.ok(hostResponse, MediaType.APPLICATION_XML).build();									// return a host XML representation
 		}
 	}
 }

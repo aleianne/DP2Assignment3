@@ -20,9 +20,9 @@ public class HostResourceService {
 	 * return all the host available into the system, use a monitor to
 	 * synchronize the acces to the hostDao
 	 */
-	public List<HostType> getAllAvailableHost() {
+	public List<ExtendedHostType> getAllAvailableHost() {
 		synchronized(hostDao) {
-			List<HostType> availableHost = new ArrayList<HostType>(hostDao.readAllHosts());
+			List<ExtendedHostType> availableHost = new ArrayList<ExtendedHostType>(hostDao.readAllHosts());
 			return availableHost;
 		}
 	}
@@ -30,9 +30,9 @@ public class HostResourceService {
 	/*
 	 * return only the host that satisfy the latency and throughput constraint 
 	 */
-	public List<HostType> queryAvailableHost(int minMemory, int minStorage) {
+	public List<ExtendedHostType> queryAvailableHost(int minMemory, int minStorage) {
 		synchronized(hostDao) {
-			List<HostType> resultList = new ArrayList<HostType>(hostDao.queryHost(minStorage, minMemory));
+			List<ExtendedHostType> resultList = new ArrayList<ExtendedHostType>(hostDao.queryHost(minStorage, minMemory));
 			return resultList;
 		}
 	}
@@ -40,7 +40,7 @@ public class HostResourceService {
 	/*
 	 * search a single host element into the database
 	 */
-	public HostType getSingleHost(String hostname) {
+	public ExtendedHostType getSingleHost(String hostname) {
 		synchronized(hostDao) {
 			return hostDao.readHost(hostname);
 		}
@@ -50,7 +50,7 @@ public class HostResourceService {
 	 * used only at server startup because laod in memory the list of the host that 
 	 * are available to the client
 	 */
-	public void setHostsAtStartup(List<HostType> hostList) throws ServiceException {
+	public void setHostsAtStartup(List<ExtendedHostType> hostList) throws ServiceException {
 		if(hostList.isEmpty()) 
 			throw new ServiceException("the list of host to be loaded in memory is empty");
 		

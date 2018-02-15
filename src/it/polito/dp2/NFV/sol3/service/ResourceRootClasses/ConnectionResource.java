@@ -51,7 +51,7 @@ public class ConnectionResource {
 			logger.log(Level.WARNING, "one of the parameters is null", new Object[] {host1, host2} );
 			throw new BadRequestException();
 		}
-		ConnectionResurceService connectionService = new ConnectionResourceService();
+		ConnectionResourceService connectionService = new ConnectionResourceService();
 		ConnectionType connectionXmlElement= connectionService.getConnection(host1, host2);
 		if(connectionXmlElement == null) {
 			return Response.noContent().build();

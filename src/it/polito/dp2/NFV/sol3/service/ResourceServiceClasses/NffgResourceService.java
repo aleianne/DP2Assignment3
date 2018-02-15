@@ -21,7 +21,6 @@ import it.polito.dp2.NFV.lab3.ServiceException;
 public class NffgResourceService {
 
 	private HostDao hostDao;
-	private NffgDao nffgDao;
 	private GraphDao graphDao;
 	private VnfDao catalogDao;
 	
@@ -30,7 +29,6 @@ public class NffgResourceService {
 	public NffgResourceService() {
 		// instantiate all the dao object that are used to accomplish the operation of deploy/read of the nffg
 		hostDao = HostDao.getInstance();
-		nffgDao = NffgDao.getInstance();
 		graphDao = GraphDao.getInstance();
 		catalogDao = VnfDao.getInstance();
 	}
@@ -45,14 +43,14 @@ public class NffgResourceService {
 	
 	// interrogate the DB in order to obtain the graph
 	public NffgType getNffg(String nffgId) {
-		NffgType nffg = nffgDao.queryNffg(nffgId);
+		//NffgType nffg = nffgDao.queryNffg(nffgId);
 		return nffg;
 	}
 	
-	public List<Nffgs> selectNffgs(String date)  {
-		synchronized(nffgDao) {
+	public List<NffgType> selectNffgs(String date)  {
+		//synchronized(nffgDao) {
 				
-		}
+		//}
 	}
 	
 	/* method used for the graph resource */
@@ -62,9 +60,9 @@ public class NffgResourceService {
 	}
 	
 	// synchronize the access to the hostDao in order to avoid race condition 
-	public String deployNewNffgGraph(GraphType newGraph) throws ServiceException, AllocationException {
-		VnfType nodeFunction;
-		List<VnfType> vnfList = new ArrayList<VnfType> ();
+	public String deployNewNffgGraph(NffgType newGraph) throws ServiceException, AllocationException {
+		FunctionType nodeFunction;
+		List<FunctionType> vnfList = new ArrayList<FunctionType> ();
 		List<NodeType> nodeList = newGraph.getNodes().getNode();
 		
 		HostDao hostDao = HostDao.getInstance();
@@ -96,13 +94,11 @@ public class NffgResourceService {
 		try {
 			GraphAllocator allocator = new GraphAllocator();
 			synchronized(hostDao) {
-				List<HostType> hostList = new ArrayList<HostType> (hostDao.readAllHosts());
+				List<ExtendedHostType> hostList = new ArrayList<ExtendedHostType> (hostDao.readAllHosts());
 				
 				//TODO change the host map 
 				allocator.findSelectedHost(vnfList, nodeList);
 				allocator.findBestHost(vnfList, hostList);
-				
-				allocator.allocateGraph(nodeList, hostDao);
 			}
 			// create a new graph in the database
 			GraphDao.getInstance().createGraph(newGraph);
@@ -111,10 +107,7 @@ public class NffgResourceService {
 			// TODO update the host with the name of the nodes
 			
 			synchronized(hostDao) {
-				HostType host;
-				for(NodeType node: nodeList) {
-					host = hostDao.readHost(node.getHostname);
-				}
+				allocator.allocateGraph(nodeList, hostDao);
 			}
 			
 		} catch(Exception e) {
@@ -150,18 +143,18 @@ public class NffgResourceService {
 	}
 
 	
-	/*private HostType searchHost(VnfType nodeFunction) throws AllocationException {
-		HostType targetHost = null;
+	/*private ExtendedHostType searchHost(FunctionType nodeFunction) throws AllocationException {
+		ExtendedHostType targetHost = null;
 		int reqStorage = nodeFunction.getRequiredStorage().intValue();
 		int reqMemory = nodeFunction.getRequiredMemory().intValue();
 		
-		Set<HostType> selectedHost = (Set<HostType>) hostDao.queryHost(reqStorage, reqMemory);
+		Set<ExtendedHostType> selectedHost = (Set<ExtendedHostType>) hostDao.queryHost(reqStorage, reqMemory);
 		
 		if(!selectedHost.isEmpty()) {
 			int minNumberOfNodesDeployed = 0;
 			
 			// find the host that have the minimum number of deployed network node
-			for(HostType host: selectedHost) {
+			for(ExtendedHostType host: selectedHost) {
 				if(minNumberOfNodesDeployed > host.getTotalDeployedNode().intValue() &&
 						host.getTotalDeployedNode().intValue() < host.getMaxVNF().intValue()) {
 	
