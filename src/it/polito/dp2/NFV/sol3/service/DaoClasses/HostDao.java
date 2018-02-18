@@ -80,6 +80,7 @@ public class HostDao {
 	 * update total allocated Storage and Memory
 	 */
 	public void updateHost(String hostname, FunctionType functionToBeDeployed) {
+		// interrogate the database in order to obtain the host to be update
 		ExtendedHostType queryResultHost = hostMap.get(hostname);
 		if(queryResultHost == null) {
 			throw new InternalServerErrorException();

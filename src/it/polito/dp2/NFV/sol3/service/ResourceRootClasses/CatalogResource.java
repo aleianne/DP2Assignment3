@@ -45,7 +45,7 @@ public class CatalogResource {
 		if(catalogXmlElement.getFunction().isEmpty()) {
 			return Response.noContent().build();
 		} else {
-			JAXBElement<CatalogType> catalogElement = objFactory.createCatalog(catalogXmlElement);
+			JAXBElement<CatalogType> catalogElement = objFactory.createFunctions(catalogXmlElement);
 			return Response.ok(catalogElement, MediaType.APPLICATION_XML).build();
 		}
 	}

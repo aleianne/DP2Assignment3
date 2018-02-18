@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Level;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -32,7 +33,7 @@ public class Neo4jServiceManager {
 	
 	public Neo4jServiceManager() {
 		client = ClientBuilder.newClient();
-		String simpleXmlURL = System.getProperty("it.polito.dp2.NFV.lab3.Neo4JSimpleXMLURL").concat("/data");
+		simpleXmlURL = System.getProperty("it.polito.dp2.NFV.lab3.Neo4JSimpleXMLURL").concat("/data");
 	}
 	
 	public static Neo4jServiceManager getInstance() {
@@ -59,11 +60,9 @@ public class Neo4jServiceManager {
 			checkResponse(labelPostResponse);
 			neo4jNodeMap.put(node.getProperties().getProperty().get(0).getValue(), nodeID);
 		} catch(ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
-			serverResponse.close();
 			client.close();
-			throw new ServiceException("Neo4JSimpleXML client raised an exception: " + e.getMessage());
+			throw new ServiceException("Neo4JSimpleXML client raised an exception: " + e.getMessage() + simpleXmlURL);
 		} catch(NullPointerException npe) {
-			serverResponse.close();
 			client.close();
 			throw new ServiceException("exception: " + npe.getMessage());
 		}
@@ -89,7 +88,6 @@ public class Neo4jServiceManager {
 			checkResponse(serverResponse);
 			serverResponse.close();
 		} catch(ResponseProcessingException | IllegalStateException | IllegalArgumentException  e) {
-			serverResponse.close();
 			client.close();
 			throw new ServiceException("Neo4JSimpleXML client raised an exception: " + e.getMessage());
 		} 
@@ -109,7 +107,6 @@ public class Neo4jServiceManager {
 			Nodes reachableHosts = serverResponse.readEntity(Nodes.class);
 			return reachableHosts;
 		} catch(ResponseProcessingException rpe) {
-			serverResponse.close();
 			client.close();
 			throw new ServiceException("Neo4jSimpleXML client raised an exception: " + rpe.getMessage());
 		}

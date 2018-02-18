@@ -5,6 +5,7 @@ import it.polito.dp2.NFV.sol3.service.DaoClasses.*;
 import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.*;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,135 +13,128 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.json.JsonValue.ValueType;
 import javax.ws.rs.InternalServerErrorException;
+import javax.xml.datatype.DatatypeConfigurationException;
 
 import it.polito.dp2.NFV.lab3.AllocationException;
 import it.polito.dp2.NFV.lab3.ServiceException;
 
 public class NffgResourceService {
-
-	private HostDao hostDao;
-	private GraphDao graphDao;
-	private VnfDao catalogDao;
 	
 	private static Logger logger = Logger.getLogger(NffgResourceService.class.getName());
 	
 	public NffgResourceService() {
-		// instantiate all the dao object that are used to accomplish the operation of deploy/read of the nffg
-		hostDao = HostDao.getInstance();
-		graphDao = GraphDao.getInstance();
-		catalogDao = VnfDao.getInstance();
+		
 	}
-	
-	/* method used for the nffgs resource */
-	
+
 	// return all the nffgs inside the system
-	public List<NffgType> getNffgs() {
-		List<NffgType> nffgList = new ArrayList<NffgType>(nffgDao.readNffgs());		
-		return nffgList;
+	public NffgsInfoType getAllNffgs() {
+		GraphDao graphDao = GraphDao.getInstance();
+		NffgsInfoType nffgsInfos = new NffgsInfoType();
+		
+		synchronized(graphDao) {
+			List<NffgGraphType> graphList = new ArrayList<NffgGraphType> (graphDao.readAllGraph());
+			
+			for(NffgGraphType graph: graphList) {
+				NffgsInfoType.NffgInfo nffgInfo = new NffgsInfoType.NffgInfo();
+				
+				nffgInfo.setNffgName(graph.getNffgName());
+				nffgInfo.setDeployDate(graph.getDeployDate());
+				nffgsInfos.getNffgInfo().add(nffgInfo);
+			}
+			return nffgsInfos;
+		}
 	}
 	
 	// interrogate the DB in order to obtain the graph
-	public NffgType getNffg(String nffgId) {
-		//NffgType nffg = nffgDao.queryNffg(nffgId);
-		return nffg;
+	public NffgGraphType getSingleNffg(String nffgId) {
+		return GraphDao.getInstance().readGraph(nffgId);
 	}
 	
-	public List<NffgType> selectNffgs(String date)  {
-		//synchronized(nffgDao) {
-				
-		//}
+	// return null if there aren't any nffg
+	public NffgsInfoType selectNffgs(Date date)  {
+		NffgsInfoType nffgsInfos = new NffgsInfoType();
+		
+		// get the list of graph deployed into the system
+		List<NffgGraphType> graphList = new ArrayList<NffgGraphType> (GraphDao.getInstance().readAllGraph());
+		
+		if(graphList.isEmpty()) 
+			return null;
+		
+		for(NffgGraphType graph: graphList) {
+			NffgsInfoType.NffgInfo nffgInfo = new NffgsInfoType.NffgInfo();
+			
+			if(DateConverter.compareXmlGregorianCalendar(graph.getDeployDate(), date)) {
+				nffgInfo.setNffgName(graph.getNffgName());
+				nffgInfo.setDeployDate(graph.getDeployDate());
+				nffgsInfos.getNffgInfo().add(nffgInfo);
+			}
+		}
+		return nffgsInfos;
 	}
 	
-	/* method used for the graph resource */
-	
-	public NffgType getGraph(String nffgId) {
-		return graphDao.readGraph(nffgId);	
+	public NffgGraphType getGraph(String nffgId) {
+		return GraphDao.getInstance().readGraph(nffgId);	
 	}
 	
 	// synchronize the access to the hostDao in order to avoid race condition 
-	public String deployNewNffgGraph(NffgType newGraph) throws ServiceException, AllocationException {
+	public String deployNewNffgGraph(NffgGraphType newGraph) throws ServiceException, AllocationException {
 		FunctionType nodeFunction;
 		List<FunctionType> vnfList = new ArrayList<FunctionType> ();
 		List<NodeType> nodeList = newGraph.getNodes().getNode();
 		
 		HostDao hostDao = HostDao.getInstance();
 	
-		// synchronize the access to the the host interface during the allocation phas	
+		// add into the function list the VNF of the specified node
 		for(NodeType node: nodeList) {
-			nodeFunction = catalogDao.readVnf(node.getVNF());
+			nodeFunction = VnfDao.getInstance().readVnf(node.getVNF());
 			if(nodeFunction == null) {
 				logger.log(Level.SEVERE, "the function specified is not available");
 				throw new ServiceException();
 			}
-					
+	
+			// add the VNF into the list of function to be deployed
 			vnfList.add(nodeFunction);
-				
-			/*if(nodeFunction != null) {	
-			// query the database in order to obtain the host 
-			if(!newGraphDeployer.findSuitableHost(nodeFunction, node)) {
-			// update the host deleting the node info
-			newGraphDeployer.rollback();
-			logger.log(Level.WARNING, "impossible to find an host for the network node", nodeFunction);
-			throw new AllocationException();
-			} else 
-			logger.log(Level.INFO, "host find correclty!");
-			} else 
-			logger.log(Level.WARNING, "the VNF of the specified node is not defined in the catalog of this web-service", node.getVNF());*/
+		}
+		
+		logger.log(Level.INFO, "try to allocate the function into the system");
+		if(nodeList.size() != vnfList.size()) {
+			logger.log(Level.SEVERE, "nodeList and vnfList are not of the same size");
+			throw new InternalServerErrorException("server encourred in a problem");
+		}
+		
+		GraphAllocator allocator = new GraphAllocator();
+		synchronized(hostDao) {
+			List<ExtendedHostType> hostList = new ArrayList<ExtendedHostType> (hostDao.readAllHosts());
+			allocator.findSelectedHost(vnfList, nodeList, hostDao);
 			
+			// if the vnf are already allocated don't do anything
+			if(!vnfList.isEmpty()) {
+				allocator.findBestHost(vnfList, hostList);
+				
+			}
+			
+			// update the resource information about each single host
+			allocator.allocateGraph(nodeList, hostDao);
 		}
 		
 		try {
-			GraphAllocator allocator = new GraphAllocator();
-			synchronized(hostDao) {
-				List<ExtendedHostType> hostList = new ArrayList<ExtendedHostType> (hostDao.readAllHosts());
-				
-				//TODO change the host map 
-				allocator.findSelectedHost(vnfList, nodeList);
-				allocator.findBestHost(vnfList, hostList);
-			}
-			// create a new graph in the database
-			GraphDao.getInstance().createGraph(newGraph);
-			
-			
-			// TODO update the host with the name of the nodes
-			
-			synchronized(hostDao) {
-				allocator.allocateGraph(nodeList, hostDao);
-			}
-			
-		} catch(Exception e) {
-			
+			// add the date of the deploy
+			newGraph.setDeployDate(DateConverter.getCurrentXmlDate());
+		} catch(DatatypeConfigurationException dce) {
+			newGraph.setDeployDate(null);
 		}
 		
+		// insert the new graph into the DB
+		String nffgName = GraphDao.getInstance().createNffg(newGraph);
 		
+		// update the hosts with the name of the node 
+		synchronized(hostDao) {
+			allocator.updateHost(nodeList, hostDao);
+		}
 		
-						
-		/*try {
-			// create a new nffg
-			String nffgName = newGraphDeployer.createNewNffg();
-			newGraph.setNffgId(nffgName);
-				
-			// create a new graph 
-			newGraphDeployer.addNewGraphToDB(newGraph);
-				
-			List<String> nodeNameList = new ArrayList<String>();
-			for(NodeType node: newGraph.getNodes().getNode()) {
-				nodeNameList.add(node.getName());
-			}
-				
-			// update the host with the node id 
-			newGraphDeployer.commit(nodeNameList);
-				
-			return newGraph.getNffgId();
-				
-		} catch(ServiceException se) {
-			newGraphDeployer.rollback();
-			throw se;
-		}	*/	
-			
-	}
+		return nffgName;	
+}
 
 	
 	/*private ExtendedHostType searchHost(FunctionType nodeFunction) throws AllocationException {

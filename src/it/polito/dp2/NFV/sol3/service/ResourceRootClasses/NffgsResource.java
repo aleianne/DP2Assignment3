@@ -6,6 +6,7 @@ import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
 
 import java.rmi.ServerException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,11 +18,13 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
 
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import it.polito.dp2.NFV.lab3.AllocationException;
+import it.polito.dp2.NFV.lab3.LinkAlreadyPresentException;
 import it.polito.dp2.NFV.lab3.ServiceException;
 
 /*
@@ -35,7 +38,7 @@ public class NffgsResource {
 	
 	private NffgResourceService nffgServer;
 	
-	private static ObjectFactoryManager objFactory = ObjectFactoryManager.getObjectFactory();
+	private static ObjectFactory objFactory = ObjectFactoryManager.getObjectFactory();
 	private static Logger logger = Logger.getLogger(NffgsResource.class.getName());
 	
 	/*
@@ -53,10 +56,10 @@ public class NffgsResource {
     	})
 	@Produces(MediaType.TEXT_PLAIN)
 	@Consumes(MediaType.APPLICATION_XML)
-	public String postNewNffg(JAXBElement<NffgType> reqBodyNffg) {
+	public String postNewNffg(JAXBElement<NffgGraphType> reqBodyNffg) {
 		try {
 			if(reqBodyNffg != null) {													
-				NffgType nffgXmlElement = reqBodyNffg.getValue();								// create a new nodesType element
+				NffgGraphType nffgXmlElement = reqBodyNffg.getValue();								// create a new nodesType element
 				if(nffgXmlElement != null) {
 					nffgServer = new NffgResourceService();
 					return nffgServer.deployNewNffgGraph(nffgXmlElement);						// return the the nffgID
@@ -78,8 +81,6 @@ public class NffgsResource {
 	}
 	
 	
-	// TODO: to be changed the representation of data to be returned
-	
 	/*
 	 * return the entire collection of nffgs that are saved inside the server
 	 */
@@ -91,26 +92,24 @@ public class NffgsResource {
     		@ApiResponse(code = 500, message = "Internal Server Error")
     	})
 	@Produces(MediaType.APPLICATION_XML)
-	public Response getNffgs(@QueryParam("date") String date) {
-		if(date == null) {
-			nffgServer = new NffgResourceService();
-			NffgsType nffgsWrapper = objFactory.createNffgsType();
-			
-			// retrieve the list of all nffg graph deployed into the system
-			List<NffgType> queryListResult = nffgServer.getNffgs();
-			
-			if(queryListResult.isEmpty()) {
-				logger.log(Level.WARNING, "server returned an empty response becasue no one nffg has been found");
-			}
-				
-			// add the list returned into the XML representation of the response
-			nffgsWrapper.getNffg().addAll(queryListResult);
-			JAXBElement<NffgsType> nffgsXmlElement = objFactory.createNffgs(nffgsWrapper);
-			return Response.ok(nffgsXmlElement, MediaType.APPLICATION_XML).build();
+	public Response getNffgs(@QueryParam("date") Date inputDate) {
+		JAXBElement<NffgsInfoType> nffgsXmlElement;
+		nffgServer = new NffgResourceService();
+
+		if(inputDate == null) {
+			// return all the nffg infos in the server
+			nffgsXmlElement = objFactory.createNffgs(nffgServer.getAllNffgs());
 		} else {
-			logger.log(Level.INFO, "");
+			// select only the nffg that are deployed before the date
+			NffgsInfoType resultValue = nffgServer.selectNffgs(inputDate);
+			// if return null value throw a new notFound exception
+			if(resultValue == null) 
+				throw new NotFoundException();
+			else {
+				nffgsXmlElement = objFactory.createNffgs(resultValue);
+			}
 		}
-		
+		return Response.ok(nffgsXmlElement, MediaType.APPLICATION_XML).build();
 	}
 	
 	/*
@@ -133,9 +132,9 @@ public class NffgsResource {
 		}
 		// interrogate the database to find the nffg graph
 		nffgServer = new NffgResourceService();
-		NffgType queryResultNffg = nffgServer.getNffg(nffgId);												// query the database to obtain the nffg that correspond to the ID
+		NffgGraphType queryResultNffg = nffgServer.getSingleNffg(nffgId);												// query the database to obtain the nffg that correspond to the ID
 		if(queryResultNffg != null) {
-			JAXBElement<NffgType> nffgXmlElement = objFactory.createNffg(queryResultNffg);
+			JAXBElement<NffgGraphType> nffgXmlElement = objFactory.createNffg(queryResultNffg);
 			return Response.ok(nffgXmlElement, MediaType.APPLICATION_XML).build();
 		} else {
 			logger.log(Level.SEVERE, "the resource requested by the client doesn't exist");
@@ -264,7 +263,7 @@ public class NffgsResource {
 			NodeResourceService nodeServer = new NodeResourceService();
 			
 			HostsType reachableHosts = new HostsType();
-			reachableHosts.getHost().addAll(nodeServer.getReachableHost(nodeId));
+			reachableHosts.getHost().add((HostType) nodeServer.getReachableHost(nodeId));
 			if(reachableHosts.getHost().isEmpty()) {
 				return Response.noContent().build();
 			} else {
@@ -281,7 +280,7 @@ public class NffgsResource {
 	 * create a new link inside the nf-fg graph
 	 */
 	@POST
-	@Path("{nffgId}/nodes/{nodeId}/links")
+	@Path("{nffgId}/links")
 	@ApiOperation(	value = "create a new link", notes = "create a new link inside the graph")
 	@ApiResponses(	value = {
 	    @ApiResponse(code = 201, message = "Created"),
@@ -290,12 +289,13 @@ public class NffgsResource {
 	  })
 	@Produces(MediaType.TEXT_PLAIN)
 	@Consumes(MediaType.APPLICATION_XML)
-	public String createNewLink(JAXBElement<LinkType> reqBodyNode, @PathParam("nffgId") String nffgId, @PathParam("nodeId") String nodeId) {
+	public String createNewLink(JAXBElement<ExtendedLinkType> reqBodyNode, @PathParam("nffgId") String nffgId, @PathParam("nodeId") String nodeId) {
 		try {
+			LinkResourceService linkServer = new LinkResourceService();
 			if(nffgId != null && reqBodyNode != null) {
-				LinkType link = reqBodyNode.getValue();
+				ExtendedLinkType link = reqBodyNode.getValue();
 				if(link != null) {
-					return nffgServer.addLink(nffgId, link);
+					return linkServer.addLink(nffgId, link);
 				} else {
 					logger.log(Level.SEVERE, "there isn't any type of data inside the request element");
 					throw new InternalServerErrorException();
@@ -307,16 +307,16 @@ public class NffgsResource {
 		} catch(ServiceException se) {
 			logger.log(Level.SEVERE, "Service Exception " + se.getMessage());
 			throw new InternalServerErrorException();
-		} catch(AllocationException ae) {
+		} catch(AllocationException | LinkAlreadyPresentException ae) {
 			throw new ForbiddenException();
-		}
+		} 
 	}
 		
 	/*
 	 * this operation is mapped to a java method but is not necessary for the assignment
 	 */
 	@DELETE
-	@Path("{nffgId}/nodes/{nodeId}/links/{linkId}")
+	@Path("{nffgId}/links/{linkId}")
 	@ApiOperation( value = "delete a link", notes = "delete a nf-fg link")
 	@ApiResponses( value = {
 		@ApiResponse(code = 200, message = "Deleted"),

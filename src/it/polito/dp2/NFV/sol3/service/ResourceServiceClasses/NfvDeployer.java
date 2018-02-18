@@ -53,9 +53,7 @@ public class NfvDeployer implements ApplicationEventListener{
 	}
 	
 	public void initNfvDeployer(){
-
 		try {
-			
 			logger.log(Level.INFO, "Nfv deployer Web-Service startup");
 			
 			// declare the object that are used to update the DB
@@ -67,7 +65,7 @@ public class NfvDeployer implements ApplicationEventListener{
 			ObjectFactory objFactory = ObjectFactoryManager.getObjectFactory();
 			
 			NfvReader monitor = NfvReaderFactory.newInstance().newNfvReader();
-			List<ExtendedExtendedHostType> hostList = new ArrayList<ExtendedHostType>();
+			List<ExtendedHostType> hostList = new ArrayList<ExtendedHostType>();
 			List<ConnectionType> connList = new ArrayList<ConnectionType>();
 			List<FunctionType> functionList = new ArrayList<FunctionType>();
 			
@@ -82,8 +80,9 @@ public class NfvDeployer implements ApplicationEventListener{
 				newHost.setAvailableStorage(BigInteger.valueOf(hr.getAvailableStorage()));
 				newHost.setHostname(hr.getName());
 				newHost.setMaxVNF(BigInteger.valueOf(hr.getMaxVNFs()));
+				newHost.setMemoryUsed(BigInteger.valueOf(0));
+				newHost.setStorageUsed(BigInteger.valueOf(0));
 				newHost.setTotalVNFallocated(BigInteger.valueOf(0));
-				
 				hostList.add(newHost);
 			}
 			// add the list to the database
@@ -101,8 +100,6 @@ public class NfvDeployer implements ApplicationEventListener{
 				newFunction.setType(FunctionEnumeration.fromValue(function.getFunctionalType().toString()));
 				newFunction.setRequiredMemory(BigInteger.valueOf(function.getRequiredMemory()));
 				newFunction.setRequiredStorage(BigInteger.valueOf(function.getRequiredStorage()));
-				
-				// add the function to the catalog
 				functionList.add(newFunction);
 			}
 			// put the data inside the the server
@@ -128,7 +125,6 @@ public class NfvDeployer implements ApplicationEventListener{
 						newConnection.setHostname2(host2.getName());
 						newConnection.setLatency(BigInteger.valueOf(connReader.getLatency()));
 						newConnection.setThroughput(Float.valueOf(connReader.getLatency()));
-						
 						connList.add(newConnection);
 					}
 				}
@@ -140,30 +136,30 @@ public class NfvDeployer implements ApplicationEventListener{
 			
 			// deploy the first graph
 			NffgReader nfgr = monitor.getNffg("Nffg0");
-			NffgType newGraph = new NffgType();
+			NffgGraphType newGraph = new NffgGraphType();
 			
-			List<NodeType> nodeList = newGraph.getNode();
-			List<LinkType> linkList;
+			newGraph.setNodes(new NffgGraphType.Nodes());
+			newGraph.setLinks(new NffgGraphType.Links());
+			
+			List<NodeType> nodeList = newGraph.getNodes().getNode();
+			List<ExtendedLinkType> linkList = newGraph.getLinks().getLink();
 			
 			for(NodeReader nr: nfgr.getNodes()) {
 				NodeType newNode = new NodeType();
 				newNode.setHostname(nr.getHost().getName());
 				newNode.setVNF(nr.getFuncType().getName());
 				newNode.setName(nr.getName());
-				
 				nodeList.add(newNode);
-				linkList = newNode.getLink();
 				
 				for(LinkReader lr: nr.getLinks()) {
-					LinkType newLink = new LinkType();
-					
+					ExtendedLinkType newLink = new ExtendedLinkType();
+			
 					newLink.setDestinationNode(lr.getDestinationNode().getName());
 					newLink.setSourceNode(lr.getSourceNode().getName());
 					newLink.setLatency(BigInteger.valueOf(lr.getLatency()));
 					newLink.setThroughput(lr.getThroughput());
 					newLink.setLinkName(lr.getName());
 					newLink.setOverwrite(false);
-					
 					linkList.add(newLink);
 				}
 			}

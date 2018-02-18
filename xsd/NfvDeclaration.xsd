@@ -26,20 +26,20 @@
 	
 	<xsd:include schemaLocation="nfvInfo.xsd"/>
 	
-	<xsd:element name="nffgs" type="nfv:nffgsType"/>
-	<xsd:element name="nffg" type="nfv:nffgType"/>
-	<xsd:element name="link" type="nfv:linkType"/>
+	<xsd:element name="nffgs" type="nfv:nffgsInfoType"/>
+	<xsd:element name="nffg" type="nfv:nffgGraphType"/>
+	<xsd:element name="link" type="nfv:extendedLinkType"/>
 	<xsd:element name="node" type="nfv:nodeType"/>
-	<xsd:element name="catalog" type="nfv:catalogType"/>
-	<xsd:element name="connections" type="nfv:connectionsType"/>
+	<xsd:element name="functions" type="nfv:catalogType"/>
+	<!-- <xsd:element name="connections" type="nfv:connectionsType"/>  -->
 	<xsd:element name="connection" type="nfv:connectionType"/>
-	<xsd:element name="hosts" type="nfv:extendedHostsType"/>
-	<xsd:element name="host" type="nfv:extendedHostType"/>
-	<xsd:element name="nffgs-info" type="nfv:nffgsInfo"/>
-	
-	<xsd:complexType name="nffgsInfo">
+	<xsd:element name="hosts" type="nfv:hostsType"/>
+	<xsd:element name="host" type="nfv:hostType"/>
+
+
+	<xsd:complexType name="nffgsInfoType">
 		<xsd:sequence>
-			<xsd:element name="nffg-info">
+			<xsd:element name="nffg-info" maxOccurs="unbounded">
 				<xsd:complexType>
 					<xsd:sequence>
 						<xsd:element name="nffg-name" type="nfv:nfvName"/>
@@ -50,15 +50,36 @@
 		</xsd:sequence>
 	</xsd:complexType>
 	
-	<xsd:complexType name="nffgsType">
+	<xsd:complexType name="nffgGraphType">
 		<xsd:sequence>
-			<xsd:element name="nffg" type="nfv:nffgsType" maxOccurs="unbounded"/>
+			<xsd:element name="nffg-name" type="nfv:nfvName"/>
+			<xsd:element name="deploy-date" type="xsd:date"/>
+			<xsd:element name="nodes">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="node" type="nfv:nodeType" maxOccurs="unbounded"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="links">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="link" type="nfv:extendedLinkType" maxOccurs="unbounded"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="hostsType">
+		<xsd:sequence>
+			<xsd:element name="host" type="nfv:hostType" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	
 	<xsd:complexType name="extendedHostsType">
 		<xsd:sequence>
-			<xsd:element name="extendesHostType"/>
+			<xsd:element name="host" type="nfv:extendedHostsType" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	
@@ -74,16 +95,20 @@
 		</xsd:complexContent>
 	</xsd:complexType>
 	
-	<xsd:complexType name="connectionsType">
+	<!-- <xsd:complexType name="connectionsType">
 		<xsd:sequence>
 			<xsd:element name="connection" type="nfv:connectionType" maxOccurs="unbounded"/>
 		</xsd:sequence>
-	</xsd:complexType>
+	</xsd:complexType>  -->
 	
-	<xsd:complexType name="hostsType">
-		<xsd:sequence>
-			<xsd:element name="host" type="nfv:hostType" maxOccurs="unbounded"/>
-		</xsd:sequence>
+	<xsd:complexType name="extendedLinkType">
+		<xsd:complexContent>
+			<xsd:extension base="nfv:linkType">
+				<xsd:sequence>
+					<xsd:element name="overwrite" type="xsd:boolean"/>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
 	</xsd:complexType>
 
 </xsd:schema>

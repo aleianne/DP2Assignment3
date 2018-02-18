@@ -8,6 +8,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -88,15 +90,18 @@ public class GraphAllocator {
 	public void findSelectedHost(List<FunctionType> vnfList, List<NodeType> nodeList, HostDao hostDao) {
 		
 		/* 
-		 * in this arrays at the same position there is a correspondance between the node and is virtual function
+		 * in those arrays at the same position there is a correspondance between the node and is virtual function
 		 */
 		
 		int index = 0;
 		int usedStorage, usedMemory, totalVNF;
-		List<Integer> indexList = new ArrayList<Integer> ();
+		List<FunctionType> vnfAllocatedList = new ArrayList<FunctionType> ();
+		List<FunctionType> hostVnfAllocatedList;
 		
 		for(NodeType node: nodeList) {
 			String hostname = node.getHostname();
+			
+			logger.log(Level.SEVERE, "try to allocate function n: " + index + " " + vnfList.get(index).getName() + " on host " + hostname);
 			
 			if(hostname != null) {
 				ExtendedHostType host = hostDao.readHost(hostname);
@@ -106,26 +111,28 @@ public class GraphAllocator {
 					usedMemory = host.getMemoryUsed().intValue();
 					totalVNF = host.getTotalVNFallocated().intValue();
 					
-					List<FunctionType> vnfAllocatedList = allocatedNodeMap.get(hostname);
-					if(vnfAllocatedList != null) {
-						for(FunctionType virtulFunction: vnfAllocatedList) {
+					hostVnfAllocatedList = allocatedNodeMap.get(hostname);
+					if(hostVnfAllocatedList != null) {
+						for(FunctionType virtualFunction: hostVnfAllocatedList) {
 							totalVNF++;
-							usedMemory += vnfAllocatedList.getRequiredMemory().intValue();
-							usedStorage += vnfAllocatedList.getRequiredStorage().gtintValue();
+							usedMemory += virtualFunction.getRequiredMemory().intValue();
+							usedStorage += virtualFunction.getRequiredStorage().intValue();
 						}
 					}
 					
 					if(totalVNF < host.getMaxVNF().intValue() &&
 							usedMemory + vnfList.get(index).getRequiredMemory().intValue() <= host.getAvailableMemory().intValue() &&
-							usedStorage + vnfList.get(index).getRequiredStorage().getIntaValue() <= host.getAvailableStorage().intValue()) {
+							usedStorage + vnfList.get(index).getRequiredStorage().intValue() <= host.getAvailableStorage().intValue()) {
 						
-						if(vnfAllocatedList != null) {
-							vnfAllocatedList.add(vnfList.get(index));
+						if(hostVnfAllocatedList != null) {
+							hostVnfAllocatedList.add(vnfList.get(index));
 						} else {
-							allocatedNodeMap.put(hostname, new ArrayList<FunctionType>(vnfList.get(index)));
+							List<FunctionType> functionList = new ArrayList<FunctionType>();
+							functionList.add(vnfList.get(index));
+							allocatedNodeMap.put(hostname, functionList);
 						}
 						// insert the vnf into the list of elment ot be removed and add the hostname into the list of target
-						indexList.add(index);
+						vnfAllocatedList.add(vnfList.get(index));
 						targetHostMap.put(index, hostname);
 					}
 				}
@@ -133,8 +140,8 @@ public class GraphAllocator {
 			index++;
 		}
 		// delete the allocated function from the list
-		for(Integer i: indexList) {
-			vnfList.remove(i.intValue());
+		for(FunctionType function: vnfAllocatedList) {
+			vnfList.remove(function);
 		}
 	}
 	
@@ -144,9 +151,23 @@ public class GraphAllocator {
 		List<FunctionType> allocatedVnfList;
 		int index = 0;
 		
-		// TODO order the list 
-		Collection.sort(hostList, new Comparator() {
-			
+		minVnfAllocated = numAllocatedNodes = usedMemory = usedStorage = 0;
+		
+		// order the list 
+		Collections.sort(hostList, new Comparator<ExtendedHostType>() {
+
+			@Override
+			public int compare(ExtendedHostType host1, ExtendedHostType host2) {			
+				int host1AllocatedVNF  = host1.getTotalVNFallocated().intValue();
+				int host2AllocatedVNF = host2.getTotalVNFallocated().intValue();
+				
+				if(host1AllocatedVNF == host2AllocatedVNF)  
+					return 0;  
+				else if(host1AllocatedVNF > host2AllocatedVNF)  
+					return 1;  
+				else  
+					return -1;  
+			}
 		});
 		
 		for(FunctionType virtualFunction: vnfList) {
@@ -164,8 +185,8 @@ public class GraphAllocator {
 				if(vnfList != null) {
 					for(FunctionType allocatedVnf: allocatedVnfList) {
 						numAllocatedNodes++;
-						usedMemory += allocatedVnf.getUsedMemory().intValue();
-						usedStorage += allocatedVnf.getUsedStorage().intValue();
+						usedMemory += allocatedVnf.getRequiredMemory().intValue();
+						usedStorage += allocatedVnf.getRequiredStorage().intValue();
 					}
 				}
 				
@@ -176,7 +197,6 @@ public class GraphAllocator {
 					
 						if(numAllocatedNodes < minVnfAllocated) 
 							targetHost = host;
-						
 				}
 			}
 		
@@ -186,7 +206,9 @@ public class GraphAllocator {
 			else {
 				allocatedVnfList = allocatedNodeMap.get(targetHost.getHostname());
 				if(allocatedVnfList == null) {
-					allocatedNodeMap.put(targetHost.getHostname(), new ArrayList<FunctionType> (virtualFunction));
+					List<FunctionType> functionList = new ArrayList<FunctionType> ();
+					functionList.add(virtualFunction);
+					allocatedNodeMap.put(targetHost.getHostname(), functionList);
 				} else {
 					allocatedVnfList.add(virtualFunction);
 				}
@@ -229,7 +251,13 @@ public class GraphAllocator {
 			}
 		}
 		
+		
+	}
+	
+	
+	public void updateHost(List<NodeType> nodeList, HostDao hostDao) {
 		// insert into the host the deployed node
+		int index = 0;
 		for(NodeType node: nodeList) {
 			hostDao.updateHost(targetHostMap.get(index), node);
 			index++;
