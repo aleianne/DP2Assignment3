@@ -61,7 +61,7 @@ public class Neo4jServiceManager {
 			neo4jNodeMap.put(node.getProperties().getProperty().get(0).getValue(), nodeID);
 		} catch(ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
 			client.close();
-			throw new ServiceException("Neo4JSimpleXML client raised an exception: " + e.getMessage() + simpleXmlURL);
+			throw new ServiceException("Neo4JSimpleXML client raised an exception: " + e.getMessage());
 		} catch(NullPointerException npe) {
 			client.close();
 			throw new ServiceException("exception: " + npe.getMessage());
