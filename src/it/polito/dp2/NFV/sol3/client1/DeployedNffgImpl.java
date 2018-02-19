@@ -15,12 +15,13 @@ import it.polito.dp2.NFV.lab3.ServiceException;
 
 public class DeployedNffgImpl implements DeployedNffg{
 
-	private String nffgName;
+	private NffgGraphType newGraph;
 	private Map<NodeDescriptor, String> nodeDescriptorMap;
 	private NfvDeployerServiceManager serviceManager;
 	
-	public DeployedNffgImpl(NffgGraphType newNffg, NfvDeployerServiceManager serviceManager) {
-		nffgName = newNffg
+	public DeployedNffgImpl(NffgGraphType newGraph, Map<NodeDescription, String> nodeDescriptionMap, NfvDeployerServiceManager serviceManager) {
+		this.newGraph = newGraph;
+		this.nodeDescriptorMap = nodeDescriptionMap;
 		this.serviceManager = serviceManager;
 	}
 	
@@ -32,22 +33,40 @@ public class DeployedNffgImpl implements DeployedNffg{
 		xmlNode.setHostname(hostName);
 		
 		serviceManager.postNode(xmlNode, nffgName);
+		
+		// put the information into the nodeReader interface
+		
+		
 		return null;
 	}
 
 	@Override
 	public LinkReader addLink(NodeReader source, NodeReader dest, boolean overwrite)
 			throws NoNodeException, LinkAlreadyPresentException, ServiceException {
-		ExtendenLinkType xmlLink = new ExtendedLinkType();
+		ExtendedLinkType xmlLink = new ExtendedLinkType();
 		
-		String destName = 
-		String sourceName = 
+		String destName = nodeDescriptorMap.get(dest);
+		String sourceName = nodeDescriptorMap.get(source);
+		
+		xmlLink.setDestinationNode(destName);
+		xmlLink.setSourceNode(sourceName);
+		xmlLink.setOverwrite(overwrite);
+		
+		if(destName == null || sourceName == null)
+			throw new NoNodeException();
+		
+		ExtendedLinkType link = serviceManager.postLink(xmlLink, nffgName);
+		
+		// set the date into the 
+		
+		
+		
 		return null;
 	}
 
 	@Override
 	public NffgReader getReader() throws ServiceException {
-		// TODO Auto-generated method stub
+		
 		return null;
 	}
 

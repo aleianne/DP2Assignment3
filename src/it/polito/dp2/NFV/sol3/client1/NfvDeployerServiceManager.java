@@ -23,7 +23,7 @@ public class NfvDeployerServiceManager {
 		serviceURL = System.getProperty("it.polito.dp2.NFV.lab3.URL");
 	}
 
-	public String postNffg(NffgGraphType nffg) {
+	public NffgGraphType postNffg(NffgGraphType nffg) {
 		try {
 			serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("/nffgs").build())
 					.request()
@@ -31,9 +31,7 @@ public class NfvDeployerServiceManager {
 					.post(Entity.xml(nffg));
 			
 			checkResponse(serverResponse);														// check the response of the server
-			NffgGraphType responseGraph = serverResponse.readEntity(Entity.xml(NffgGraphType));
-			
-			return responseGraph.getNffgName();
+			return serverResponse.readEntity(Entity.xml(NffgGraphType));
 			
 		} catch(ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
 			client.close();

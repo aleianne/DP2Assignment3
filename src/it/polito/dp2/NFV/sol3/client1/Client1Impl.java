@@ -23,6 +23,7 @@ public class Client1Impl implements NfvClient {
 		// use a counter for the name of the node
 		int nodeCounter = 0;
 		Map<NodeDescriptor, String> nodeMap = new HashMap<NodeDescriptor, String> ();
+		Map<NodeDescriptor, String> nodeResponseMap = new HashMap<NodeDescriptor, String> ();
 		
 		
 		// convert the nffg descriptor into the xml type for the forward
@@ -57,10 +58,16 @@ public class Client1Impl implements NfvClient {
 			}
 		}
 		
-		serviceManager.postNffg(newGraph);
+		int index = 0;
+		NffgGraphType responseGraph = serviceManager.postNffg(newGraph);
+		for(NodeDescriptor node: nffg.getNodes()) {
+			nodeResponseMap.put(node, responseGraph.getNodes().getNode().get(index));
+		}
 		
+		DeployedNffg deployedNffg = new DeployedNffgImpl();
+		nffgMap.put(responseGraph.getNffgName(), deployedNffg);
 		
-		return null;
+		return deployedNffg;
 	}
 
 	@Override
