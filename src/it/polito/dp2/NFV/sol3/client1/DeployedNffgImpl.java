@@ -19,9 +19,8 @@ public class DeployedNffgImpl implements DeployedNffg{
 	private Map<NodeDescriptor, String> nodeDescriptorMap;
 	private NfvDeployerServiceManager serviceManager;
 	
-	public DeployedNffgImpl(String nffgName, Map<NodeDescriptor, String> nodeDescriptorMap, NfvDeployerServiceManager serviceManager) {
-		this.nffgName = nffgName;
-		this.nodeDescriptorMap = nodeDescriptorMap;
+	public DeployedNffgImpl(NffgGraphType newNffg, NfvDeployerServiceManager serviceManager) {
+		nffgName = newNffg
 		this.serviceManager = serviceManager;
 	}
 	
