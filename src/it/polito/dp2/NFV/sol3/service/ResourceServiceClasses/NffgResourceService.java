@@ -23,27 +23,25 @@ public class NffgResourceService {
 	
 	private static Logger logger = Logger.getLogger(NffgResourceService.class.getName());
 	
-	public NffgResourceService() {
-		
-	}
+	public NffgResourceService() {}
 
-	// return all the nffgs inside the system
+	// return the infos relative to all the nffgs deployed into the system
+	// get all the graph from the database and put the deploy-date and the graph-name into a list of nffgsInfoType
 	public NffgsInfoType getAllNffgs() {
 		GraphDao graphDao = GraphDao.getInstance();
 		NffgsInfoType nffgsInfos = new NffgsInfoType();
 		
-		synchronized(graphDao) {
-			List<NffgGraphType> graphList = new ArrayList<NffgGraphType> (graphDao.readAllGraph());
+		List<NffgGraphType> graphList = new ArrayList<NffgGraphType> (graphDao.readAllGraph());
 			
-			for(NffgGraphType graph: graphList) {
-				NffgsInfoType.NffgInfo nffgInfo = new NffgsInfoType.NffgInfo();
-				
-				nffgInfo.setNffgName(graph.getNffgName());
-				nffgInfo.setDeployDate(graph.getDeployDate());
-				nffgsInfos.getNffgInfo().add(nffgInfo);
-			}
-			return nffgsInfos;
+		// add the date and the graph name into the list of nffg information
+		for(NffgGraphType graph: graphList) {
+			NffgsInfoType.NffgInfo nffgInfo = new NffgsInfoType.NffgInfo();
+			nffgInfo.setNffgName(graph.getNffgName());
+			nffgInfo.setDeployDate(graph.getDeployDate());
+			nffgsInfos.getNffgInfo().add(nffgInfo);
 		}
+		
+		return nffgsInfos;
 	}
 	
 	// interrogate the DB in order to obtain the graph
@@ -51,19 +49,21 @@ public class NffgResourceService {
 		return GraphDao.getInstance().readGraph(nffgId);
 	}
 	
-	// return null if there aren't any nffg
+	// return a null value if the list of deployde date is empty
 	public NffgsInfoType selectNffgs(Date date)  {
 		NffgsInfoType nffgsInfos = new NffgsInfoType();
-		
+		GraphDao graphDao = GraphDao.getInstance();
+	
 		// get the list of graph deployed into the system
-		List<NffgGraphType> graphList = new ArrayList<NffgGraphType> (GraphDao.getInstance().readAllGraph());
-		
+		List<NffgGraphType> graphList = new ArrayList<NffgGraphType> (graphDao.readAllGraph());
+			
 		if(graphList.isEmpty()) 
 			return null;
-		
+			
+		// add the relevant info of the deployd nffg into the nffgsInfo xml data structure in xml
 		for(NffgGraphType graph: graphList) {
 			NffgsInfoType.NffgInfo nffgInfo = new NffgsInfoType.NffgInfo();
-			
+				
 			if(DateConverter.compareXmlGregorianCalendar(graph.getDeployDate(), date)) {
 				nffgInfo.setNffgName(graph.getNffgName());
 				nffgInfo.setDeployDate(graph.getDeployDate());
@@ -73,101 +73,61 @@ public class NffgResourceService {
 		return nffgsInfos;
 	}
 	
-	public NffgGraphType getGraph(String nffgId) {
-		return GraphDao.getInstance().readGraph(nffgId);	
-	}
-	
 	// synchronize the access to the hostDao in order to avoid race condition 
 	public String deployNewNffgGraph(NffgGraphType newGraph) throws ServiceException, AllocationException {
 		FunctionType nodeFunction;
 		List<FunctionType> vnfList = new ArrayList<FunctionType> ();
 		List<NodeType> nodeList = newGraph.getNodes().getNode();
+		String nffgName;
 		
 		HostDao hostDao = HostDao.getInstance();
+		GraphDao graphDao = GraphDao.getInstance();
 	
-		// add into the function list the VNF of the specified node
+		// for each node add the correspondent vnf to be deployded into the list of vnf
 		for(NodeType node: nodeList) {
+			// get the correspondent vnf from the database
 			nodeFunction = VnfDao.getInstance().readVnf(node.getVNF());
 			if(nodeFunction == null) {
 				logger.log(Level.SEVERE, "the function specified is not available");
 				throw new ServiceException();
 			}
-	
-			// add the VNF into the list of function to be deployed
 			vnfList.add(nodeFunction);
 		}
 		
 		logger.log(Level.INFO, "try to allocate the function into the system");
+		
 		if(nodeList.size() != vnfList.size()) {
 			logger.log(Level.SEVERE, "nodeList and vnfList are not of the same size");
 			throw new InternalServerErrorException("server encourred in a problem");
 		}
 		
+		// instantiate a new graph deployer
 		GraphAllocator allocator = new GraphAllocator();
+		
 		synchronized(hostDao) {
 			List<ExtendedHostType> hostList = new ArrayList<ExtendedHostType> (hostDao.readAllHosts());
 			allocator.findSelectedHost(vnfList, nodeList, hostDao);
 			
 			// if the vnf are already allocated don't do anything
-			if(!vnfList.isEmpty()) {
+			if(!vnfList.isEmpty()) 
 				allocator.findBestHost(vnfList, hostList);
-				
-			}
 			
 			// update the resource information about each single host
 			allocator.allocateGraph(nodeList, hostDao);
-		}
-		
-		try {
-			// add the date of the deploy
-			newGraph.setDeployDate(DateConverter.getCurrentXmlDate());
-		} catch(DatatypeConfigurationException dce) {
-			newGraph.setDeployDate(null);
-		}
-		
-		// insert the new graph into the DB
-		String nffgName = GraphDao.getInstance().createNffg(newGraph);
-		
-		// update the hosts with the name of the node 
-		synchronized(hostDao) {
+			
+			try {
+				// add the date of the deploy
+				newGraph.setDeployDate(DateConverter.getCurrentXmlDate());
+			} catch(DatatypeConfigurationException dce) {
+				newGraph.setDeployDate(null);
+			}
+			
+			nffgName = GraphDao.getInstance().createNffg(newGraph);
+			
+			// update the hosts with the name of the node 
 			allocator.updateHost(nodeList, hostDao);
 		}
-		
 		return nffgName;	
-}
+	}
 
-	
-	/*private ExtendedHostType searchHost(FunctionType nodeFunction) throws AllocationException {
-		ExtendedHostType targetHost = null;
-		int reqStorage = nodeFunction.getRequiredStorage().intValue();
-		int reqMemory = nodeFunction.getRequiredMemory().intValue();
-		
-		Set<ExtendedHostType> selectedHost = (Set<ExtendedHostType>) hostDao.queryHost(reqStorage, reqMemory);
-		
-		if(!selectedHost.isEmpty()) {
-			int minNumberOfNodesDeployed = 0;
-			
-			// find the host that have the minimum number of deployed network node
-			for(ExtendedHostType host: selectedHost) {
-				if(minNumberOfNodesDeployed > host.getTotalDeployedNode().intValue() &&
-						host.getTotalDeployedNode().intValue() < host.getMaxVNF().intValue()) {
-	
-					targetHost = host;
-					minNumberOfNodesDeployed = host.getTotalDeployedNode().intValue();
-				}
-			}
-			
-			if(targetHost == null) {
-				logger.log(Level.WARNING, "for the specified node is not possible to be deployed into an host");
-				throw new AllocationException();
-			} else {
-				return targetHost;
-			}
-	
-		} else {
-			logger.log(Level.WARNING, "for the specified node is not possible to be deployed into an host");
-			throw new AllocationException();
-		}	
-		
-	}*/
 }

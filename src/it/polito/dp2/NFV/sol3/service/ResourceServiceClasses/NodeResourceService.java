@@ -12,6 +12,7 @@ import it.polito.dp2.NFV.lab3.ServiceException;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.GraphDao;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.HostDao;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.VnfDao;
+import it.polito.dp2.NFV.sol3.service.Exceptions.GraphNotFoundException;
 import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.Node;
 import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.Nodes;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
@@ -20,7 +21,7 @@ public class NodeResourceService {
 	
 	private static Logger logger = Logger.getLogger(NodeResourceService.class.getName());
 	
-	public String addNode(String graphId, NodeType newNode) throws ServiceException, AllocationException, InternalServerErrorException {
+	public String addNode(String graphId, NodeType newNode) throws ServiceException, AllocationException, InternalServerErrorException, GraphNotFoundException {
 		
 		/*
 		 * in this method use the same class used for the graph allocation 
@@ -54,65 +55,14 @@ public class NodeResourceService {
 				allocator.findBestHost(vnfList, hostList);
 			}
 			
+			// create a new graph in the database
+			GraphDao.getInstance().updateGraph(graphId, newNode);
+				
 			allocator.allocateGraph(nodeList, hostDao);
-		}
-			
-		// create a new graph in the database
-		GraphDao.getInstance().updateGraph(graphId, newNode);
-			
-			
-		// TODO update the host with the name of the nodes
-		synchronized(hostDao) {
 			allocator.updateHost(nodeList, hostDao);
 		}
-		
+			
 		return nodeList.get(0).getName();
-		
-		/*GraphType targetGraph = graphDao.readGraph(graphId);
-		
-		if(targetGraph == null) {
-			logger.log(Level.SEVERE, "the graph doesn't exist in the system", graphId);
-			throw new AllocationException();
-		}
-		
-		
-		FunctionType nodeFunction = catalogDao.readVnf(newNode.getVNF());
-	
-		if(nodeFunction == null) {
-			logger.log(Level.WARNING, "doesn't exist in the system a virtual function that corresponds to the function of the node", new Object[] {newNode});
-			throw new AllocationException();
-		}
-			
-		// search the suitable node for the node
-		synchronized(hostDao) {
-			int reqStorage = nodeFunction.getRequiredStorage().intValue();
-			int reqMemory = nodeFunction.getRequiredMemory().intValue();
-			
-			if(newNode.getHostname() != null) {
-				HostType host = hostDao.readHost(newNode.getHostname());
-				if(host.getAvailableMemory().intValue() > reqStorage && host.getAvailableStorage().intValue() > reqMemory) {
-					// if the host can contain this function 
-					targetHost = host;
-				} else {
-					//if the host cannot contain this function 
-					targetHost = searchHost(nodeFunction);
-				}
-				
-			} else {
-				// if the client does not specified a target host
-				targetHost = searchHost(nodeFunction);
-			} 
-		
-			hostDao.updateHostDetail(targetHost.getHostname(), nodeFunction, true);
-			
-			synchronized(graphDao) {
-				graphDao.updateGraph(graphId, newNode);
-			}
-			
-			hostDao.updateHostDeployedNode(targetHost.getHostname(), newNode.getName());
-		}
-
-		return newNode.getName();*/
 	}
 
 	
