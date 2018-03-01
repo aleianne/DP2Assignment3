@@ -41,7 +41,6 @@ public class HostResource {
     	})
 	@Produces(MediaType.APPLICATION_XML)
 	public Response getHosts() {
-		
 		HostsType hostsXmlElement = new HostsType();
 		hostServer = new HostResourceService();
 		List<ExtendedHostType> hostList = hostServer.getAllAvailableHost();

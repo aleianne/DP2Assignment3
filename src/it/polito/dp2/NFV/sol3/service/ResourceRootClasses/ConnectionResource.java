@@ -24,8 +24,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Path("/connection")
-@Api(value = "/connection")
+@Path("/connections")
+@Api(value = "/connections")
 public class ConnectionResource {
 
 	private ConnectionDao connDao;
@@ -36,11 +36,11 @@ public class ConnectionResource {
 	public ConnectionResource() {}
 
 	/*
-	 * return the connection between the host1 and host2
+	 * GET operation performed on the connections resoure retrieve the connection performance of the link between two host
 	 */
 	@GET
 	@Path("/{host1Id}/{host2Id}")
-	@ApiOperation(	value = "get the connnection parameter", notes = "return the connection parameters between two host into the system")
+	@ApiOperation(	value = "get connnection performance", notes = "return the connection performace parameters between two host into the system")
     @ApiResponses(	value = {
     		@ApiResponse(code = 200, message = "OK"),
     		@ApiResponse(code = 400, message = "Bad Request"),

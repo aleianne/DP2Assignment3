@@ -13,41 +13,52 @@ import it.polito.dp2.NFV.lab3.NoNodeException;
 import it.polito.dp2.NFV.lab3.NodeDescriptor;
 import it.polito.dp2.NFV.lab3.ServiceException;
 
-public class DeployedNffgImpl implements DeployedNffg{
+import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
+
+public class DeployedNffgImpl implements DeployedNffg {
 
 	private NffgGraphType newGraph;
 	private Map<NodeDescriptor, String> nodeDescriptorMap;
 	private NfvDeployerServiceManager serviceManager;
+	private String nffgId;
 	
-	public DeployedNffgImpl(NffgGraphType newGraph, Map<NodeDescription, String> nodeDescriptionMap, NfvDeployerServiceManager serviceManager) {
+	
+	// the costructor receive the graph, a map that represent the association of nodedDescriptor and name assigned by the server
+	// it receives also the reference of the NFV Deployer service
+	public DeployedNffgImpl(NffgGraphType newGraph, Map<NodeDescriptor, String> nodeDescriptionMap, NfvDeployerServiceManager serviceManager) {
 		this.newGraph = newGraph;
 		this.nodeDescriptorMap = nodeDescriptionMap;
 		this.serviceManager = serviceManager;
+		nffgId = newGraph.getNffgName();
 	}
 	
 	@Override
-	public NodeReader addNode(VNFTypeReader type, String hostName) throws AllocationException, ServiceException {
+	public NodeReader addNode(VNFTypeReader type, String hostName) throws AllocationException, ServiceException {		
 		// create a new node
 		NodeType xmlNode = new NodeType();
 		xmlNode.setVNF(type.getName());
 		xmlNode.setHostname(hostName);
+		xmlNode.setNfFg(nffgId);
 		
-		serviceManager.postNode(xmlNode, nffgName);
+		// forward the node to the webserver
+		String nodeName = serviceManager.postNode(xmlNode, nffgId);
+		
+		// set the name returned by the server into the node
+		xmlNode.setName(nodeName);
 		
 		// put the information into the nodeReader interface
-		
-		
-		return null;
+		NodeReader nodeReader = new NodeReaderImpl(xmlNode, newGraph);
+		return nodeReader;
 	}
 
 	@Override
 	public LinkReader addLink(NodeReader source, NodeReader dest, boolean overwrite)
 			throws NoNodeException, LinkAlreadyPresentException, ServiceException {
-		ExtendedLinkType xmlLink = new ExtendedLinkType();
-		
+		// get the link name from the resolver
 		String destName = nodeDescriptorMap.get(dest);
 		String sourceName = nodeDescriptorMap.get(source);
 		
+		ExtendedLinkType xmlLink = new ExtendedLinkType();
 		xmlLink.setDestinationNode(destName);
 		xmlLink.setSourceNode(sourceName);
 		xmlLink.setOverwrite(overwrite);
@@ -55,19 +66,17 @@ public class DeployedNffgImpl implements DeployedNffg{
 		if(destName == null || sourceName == null)
 			throw new NoNodeException();
 		
-		ExtendedLinkType link = serviceManager.postLink(xmlLink, nffgName);
-		
-		// set the date into the 
-		
-		
-		
-		return null;
+		ExtendedLinkType link = serviceManager.postLink(xmlLink, nffgId);
+	
+		// create a new link reader interface  in order to read the link infos
+		LinkReader linkReader = new LinkReaderImpl(link, newGraph);
+		return linkReader;
 	}
 
 	@Override
 	public NffgReader getReader() throws ServiceException {
-		
-		return null;
+		NffgReader nffgReader = new NffgReaderImpl(newGraph);
+		return nffgReader;
 	}
 
 }

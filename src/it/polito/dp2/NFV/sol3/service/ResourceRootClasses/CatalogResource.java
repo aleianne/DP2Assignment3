@@ -24,12 +24,10 @@ public class CatalogResource {
 
 	public CatalogResource() {}
 
-	private VnfDao vnfDao;
 	private ObjectFactory objFactory = new ObjectFactory();
 
-	
 	/*
-	 * this resource will responde with the list of all the available vnf into the system
+	 * GET operation performed on the catalog resource give back the list of all the VNFs available into the NFV system
 	 */
 	@GET
     @ApiOperation(	value = "get the catalog", notes = "return to the client the entire catalog of VNF that are available into the web service")

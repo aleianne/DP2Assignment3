@@ -2,17 +2,14 @@ package it.polito.dp2.NFV.sol3.service.ResourceServiceClasses;
 
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.*;
-import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.*;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.xml.datatype.DatatypeConfigurationException;
 
@@ -74,7 +71,7 @@ public class NffgResourceService {
 	}
 	
 	// synchronize the access to the hostDao in order to avoid race condition 
-	public String deployNewNffgGraph(NffgGraphType newGraph) throws ServiceException, AllocationException {
+	public void deployNewNffgGraph(NffgGraphType newGraph) throws ServiceException, AllocationException, BadRequestException{
 		FunctionType nodeFunction;
 		List<FunctionType> vnfList = new ArrayList<FunctionType> ();
 		List<NodeType> nodeList = newGraph.getNodes().getNode();
@@ -82,6 +79,12 @@ public class NffgResourceService {
 		
 		HostDao hostDao = HostDao.getInstance();
 		GraphDao graphDao = GraphDao.getInstance();
+		
+		// if the node list of the graph is empty return an exception
+		if(nodeList.isEmpty()) {
+			logger.log(Level.SEVERE, "the graph received by the server doesn't contain any node");
+			throw new BadRequestException();
+		}
 	
 		// for each node add the correspondent vnf to be deployded into the list of vnf
 		for(NodeType node: nodeList) {
@@ -89,7 +92,7 @@ public class NffgResourceService {
 			nodeFunction = VnfDao.getInstance().readVnf(node.getVNF());
 			if(nodeFunction == null) {
 				logger.log(Level.SEVERE, "the function specified is not available");
-				throw new ServiceException();
+				throw new BadRequestException();
 			}
 			vnfList.add(nodeFunction);
 		}
@@ -116,7 +119,6 @@ public class NffgResourceService {
 			allocator.allocateGraph(nodeList, hostDao);
 			
 			try {
-				// add the date of the deploy
 				newGraph.setDeployDate(DateConverter.getCurrentXmlDate());
 			} catch(DatatypeConfigurationException dce) {
 				newGraph.setDeployDate(null);
@@ -126,8 +128,7 @@ public class NffgResourceService {
 			
 			// update the hosts with the name of the node 
 			allocator.updateHost(nodeList, hostDao);
-		}
-		return nffgName;	
+		}	
 	}
 
 }

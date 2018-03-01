@@ -2,23 +2,16 @@ package it.polito.dp2.NFV.sol3.service.ResourceRootClasses;
 
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 import it.polito.dp2.NFV.sol3.service.Exceptions.GraphNotFoundException;
-import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.Nodes;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
 
-import java.rmi.ServerException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
-
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -55,21 +48,23 @@ public class NffgsResource {
     	})
 	@Produces(MediaType.TEXT_PLAIN)
 	@Consumes(MediaType.APPLICATION_XML)
-	public String postNewNffg(JAXBElement<NffgGraphType> reqBodyNffg) {
+	public Response postNewNffg(JAXBElement<NffgGraphType> reqBodyNffg) {
 		try {
 			
-			if(reqBodyNffg != null) {	
-				// get the nffg graph type xml instance from the req body
-				NffgGraphType nffgXmlElement = reqBodyNffg.getValue();								
-				if(nffgXmlElement != null) {
-					nffgServer = new NffgResourceService();
-					return nffgServer.deployNewNffgGraph(nffgXmlElement);							// return the the nffgID
-				} else {
-					logger.log(Level.SEVERE, "empty xml represeantion of graph to be deployed");
-					throw new InternalServerErrorException();
-				}
+			if(reqBodyNffg != null)
+				logger.log(Level.INFO, "the request body is empty");
+			
+			// get the nffg graph type xml instance from the req body
+			NffgGraphType nffgXmlElement = reqBodyNffg.getValue();								
+			if(nffgXmlElement != null) {
+				nffgServer = new NffgResourceService();
+				
+				// put the graph into the database and then return it to the client
+				nffgServer.deployNewNffgGraph(nffgXmlElement);							
+				JAXBElement<NffgGraphType> xmlResponse = objFactory.createNffg(nffgXmlElement);
+				return Response.ok(xmlResponse, MediaType.APPLICATION_XML).build();
 			} else {
-				logger.log(Level.SEVERE, "server received an empty request body");
+				logger.log(Level.SEVERE, "empty xml represeantion of graph to be deployed");
 				throw new BadRequestException();
 			}
 			
@@ -138,19 +133,10 @@ public class NffgsResource {
 		// interrogate the database to find the nffg graph
 		nffgServer = new NffgResourceService();
 		NffgGraphType queryResultNffg = nffgServer.getSingleNffg(nffgId);												// query the database to obtain the nffg that correspond to the ID
-		
-		
-		/*
-		 * nota bene: una soluzione al problema della concorrenza puo essere quello di prendere il lock 
-		 * direttamente sull'oggetto quando lo prendiamo indietro dalla mappa 
-		 * 
-		 * 
-		 */
-		
-		
+	
 		if(queryResultNffg != null) { 
 			
-			// synchronize the access to the graph in order to prevent change during the get
+			// synchronize the access to the graph in order to prevent change during the GET operation
 			synchronized(queryResultNffg)  {
 				JAXBElement<NffgGraphType> nffgXmlElement = objFactory.createNffg(queryResultNffg);
 				return Response.ok(nffgXmlElement, MediaType.APPLICATION_XML).build();
@@ -222,20 +208,17 @@ public class NffgsResource {
 		try {
 			if(nffgId == null) 
 				throw new NotFoundException();
+			if(reqBodyNode == null) 
+				logger.log(Level.INFO, "the  request body is empty");
 			
-			if(reqBodyNode != null){
-				NodeType nodeXmlElement = reqBodyNode.getValue();
-				if(nodeXmlElement != null) {
-					NodeResourceService nodeServer = new NodeResourceService();
-					nodeServer.addNode(nffgId, nodeXmlElement);
-					JAXBElement<NodeType> resBodyNode = objFactory.createNode(nodeXmlElement);
-					return Response.ok(resBodyNode, MediaType.APPLICATION_XML).build();
-				} else {
-					logger.log(Level.SEVERE, "the xml element is null");
-					throw new BadRequestException();
-				}
-			} else {						
-				logger.log(Level.SEVERE, "the parameter received by the server are null");
+			NodeType nodeXmlElement = reqBodyNode.getValue();
+			if(nodeXmlElement != null) {
+				NodeResourceService nodeServer = new NodeResourceService();
+				nodeServer.addNode(nffgId, nodeXmlElement);
+				JAXBElement<NodeType> resBodyNode = objFactory.createNode(nodeXmlElement);
+				return Response.ok(resBodyNode, MediaType.APPLICATION_XML).build();
+			} else {
+				logger.log(Level.SEVERE, "the xml element is null");
 				throw new BadRequestException();
 			}
 		} catch(ServiceException se) {
@@ -257,7 +240,7 @@ public class NffgsResource {
 	@Path("{nffgId}/nodes/{nodeId}")
 	@ApiOperation( value = "delete a node", notes = "delete a nf-fg node")
 	@ApiResponses( value = {
-		@ApiResponse(code = 200, message = "Deleted"),
+		@ApiResponse(code = 200, message = "Not Implemented"),
 		@ApiResponse(code = 404, message = "Not Found"),
 		@ApiResponse(code = 500, message = "Internal Server Error")
 	})
@@ -310,12 +293,13 @@ public class NffgsResource {
 	@ApiOperation(	value = "create a new link", notes = "create a new link inside the graph")
 	@ApiResponses(	value = {
 	    @ApiResponse(code = 201, message = "Created"),
-	    @ApiResponse(code = 404, message = "Forbidden"),
+	    @ApiResponse(code = 404, message = "Not Found"),
+	    @ApiResponse(code = 403, message = "Forbidden"),
 	    @ApiResponse(code = 500, message = "Internal Server Error")
 	  })
 	@Produces(MediaType.TEXT_PLAIN)
 	@Consumes(MediaType.APPLICATION_XML)
-	public String createNewLink(JAXBElement<ExtendedLinkType> reqBodyNode, @PathParam("nffgId") String nffgId) {
+	public Response createNewLink(JAXBElement<ExtendedLinkType> reqBodyNode, @PathParam("nffgId") String nffgId) {
 		try {
 			LinkResourceService linkServer = new LinkResourceService();
 			
@@ -327,7 +311,9 @@ public class NffgsResource {
 			
 			ExtendedLinkType link = reqBodyNode.getValue();
 			if(link != null) {
-				return linkServer.addLink(nffgId, link);
+				linkServer.addLink(nffgId, link);
+				JAXBElement<ExtendedLinkType> xmlLinkElement = objFactory.createLink(link);
+				return Response.ok(xmlLinkElement, MediaType.APPLICATION_XML).build();
 			} else {
 				logger.log(Level.SEVERE, "there isn't any type of data inside the request element");
 				throw new BadRequestException();
@@ -338,7 +324,10 @@ public class NffgsResource {
 			throw new InternalServerErrorException();
 		} catch(AllocationException | LinkAlreadyPresentException ae) {
 			throw new ForbiddenException();
-		} 
+		} catch(GraphNotFoundException gfe) {
+			logger.log(Level.SEVERE, "the graph specified doesn't exist");
+			throw new NotFoundException();
+		}
 	}
 		
 	/*
@@ -348,7 +337,7 @@ public class NffgsResource {
 	@Path("{nffgId}/links/{linkId}")
 	@ApiOperation( value = "delete a link", notes = "delete a nf-fg link")
 	@ApiResponses( value = {
-		@ApiResponse(code = 200, message = "Deleted"),
+		@ApiResponse(code = 200, message = "Not Implemented"),
 		@ApiResponse(code = 404, message = "Not Found"),
 		@ApiResponse(code = 500, message = "Internal Server Error")
 		})

@@ -3,6 +3,7 @@ package it.polito.dp2.NFV.sol3.service.ResourceServiceClasses;
 import java.text.DateFormat;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
@@ -21,9 +22,9 @@ public class DateConverter {
 		    }
 		};
 
-		GregorianCalendar calendar = new GregorianCalendar();
-		calendar.setTime(new Date());
-		XMLGregorianCalendar xc = DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar);
+		// create the xml gregorian calendar date
+		Date newDate = new Date();
+		XMLGregorianCalendar xc = DatatypeFactory.newInstance().newXMLGregorianCalendar(df.format(newDate));
 		return xc;
 	}
 	
@@ -41,5 +42,11 @@ public class DateConverter {
 			return false;
 	}
 	
-	
+	//
+	public static Calendar fromXMLGregorianCalendar(XMLGregorianCalendar xc)
+			 throws DatatypeConfigurationException {
+		 Calendar c = Calendar.getInstance();
+		 c.setTimeInMillis(xc.toGregorianCalendar().getTimeInMillis());
+		 return c;
+	}
 }

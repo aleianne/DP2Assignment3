@@ -62,7 +62,7 @@ public class GraphDao {
 			String oldNodeName = node.getName();
 			nameResolverMap.put(oldNodeName, newNodeName);
 			
-			node.setNfFg(newNffg.getNffgName());
+			node.setNfFg(nffgName);
 			node.setName(newNodeName);
 		}
 		
