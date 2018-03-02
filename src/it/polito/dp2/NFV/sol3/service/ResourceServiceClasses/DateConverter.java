@@ -1,11 +1,12 @@
 package it.polito.dp2.NFV.sol3.service.ResourceServiceClasses;
 
-import java.text.DateFormat;
-import java.text.ParsePosition;
+
 import java.text.SimpleDateFormat;
+import java.time.ZoneOffset;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -14,18 +15,15 @@ import javax.xml.datatype.XMLGregorianCalendar;
 public class DateConverter {
 	
 	public static XMLGregorianCalendar getCurrentXmlDate() throws DatatypeConfigurationException  {
-		
-		// this is the date format for the xml serialization
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ") { 
-		    public Date parse(String source,ParsePosition pos) {    
-		        return super.parse(source.replaceFirst(":(?=[0-9]{2}$)",""),pos);
-		    }
-		};
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        dateFormat.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
 
-		// create the xml gregorian calendar date
-		Date newDate = new Date();
-		XMLGregorianCalendar xc = DatatypeFactory.newInstance().newXMLGregorianCalendar(df.format(newDate));
-		return xc;
+        XMLGregorianCalendar xmlcal = DatatypeFactory.newInstance()
+            .newXMLGregorianCalendar(
+                dateFormat.format(new Date()));
+        xmlcal.setTimezone(0);
+
+        return xmlcal;
 	}
 	
 	// this function compare the 

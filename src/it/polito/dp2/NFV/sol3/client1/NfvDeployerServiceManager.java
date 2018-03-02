@@ -42,7 +42,7 @@ public class NfvDeployerServiceManager {
 		} 
 	}
 	
-	public String postNode(NodeType node, String nffgId) throws ServiceException {
+	public String postNode(RestrictedNodeType node, String nffgId) throws ServiceException {
 		try {
 			serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("/nffgs/" + nffgId + "/nodes").build())
 					.request()
@@ -50,7 +50,7 @@ public class NfvDeployerServiceManager {
 					.post(Entity.xml(node));
 			
 			checkResponse(serverResponse);														// check the response of the server
-			NodeType responseNode = serverResponse.readEntity(NodeType.class);
+			RestrictedNodeType responseNode = serverResponse.readEntity(RestrictedNodeType.class);
 			
 			return responseNode.getName();
 			
@@ -125,6 +125,50 @@ public class NfvDeployerServiceManager {
 			throw new ServiceException("exception: " + npe.getMessage());
 		}
 	}
+	
+	public NodesType getHostNode(String hostname) throws ServiceException {
+		try {
+			serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("/hosts/" + hostname + "/nodes").build())
+					.request()
+					.accept(MediaType.APPLICATION_XML)
+					.get();
+			
+			checkResponse(serverResponse);														// check the response of the server
+			
+			NodesType responseHost = serverResponse.readEntity(NodesType.class);
+			return responseHost;
+			
+		} catch(ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
+			client.close();
+			throw new ServiceException("NfvDeployer client raised an exception: " + e.getMessage());
+		} catch(NullPointerException npe) {
+			client.close();
+			throw new ServiceException("exception: " + npe.getMessage());
+		}
+	}
+	
+	
+	public FunctionType getFunction(String vnfName) throws ServiceException {
+		try {
+			serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("/hosts/" + vnfName + "/nodes").build())
+					.request()
+					.accept(MediaType.APPLICATION_XML)
+					.get();
+			
+			checkResponse(serverResponse);													// check the response of the server
+			
+			FunctionType responseVnf = serverResponse.readEntity(FunctionType.class);
+			return responseVnf;
+			
+		} catch(ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
+			client.close();
+			throw new ServiceException("NfvDeployer client raised an exception: " + e.getMessage());
+		} catch(NullPointerException npe) {
+			client.close();
+			throw new ServiceException("exception: " + npe.getMessage());
+		}
+	}
+	
 	
 	private void checkResponse(Response res) throws ServiceException {
 		Response.StatusType resStatus = res.getStatusInfo();

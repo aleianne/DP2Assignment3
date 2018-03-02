@@ -2,7 +2,6 @@ package it.polito.dp2.NFV.sol3.client1;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import it.polito.dp2.NFV.HostReader;
 import it.polito.dp2.NFV.LinkReader;
@@ -14,12 +13,19 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 public class NodeReaderImpl implements NodeReader {
 
-	private NodeType node;
-	private NffgGraphType nffg;
+	private RestrictedNodeType node;
+	private NfvDeployerServiceManager serviceManager;
+	private NffgGraphType graphResponse;
 	
-	public NodeReaderImpl(NodeType newNode, NffgGraphType nffg) {
+	public NodeReaderImpl(RestrictedNodeType newNode, NfvDeployerServiceManager serviceManager) {
 		this.node = newNode;
-		this.nffg = nffg;
+		this.serviceManager = serviceManager;
+		
+		try {
+			graphResponse = serviceManager.getGraph(node.getNfFg());
+		} catch(ServiceException se) {
+			
+		}
 	}
 	
 	@Override
@@ -29,21 +35,27 @@ public class NodeReaderImpl implements NodeReader {
 
 	@Override
 	public VNFTypeReader getFuncType() {
-		return null;
+		VNFTypeReader vnfReader = null;
+		
+		try {
+			vnfReader = new VNFTypeReaderImpl(serviceManager.getFunction(node.getVNF()));
+		} catch(ServiceException se) {
+			System.err.println(se.getMessage());
+		}
+		
+		return vnfReader;
 	}
 
 	@Override
 	public HostReader getHost() {
-		NfvDeployerServiceManager serviceManager = new NfvDeployerServiceManager();
 		HostReader hostReader = null;
 		
 		try {
-			HostType host = serviceManager.getHost(node.getHostname());		
-			hostReader = new HostReaderImpl(host);
+			HostType host = (HostType) serviceManager.getHost(node.getHostname());		
+			hostReader = new HostReaderImpl(host, serviceManager);
 		} catch(ServiceException se) {
-			
+			System.err.println(se.getMessage());
 		}
-		
 		return hostReader;
 	}
 
@@ -52,9 +64,9 @@ public class NodeReaderImpl implements NodeReader {
 		Set<LinkReader> linkReaderSet = new HashSet<LinkReader> ();
 		
 		// filter only those that have the source node name equal to this node
-		for(ExtendedLinkType link: nffg.getLinks().getLink()) {
+		for(ExtendedLinkType link: graphResponse.getLinks().getLink()) {
 			if(link.getSourceNode() == node.getName()) {
-				LinkReader lr = new LinkReaderImpl(link);
+				LinkReader lr = new LinkReaderImpl(link, graphResponse, serviceManager);
 				linkReaderSet.add(lr);
 			}
 		}
@@ -63,7 +75,15 @@ public class NodeReaderImpl implements NodeReader {
 
 	@Override
 	public NffgReader getNffg() {
-		return new NffgReaderImpl(nffg);
+		NffgReader nffgReader = null;
+		
+		try {
+			nffgReader = new NffgReaderImpl(graphResponse, serviceManager);
+		} catch(ServiceException se) {
+			System.err.println(se.getMessage());
+		}
+		
+		return nffgReader;
 	}
 
 }

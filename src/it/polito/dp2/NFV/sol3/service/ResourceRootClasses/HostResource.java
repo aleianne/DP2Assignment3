@@ -69,12 +69,47 @@ public class HostResource {
     	})
 	@Produces(MediaType.APPLICATION_XML)
 	public Response getHost(@PathParam("{hostId}") String hostname) {
+		hostServer = new HostResourceService();
 		ExtendedHostType host = hostServer.getSingleHost(hostname);
 		
 		if(host == null) {
 			throw new NotFoundException();
 		} else {
 			JAXBElement<HostType> hostResponse = objFactory.createHost((HostType) host);
+			return Response.ok(hostResponse, MediaType.APPLICATION_XML).build();									// return a host XML representation
+		}
+	}
+	
+	
+	/*
+	 * get all the nodes allocated into a specific host
+	 */
+	@GET
+	@Path("{hostId}/nodes")
+	@ApiOperation(	value = "get all the nodes", notes = "return to the client the entire collection of nodes allocated on the host")
+    @ApiResponses(	value = {
+    		@ApiResponse(code = 201, message = "OK"),
+    		@ApiResponse(code = 204, message = "No Content"),
+    		@ApiResponse(code = 404, message = "Not Found"),
+    		@ApiResponse(code = 500, message = "Internal Server Error")
+    	})
+	@Produces(MediaType.APPLICATION_XML)
+	public Response getNodeAllocated(@PathParam("{hostId}") String hostname) {
+		hostServer = new HostResourceService();
+		ExtendedHostType host = hostServer.getSingleHost(hostname);
+		
+		if(host == null) {
+			throw new NotFoundException();
+		} else {
+			NodesType xmlNodes = new NodesType();
+			List<RestrictedNodeType> nodeList = xmlNodes.getNode();
+			nodeList.addAll( hostServer.getAllocatedNodes(host));
+			
+			if(nodeList.isEmpty()) {
+				return Response.noContent().build();
+			}
+			
+			JAXBElement<NodesType> hostResponse = objFactory.createNodes(xmlNodes);
 			return Response.ok(hostResponse, MediaType.APPLICATION_XML).build();									// return a host XML representation
 		}
 	}

@@ -19,6 +19,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import it.polito.dp2.NFV.lab3.AllocationException;
 import it.polito.dp2.NFV.lab3.LinkAlreadyPresentException;
+import it.polito.dp2.NFV.lab3.NoNodeException;
 import it.polito.dp2.NFV.lab3.ServiceException;
 
 /*
@@ -322,7 +323,7 @@ public class NffgsResource {
 		} catch(ServiceException se) {
 			logger.log(Level.SEVERE, "Service Exception " + se.getMessage());
 			throw new InternalServerErrorException();
-		} catch(AllocationException | LinkAlreadyPresentException ae) {
+		} catch(NoNodeException | LinkAlreadyPresentException ae) {
 			throw new ForbiddenException();
 		} catch(GraphNotFoundException gfe) {
 			logger.log(Level.SEVERE, "the graph specified doesn't exist");

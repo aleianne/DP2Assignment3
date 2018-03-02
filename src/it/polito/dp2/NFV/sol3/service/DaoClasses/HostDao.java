@@ -1,10 +1,11 @@
 package it.polito.dp2.NFV.sol3.service.DaoClasses;
 
-
-
-import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
+import it.polito.dp2.NFV.sol3.service.ServiceXML.DeployedNodeType;
+import it.polito.dp2.NFV.sol3.service.ServiceXML.ExtendedHostType;
+import it.polito.dp2.NFV.sol3.service.ServiceXML.RestrictedNodeType;
 import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.*;
+import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 
 import java.math.BigInteger;
@@ -98,7 +99,7 @@ public class HostDao {
 		queryResultHost.setStorageUsed(BigInteger.valueOf(availableStorage + nodeStorage));
 	}
 	
-	public void updateHost(String hostname, NodeType nodeToBeDeployed) {
+	public void updateHost(String hostname, RestrictedNodeType nodeToBeDeployed) {
 		// interrogate the database in order to obtain the host to be update
 		ExtendedHostType queryResultHost = hostMap.get(hostname);
 		if(queryResultHost == null) {

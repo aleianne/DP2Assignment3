@@ -29,7 +29,9 @@
 	<xsd:element name="nffgs" type="nfv:nffgsInfoType"/>
 	<xsd:element name="nffg" type="nfv:nffgGraphType"/>
 	<xsd:element name="link" type="nfv:extendedLinkType"/>
-	<xsd:element name="node" type="nfv:nodeType"/>
+	<xsd:element name="node" type="nfv:restrictedNodeType"/>
+	<xsd:element name="nodes" type="nfv:nodesType"/>
+	<xsd:element name="function" type="nfv:functionType"/>
 	<xsd:element name="functions" type="nfv:catalogType"/>
 	<!-- <xsd:element name="connections" type="nfv:connectionsType"/>  -->
 	<xsd:element name="connection" type="nfv:connectionType"/>
@@ -57,7 +59,7 @@
 			<xsd:element name="nodes">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="node" type="nfv:nodeType" maxOccurs="unbounded"/>
+						<xsd:element name="node" type="nfv:restrictedNodeType" maxOccurs="unbounded"/>
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
@@ -74,6 +76,21 @@
 	<xsd:complexType name="hostsType">
 		<xsd:sequence>
 			<xsd:element name="host" type="nfv:hostType" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="nodesType">
+		<xsd:sequence>
+			<xsd:element name="node" type="nfv:restrictedNodeType" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="restrictedNodeType">
+		<xsd:sequence>
+			<xsd:element name="name" type="nfv:nfvName" maxOccurs="1"/>
+			<xsd:element name="VNF" type="nfv:nfvName" maxOccurs="1"/>
+			<xsd:element name="hostname" type="nfv:nfvName" maxOccurs="1"/>
+			<xsd:element name="nf-fg" type="nfv:nfvName" maxOccurs="1"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	

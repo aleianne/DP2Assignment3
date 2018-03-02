@@ -28,4 +28,8 @@ public class CatalogResourceService {
 		}
 	}
 	
+	public FunctionType getFunction(String vnfName) {
+		return VnfDao.getInstance().readVnf(vnfName);
+	}
+	
 }

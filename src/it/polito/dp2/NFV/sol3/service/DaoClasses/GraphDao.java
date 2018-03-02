@@ -23,8 +23,8 @@ import it.polito.dp2.NFV.lab3.ServiceException;
 public class GraphDao {
 
 	private static ConcurrentMap<String, NffgGraphType> graphMap = new ConcurrentHashMap<String, NffgGraphType>();
-	private static Map<String, NodeType> nodeIDMap = new HashMap<String, NodeType>();
-	private static Map<String, ExtendedLinkType> linkIDMap = new HashMap<String, ExtendedLinkType>();
+	private static ConcurrentMap<String, RestrictedNodeType> nodeIDMap = new ConcurrentHashMap<String, RestrictedNodeType>();
+	//private static Map<String, ExtendedLinkType> linkIDMap = new HashMap<String, ExtendedLinkType>();
 	
 	private static AtomicInteger linkCounter = new AtomicInteger(0);
 	private static AtomicInteger nodeCounter = new AtomicInteger(0);
@@ -48,7 +48,7 @@ public class GraphDao {
 	public String createNffg(NffgGraphType newNffg) throws ServiceException {
 		neo4jXMLclient = Neo4jServiceManager.getInstance();
 		
-		List<NodeType> graphNodeList = newNffg.getNodes().getNode();
+		List<RestrictedNodeType> graphNodeList = newNffg.getNodes().getNode();
 		List<ExtendedLinkType> graphLinkList = newNffg.getLinks().getLink();
 		Map<String, String> nameResolverMap = new HashMap<String, String>();
 		
@@ -57,13 +57,16 @@ public class GraphDao {
 		newNffg.setNffgName(nffgName);
 		
 		// update the list of nodes
-		for(NodeType node: graphNodeList) {
+		for(RestrictedNodeType node: graphNodeList) {
 			String newNodeName = nodeBaseName.concat(Integer.toString(nodeCounter.incrementAndGet()));
 			String oldNodeName = node.getName();
 			nameResolverMap.put(oldNodeName, newNodeName);
 			
 			node.setNfFg(nffgName);
 			node.setName(newNodeName);
+			
+			// put the node into the map 
+			nodeIDMap.put(newNodeName, node);
 		}
 		
 		// update the list of links
@@ -94,7 +97,7 @@ public class GraphDao {
 		nodeLabel.getLabel().add("Node");
 		nodeLabel.getLabel().add("node-name");
 		
-		for(NodeType node: graphNodeList) {
+		for(RestrictedNodeType node: graphNodeList) {
 			// create a neo4j node for the forwarding ;
 			neo4jNode.getProperties().getProperty().get(0).setName("name");
 			neo4jNode.getProperties().getProperty().get(0).setValue(node.getName());
@@ -140,7 +143,7 @@ public class GraphDao {
 	 * update the list of nodes insied the graph, locally and into the database
 	 * if the 
 	 */
-	public void updateGraph(String nffgId, NodeType newNode) throws ServiceException, GraphNotFoundException  {
+	public void updateGraph(String nffgId, RestrictedNodeType newNode) throws ServiceException, GraphNotFoundException  {
 		NffgGraphType queryResultGraph = graphMap.get(nffgId);
 		
 		if(queryResultGraph == null) {
@@ -184,15 +187,13 @@ public class GraphDao {
 			neo4jRelationship.setSrcNode(newNode.getName());
 			neo4jRelationship.setType("FrowardTo");
 			neo4jXMLclient.postRelationship(neo4jRelationship);
-			
-			return true;
 		}
 	}
 	
 	/*
 	 * insert into the graph specified by the nffgId a new link
 	 */
-	public void updateGraph(String nffgId, ExtendedLinkType newLink) throws ServiceException, LinkAlreadyPresentException, InternalServerErrorException, GraphNotFoundException {
+	public void updateGraph(String nffgId, ExtendedLinkType newLink) throws ServiceException, LinkAlreadyPresentException, InternalServerErrorException, GraphNotFoundException, NoNodeException {
 		NffgGraphType queryResultGraph = graphMap.get(nffgId);
 		
 		if(queryResultGraph == null) {
@@ -204,17 +205,17 @@ public class GraphDao {
 			synchronized(queryResultGraph) {
 			
 				List<ExtendedLinkType> graphLinkList = queryResultGraph.getLinks().getLink();
-				List<NodeType> GraphNodeList = queryResultGraph.getNodes().getNode();
+				List<RestrictedNodeType> GraphNodeList = queryResultGraph.getNodes().getNode();
 				
 				// filter the list in order to obtain all the links that have a specified source node and a specified destination node
 				Predicate<ExtendedLinkType> linkPredicate = p-> p.getSourceNode() == newLink.getDestinationNode() && p.getSourceNode() == newLink.getSourceNode();
 				
 				// filter the list of nodes inside the graph, check if there are the nodes specified
-				Predicate<NodeType> nodePredicate = p-> p.getName() == newLink.getDestinationNode();
-				Predicate<NodeType> nodePredicate2 = p-> p.getName() == newLink.getSourceNode();
+				Predicate<RestrictedNodeType> nodePredicate = p-> p.getName() == newLink.getDestinationNode();
+				Predicate<RestrictedNodeType> nodePredicate2 = p-> p.getName() == newLink.getSourceNode();
 				
 				if(GraphNodeList.stream().filter(nodePredicate).findFirst().get() == null
-						|| GraphNodeList.stream().filter(nodePredicate2).fidnFirst().get() == null) 
+						|| GraphNodeList.stream().filter(nodePredicate2).findFirst().get() == null) 
 					
 					throw new NoNodeException();
 				
@@ -240,4 +241,12 @@ public class GraphDao {
 	 *  this method is not implemented due to the fact that the assignment doesn't require it
 	 */
 	public void deleteGraph() {}
+	
+	
+	/*
+	 *  query the map in order to get the node correspondent to the name
+	 */
+	public RestrictedNodeType queryGraph(String nodename) {
+		return nodeIDMap.get(nodename);
+	}
 }

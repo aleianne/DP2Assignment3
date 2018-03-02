@@ -6,20 +6,23 @@ import java.util.function.Predicate;
 
 import it.polito.dp2.NFV.HostReader;
 import it.polito.dp2.NFV.NodeReader;
+import it.polito.dp2.NFV.lab3.ServiceException;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.DeployedNodeType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.ExtendedHostType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.HostType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.NffgGraphType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.NodeType;
+import it.polito.dp2.NFV.sol3.service.ServiceXML.NodesType;
+import it.polito.dp2.NFV.sol3.service.ServiceXML.RestrictedNodeType;
  
 public class HostReaderImpl implements HostReader{
 
-	private ExtendedHostType host;
-	private NffgGraphType nffg;
+	private HostType host;
+	private NfvDeployerServiceManager serviceManager;
 	
-	public HostReaderImpl(ExtendedHostType host, NffgGraphType nffg) {
-		this.host = host;
-		this.nffg = nffg;
+	public HostReaderImpl(HostType host2, NfvDeployerServiceManager serviceManager) {
+		this.host = host2;
+		this.serviceManager = serviceManager;
 	}
 
 	@Override
@@ -45,13 +48,16 @@ public class HostReaderImpl implements HostReader{
 	@Override
 	public Set<NodeReader> getNodes() {
 		Set<NodeReader> nodeReaderSet = new HashSet<NodeReader> ();
+		NodesType nodeList = null;
 		
-		for(DeployedNodeType deployedNode: host.getDeployedNodes().getNode()) {
-			Predicate<NodeType> nodePredicate = p-> p.getName() == deployedNode.getNodeName();
-			NodeType newNode = nffg.getNodes().getNode().stream().filter(nodePredicate).findFirst().get();
-			
-			NodeReader newNodeReader = new NodeReaderImpl(newNode, nffg);
-			nodeReaderSet.add(newNodeReader);
+		try {
+			nodeList = serviceManager.getHostNode(host.getHostname());
+			for(RestrictedNodeType deployedNode: nodeList.getNode()) {
+				NodeReader newNodeReader = new NodeReaderImpl(deployedNode, serviceManager);
+				nodeReaderSet.add(newNodeReader);
+			}
+		} catch(ServiceException se) {
+			System.err.println(se.getMessage());
 		}
 		
 		return nodeReaderSet;

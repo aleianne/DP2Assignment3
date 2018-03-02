@@ -8,6 +8,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -44,6 +45,31 @@ public class CatalogResource {
 			return Response.noContent().build();
 		} else {
 			JAXBElement<CatalogType> catalogElement = objFactory.createFunctions(catalogXmlElement);
+			return Response.ok(catalogElement, MediaType.APPLICATION_XML).build();
+		}
+	}
+	
+	
+	/*
+	 * return a single vnf function
+	 */
+	@GET
+	@Path("/{VnfId}")
+    @ApiOperation(	value = "get a single VNF", notes = "get a single virtual node function")
+    @ApiResponses(	value = {
+    		@ApiResponse(code = 200, message = "OK"),
+    		@ApiResponse(code = 404, message = "Not Found"),
+    		@ApiResponse(code = 500, message = "Internal Server Error")
+    	})
+	@Produces(MediaType.APPLICATION_XML)
+	public Response getVNF(@PathParam("VnfId") String vnfId) {
+		CatalogResourceService catalogServer = new CatalogResourceService();
+		FunctionType function = catalogServer.getFunction(vnfId);
+		
+		if(function == null) {
+			return Response.noContent().build();
+		} else {
+			JAXBElement<FunctionType> catalogElement = objFactory.createFunction(function);
 			return Response.ok(catalogElement, MediaType.APPLICATION_XML).build();
 		}
 	}

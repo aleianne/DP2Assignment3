@@ -17,12 +17,15 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 public class NffgReaderImpl implements NffgReader {
 
 	private NffgGraphType newGraph;
+	private NfvDeployerServiceManager serviceManager;
 	
-	public NffgReaderImpl(NffgGraphType newGraph) throws ServiceException {
+	public NffgReaderImpl(NffgGraphType newGraph, NfvDeployerServiceManager serviceManager) throws ServiceException {
 		if(newGraph == null) 
 			throw new ServiceException();
-		else 
+		else {
 			this.newGraph = newGraph;
+			this.serviceManager = serviceManager;
+		}
 	}
 
 	@Override
@@ -45,8 +48,8 @@ public class NffgReaderImpl implements NffgReader {
 
 	@Override
 	public NodeReader getNode(String nodeName) {
-		List<NodeType> graphNodeList = newGraph.getNodes().getNode();
-		NodeType node;
+		List<RestrictedNodeType> graphNodeList = newGraph.getNodes().getNode();
+		RestrictedNodeType node;
 		NodeReader nodeReader;
 		
 		// return null if the node is empty 
@@ -54,9 +57,9 @@ public class NffgReaderImpl implements NffgReader {
 			return null;
 		
 		// check if the node searched is inside the graph
-		Predicate<NodeType> nodePredicate = p-> p.getName() == nodeName;
+		Predicate<RestrictedNodeType> nodePredicate = p-> p.getName() == nodeName;
 		node = graphNodeList.stream().filter(nodePredicate).findFirst().get();
-		nodeReader = new NodeReaderImpl(node, newGraph);
+		nodeReader = new NodeReaderImpl(node, serviceManager);
 		
 		return nodeReader;
 	}
@@ -66,8 +69,8 @@ public class NffgReaderImpl implements NffgReader {
 		Set<NodeReader> nodeSet = new HashSet<NodeReader> ();
 		
 		// put all the graph's nodes into the node reader set
-		for(NodeType xmlNode: newGraph.getNodes().getNode()) {
-			NodeReader nodeReader = new NodeReaderImpl(xmlNode, newGraph);
+		for(RestrictedNodeType xmlNode: newGraph.getNodes().getNode()) {
+			NodeReader nodeReader = new NodeReaderImpl(xmlNode, serviceManager);
 			nodeSet.add(nodeReader);
 		}
 		

@@ -36,7 +36,7 @@ public class GraphAllocator {
 		targetHostMap = new HashMap<Integer, String> ();
 	}
 	
-	/*public boolean findSuitableHost(FunctionType functionToBeDeployed, NodeType newNode) {
+	/*public boolean findSuitableHost(FunctionType functionToBeDeployed, RestrictedNodeType newNode) {
 		int minNode;
 		int reqStorage = functionToBeDeployed.getRequiredStorage().intValue();
 		int reqMemory = functionToBeDeployed.getRequiredMemory().intValue();
@@ -87,7 +87,7 @@ public class GraphAllocator {
 	}*/
 
 	
-	public void findSelectedHost(List<FunctionType> vnfList, List<NodeType> nodeList, HostDao hostDao) {
+	public void findSelectedHost(List<FunctionType> vnfList, List<RestrictedNodeType> nodeList, HostDao hostDao) {
 		
 		/* 
 		 * in those arrays at the same position there is a correspondance between the node and is virtual function
@@ -98,7 +98,7 @@ public class GraphAllocator {
 		List<FunctionType> vnfAllocatedList = new ArrayList<FunctionType> ();
 		List<FunctionType> hostVnfAllocatedList;
 		
-		for(NodeType node: nodeList) {
+		for(RestrictedNodeType node: nodeList) {
 			String hostname = node.getHostname();
 			
 			logger.log(Level.SEVERE, "try to allocate function n: " + index + " " + vnfList.get(index).getName() + " on host " + hostname);
@@ -221,7 +221,7 @@ public class GraphAllocator {
 		}
 	}
 	
-	public void allocateGraph(List<NodeType> nodeList, HostDao hostDao) throws InternalServerErrorException {
+	public void allocateGraph(List<RestrictedNodeType> nodeList, HostDao hostDao) throws InternalServerErrorException {
 		int index = 0;
 		
 		// insert into the host the virtual function allocated
@@ -255,10 +255,10 @@ public class GraphAllocator {
 	}
 	
 	
-	public void updateHost(List<NodeType> nodeList, HostDao hostDao) {
+	public void updateHost(List<RestrictedNodeType> nodeList, HostDao hostDao) {
 		// insert into the host the deployed node
 		int index = 0;
-		for(NodeType node: nodeList) {
+		for(RestrictedNodeType node: nodeList) {
 			hostDao.updateHost(targetHostMap.get(index), node);
 			index++;
 		}

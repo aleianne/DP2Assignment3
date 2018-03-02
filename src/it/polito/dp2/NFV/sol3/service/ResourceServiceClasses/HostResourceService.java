@@ -27,6 +27,17 @@ public class HostResourceService {
 		}
 	}
 	
+	public List<RestrictedNodeType> getAllocatedNodes(ExtendedHostType host) {
+		List<RestrictedNodeType> nodeList = new ArrayList<RestrictedNodeType> ();
+		
+		// perform a query on the database and get the node correspondent to the name
+		for(DeployedNodeType node: host.getDeployedNodes().getNode()) {
+			nodeList.add(GraphDao.getInstance().queryGraph(node.getNodeName()));
+		}
+		
+		return nodeList; 
+	} 
+	
 	/*
 	 * return only the host that satisfy the latency and throughput constraint 
 	 */

@@ -42,7 +42,7 @@ public class Client1Impl implements NfvClient {
 		
 		// create the xml instance for the node inside the graph
 		for(NodeDescriptor node: nffg.getNodes()) {
-			NodeType xmlNode = new NodeType();
+			RestrictedNodeType xmlNode = new RestrictedNodeType();
 			
 			xmlNode.setHostname(node.getHostName());
 			xmlNode.setVNF(node.getFuncType().getName());
@@ -89,8 +89,13 @@ public class Client1Impl implements NfvClient {
 
 	@Override
 	public DeployedNffg getDeployedNffg(String name) throws UnknownEntityException, ServiceException {
-
-		return null;
+		DeployedNffg nffg = nffgMap.get(name);
+		
+		if(nffg == null) {
+			throw new UnknownEntityException();
+		} 
+		
+		return nffg;
 	}
 
 }
