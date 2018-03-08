@@ -4,6 +4,8 @@ import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -28,6 +30,7 @@ public class HostResource {
 	
 	private HostResourceService hostServer;
 	private ObjectFactory objFactory = ObjectFactoryManager.getObjectFactory();
+	private static Logger logger = Logger.getLogger(HostResource.class.getName());
 	
 	/*
 	 *  this request method return a hosts data type
@@ -48,8 +51,8 @@ public class HostResource {
 		if(hostList.isEmpty()) {
 			return Response.noContent().build();
 		} else {
-			for(ExtendedHostType extendedHost: hostList) {
-				hostsXmlElement.getHost().add((HostType) extendedHost);
+			for(ExtendedHostType hostElement: hostList) {
+				hostsXmlElement.getHost().add((HostType) hostElement);
 			}
 			JAXBElement<HostsType> hostResponse = objFactory.createHosts(hostsXmlElement);
 			return Response.ok(hostResponse, MediaType.APPLICATION_XML).build();
@@ -70,9 +73,10 @@ public class HostResource {
 	@Produces(MediaType.APPLICATION_XML)
 	public Response getHost(@PathParam("{hostId}") String hostname) {
 		hostServer = new HostResourceService();
-		ExtendedHostType host = hostServer.getSingleHost(hostname);
+		HostType host = (HostType) hostServer.getSingleHost(hostname);
 		
 		if(host == null) {
+			logger.log(Level.SEVERE, "impossible to find the host: " + hostname);
 			throw new NotFoundException();
 		} else {
 			JAXBElement<HostType> hostResponse = objFactory.createHost((HostType) host);
@@ -96,21 +100,17 @@ public class HostResource {
 	@Produces(MediaType.APPLICATION_XML)
 	public Response getNodeAllocated(@PathParam("{hostId}") String hostname) {
 		hostServer = new HostResourceService();
-		ExtendedHostType host = hostServer.getSingleHost(hostname);
 		
-		if(host == null) {
-			throw new NotFoundException();
-		} else {
-			NodesType xmlNodes = new NodesType();
-			List<RestrictedNodeType> nodeList = xmlNodes.getNode();
-			nodeList.addAll( hostServer.getAllocatedNodes(host));
+	
+		NodesType xmlNodes = new NodesType();
+		xmlNodes.getNode().addAll(hostServer.getAllocatedNodes(hostname));
 			
-			if(nodeList.isEmpty()) {
-				return Response.noContent().build();
-			}
-			
-			JAXBElement<NodesType> hostResponse = objFactory.createNodes(xmlNodes);
-			return Response.ok(hostResponse, MediaType.APPLICATION_XML).build();									// return a host XML representation
+		if(xmlNodes.getNode().isEmpty()) {
+			logger.log(Level.SEVERE, "the host doesn't contain any node");
+			return Response.noContent().build();
 		}
+			
+		JAXBElement<NodesType> hostResponse = objFactory.createNodes(xmlNodes);
+		return Response.ok(hostResponse, MediaType.APPLICATION_XML).build();									// return a host XML representation
 	}
 }

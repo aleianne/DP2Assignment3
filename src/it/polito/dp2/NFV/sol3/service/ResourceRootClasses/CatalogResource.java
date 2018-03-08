@@ -4,8 +4,12 @@ import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.VnfDao;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -26,6 +30,7 @@ public class CatalogResource {
 	public CatalogResource() {}
 
 	private ObjectFactory objFactory = new ObjectFactory();
+	private static Logger logger = Logger.getLogger(CatalogResource.class.getName()); 
 
 	/*
 	 * GET operation performed on the catalog resource give back the list of all the VNFs available into the NFV system
@@ -41,7 +46,9 @@ public class CatalogResource {
 	public Response getCatalog() {
 		CatalogResourceService catalogServer = new CatalogResourceService();
 		CatalogType catalogXmlElement = catalogServer.getCatalog();
+		
 		if(catalogXmlElement.getFunction().isEmpty()) {
+			logger.log(Level.INFO, "the catalog is empty");
 			return Response.noContent().build();
 		} else {
 			JAXBElement<CatalogType> catalogElement = objFactory.createFunctions(catalogXmlElement);
@@ -54,7 +61,7 @@ public class CatalogResource {
 	 * return a single vnf function
 	 */
 	@GET
-	@Path("/{VnfId}")
+	@Path("/{vnfId}")
     @ApiOperation(	value = "get a single VNF", notes = "get a single virtual node function")
     @ApiResponses(	value = {
     		@ApiResponse(code = 200, message = "OK"),
@@ -62,12 +69,13 @@ public class CatalogResource {
     		@ApiResponse(code = 500, message = "Internal Server Error")
     	})
 	@Produces(MediaType.APPLICATION_XML)
-	public Response getVNF(@PathParam("VnfId") String vnfId) {
+	public Response getVNF(@PathParam("vnfId") String vnfId) {
 		CatalogResourceService catalogServer = new CatalogResourceService();
 		FunctionType function = catalogServer.getFunction(vnfId);
 		
 		if(function == null) {
-			return Response.noContent().build();
+			logger.log(Level.SEVERE, "the virtul function " + vnfId + " doesn't exist");
+			throw new NotFoundException();
 		} else {
 			JAXBElement<FunctionType> catalogElement = objFactory.createFunction(function);
 			return Response.ok(catalogElement, MediaType.APPLICATION_XML).build();

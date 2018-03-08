@@ -24,6 +24,7 @@ public class NfvDeployerServiceManager {
 		client = ClientBuilder.newClient();
 		serviceURL = System.getProperty("it.polito.dp2.NFV.lab3.URL");
 	}
+
 	
 	public NffgGraphType postNffg(NffgGraphType nffg) throws ServiceException {
 		try {
@@ -84,27 +85,6 @@ public class NfvDeployerServiceManager {
 			client.close();
 			throw new ServiceException("exception: " + npe.getMessage());
 		} 
-	}
-	
-	public HostType getHost(String hostId) throws ServiceException {
-		try {
-			serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("/hosts/" + hostId).build())
-					.request()
-					.accept(MediaType.APPLICATION_XML)
-					.get();
-			
-			checkResponse(serverResponse);														// check the response of the server
-			HostType responseHost = serverResponse.readEntity(HostType.class);
-			
-			return responseHost;
-			
-		} catch(ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
-			client.close();
-			throw new ServiceException("NfvDeployer client raised an exception: " + e.getMessage());
-		} catch(NullPointerException npe) {
-			client.close();
-			throw new ServiceException("exception: " + npe.getMessage());
-		}
 	}
 	
 	public NffgGraphType getGraph(String nffgId) throws ServiceException {
@@ -233,7 +213,28 @@ public class NfvDeployerServiceManager {
 		}
 	}
 	
-	public HostsType getHosts() {
+	public ExtendedHostType getHost(String hostId) throws ServiceException {
+		try {
+			serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("/hosts/" + hostId).build())
+					.request()
+					.accept(MediaType.APPLICATION_XML)
+					.get();
+			
+			checkResponse(serverResponse);														// check the response of the server
+			ExtendedHostType responseHost = serverResponse.readEntity(ExtendedHostType.class);
+			
+			return responseHost;
+			
+		} catch(ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
+			client.close();
+			throw new ServiceException("NfvDeployer client raised an exception: " + e.getMessage());
+		} catch(NullPointerException npe) {
+			client.close();
+			throw new ServiceException("exception: " + npe.getMessage());
+		}
+	}
+	
+	public HostsType getHosts() throws ServiceException {
 		try {
 			serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("/hosts").build())
 					.request()
@@ -242,8 +243,8 @@ public class NfvDeployerServiceManager {
 			
 			checkResponse(serverResponse);														// check the response of the server
 			
-			HostsType responseConnection = serverResponse.readEntity(HostsType.class);
-			return responseConnection;
+			HostsType responseHosts = serverResponse.readEntity(HostsType.class);
+			return responseHosts;
 			
 		} catch(ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
 			client.close();

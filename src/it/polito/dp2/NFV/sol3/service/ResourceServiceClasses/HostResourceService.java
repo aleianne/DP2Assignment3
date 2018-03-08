@@ -6,6 +6,8 @@ import it.polito.dp2.NFV.sol3.service.DaoClasses.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ws.rs.InternalServerErrorException;
+
 import it.polito.dp2.NFV.lab3.ServiceException;
 
 public class HostResourceService {
@@ -27,12 +29,21 @@ public class HostResourceService {
 		}
 	}
 	
-	public List<RestrictedNodeType> getAllocatedNodes(ExtendedHostType host) {
+	public List<RestrictedNodeType> getAllocatedNodes(String hostname) throws InternalServerErrorException {
 		List<RestrictedNodeType> nodeList = new ArrayList<RestrictedNodeType> ();
 		
 		// perform a query on the database and get the node correspondent to the name
-		for(DeployedNodeType node: host.getDeployedNodes().getNode()) {
-			nodeList.add(GraphDao.getInstance().queryGraph(node.getNodeName()));
+		ExtendedHostType host = HostDao.getInstance().readHost(hostname);
+		// if the database doesn't not contain the host return null
+		if(host == null) 
+			return null;
+		
+		for(DeployedNodeType deployed_node: host.getDeployedNodes().getNode()) {
+			RestrictedNodeType node = GraphDao.getInstance().queryGraph(deployed_node.getNodeName());
+			if(node == null) 
+				throw new InternalServerErrorException();
+			
+			nodeList.add(node);
 		}
 		
 		return nodeList; 

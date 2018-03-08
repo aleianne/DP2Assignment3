@@ -4,6 +4,7 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.*;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -25,10 +26,9 @@ public class NffgResourceService {
 	// return the infos relative to all the nffgs deployed into the system
 	// get all the graph from the database and put the deploy-date and the graph-name into a list of nffgsInfoType
 	public NffgsInfoType getAllNffgs() {
-		GraphDao graphDao = GraphDao.getInstance();
 		NffgsInfoType nffgsInfos = new NffgsInfoType();
 		
-		List<NffgGraphType> graphList = new ArrayList<NffgGraphType> (graphDao.readAllGraph());
+		List<NffgGraphType> graphList = new ArrayList<NffgGraphType> (GraphDao.getInstance().readAllGraphs());
 			
 		// add the date and the graph name into the list of nffg information
 		for(NffgGraphType graph: graphList) {
@@ -47,25 +47,35 @@ public class NffgResourceService {
 	}
 	
 	// return a null value if the list of deployde date is empty
-	public NffgsInfoType selectNffgs(Date date)  {
+	public NffgsInfoType selectNffgs(String date)  {
 		NffgsInfoType nffgsInfos = new NffgsInfoType();
-		GraphDao graphDao = GraphDao.getInstance();
+		DateConverter dateConverter = new DateConverter();
 	
 		// get the list of graph deployed into the system
-		List<NffgGraphType> graphList = new ArrayList<NffgGraphType> (graphDao.readAllGraph());
+		List<NffgGraphType> graphList = new ArrayList<NffgGraphType> (GraphDao.getInstance().readAllGraphs());
 			
-		if(graphList.isEmpty()) 
+		if(graphList.isEmpty()) {
+			logger.log(Level.INFO, "server doesn't contain any nffg");
 			return null;
+		}
 			
 		// add the relevant info of the deployd nffg into the nffgsInfo xml data structure in xml
 		for(NffgGraphType graph: graphList) {
 			NffgsInfoType.NffgInfo nffgInfo = new NffgsInfoType.NffgInfo();
 				
-			if(DateConverter.compareXmlGregorianCalendar(graph.getDeployDate(), date)) {
-				nffgInfo.setNffgName(graph.getNffgName());
-				nffgInfo.setDeployDate(graph.getDeployDate());
-				nffgsInfos.getNffgInfo().add(nffgInfo);
+			try {
+				Calendar inputDate = dateConverter.convertCalendar(date);
+				Calendar graphDate = dateConverter.fromXMLGregorianCalendar(graph.getDeployDate());
+				if(dateConverter.compareCalendar(graphDate, inputDate)) {
+					nffgInfo.setNffgName(graph.getNffgName());
+					nffgInfo.setDeployDate(graph.getDeployDate());
+					nffgsInfos.getNffgInfo().add(nffgInfo);
+				}
+			} catch(DatatypeConfigurationException se) {
+				logger.log(Level.SEVERE, "impossible to convert the Calendar instance to an xml gregorian calendar instance: return all the nffgd in the system");
+				return getAllNffgs();
 			}
+			
 		}
 		return nffgsInfos;
 	}
@@ -74,7 +84,7 @@ public class NffgResourceService {
 	public void deployNewNffgGraph(NffgGraphType newGraph) throws ServiceException, AllocationException, BadRequestException{
 		FunctionType nodeFunction;
 		List<FunctionType> vnfList = new ArrayList<FunctionType> ();
-		List<NodeType> nodeList = newGraph.getNodes().getNode();
+		List<RestrictedNodeType> nodeList = newGraph.getNodes().getNode();
 		String nffgName;
 		
 		HostDao hostDao = HostDao.getInstance();
@@ -87,8 +97,7 @@ public class NffgResourceService {
 		}
 	
 		// for each node add the correspondent vnf to be deployded into the list of vnf
-		for(NodeType node: nodeList) {
-			// get the correspondent vnf from the database
+		for(RestrictedNodeType node: nodeList) {
 			nodeFunction = VnfDao.getInstance().readVnf(node.getVNF());
 			if(nodeFunction == null) {
 				logger.log(Level.SEVERE, "the function specified is not available");
@@ -97,11 +106,9 @@ public class NffgResourceService {
 			vnfList.add(nodeFunction);
 		}
 		
-		logger.log(Level.INFO, "try to allocate the function into the system");
-		
 		if(nodeList.size() != vnfList.size()) {
 			logger.log(Level.SEVERE, "nodeList and vnfList are not of the same size");
-			throw new InternalServerErrorException("server encourred in a problem");
+			throw new InternalServerErrorException();
 		}
 		
 		// instantiate a new graph deployer
@@ -119,14 +126,15 @@ public class NffgResourceService {
 			allocator.allocateGraph(nodeList, hostDao);
 			
 			try {
-				newGraph.setDeployDate(DateConverter.getCurrentXmlDate());
+				DateConverter dateConverter = new DateConverter();
+				newGraph.setDeployDate(dateConverter.getCurrentXmlDate());
 			} catch(DatatypeConfigurationException dce) {
+				logger.log(Level.WARNING, "impossible to create a new XML Gregorian Calendar: " + dce.getMessage());
 				newGraph.setDeployDate(null);
 			}
 			
-			nffgName = GraphDao.getInstance().createNffg(newGraph);
-			
-			// update the hosts with the name of the node 
+			// update a new host into the database
+			GraphDao.getInstance().createNffg(newGraph);
 			allocator.updateHost(nodeList, hostDao);
 		}	
 	}

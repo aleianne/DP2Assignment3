@@ -21,7 +21,7 @@ public class NodeResourceService {
 	
 	private static Logger logger = Logger.getLogger(NodeResourceService.class.getName());
 	
-	public String addNode(String graphId, NodeType newNode) throws ServiceException, AllocationException, InternalServerErrorException, GraphNotFoundException {
+	public String addNode(String graphId, RestrictedNodeType newNode) throws ServiceException, AllocationException, InternalServerErrorException, GraphNotFoundException {
 		
 		/*
 		 * in this method use the same class used for the graph allocation 
@@ -36,7 +36,7 @@ public class NodeResourceService {
 				
 		// create the list of node and vnf used during annotation
 		List<FunctionType> vnfList = new ArrayList<FunctionType> ();
-		List<NodeType> nodeList = new ArrayList<NodeType> ();
+		List<RestrictedNodeType> nodeList = new ArrayList<RestrictedNodeType> ();
 		nodeList.add(newNode);
 
 		GraphAllocator allocator = new GraphAllocator();
@@ -70,14 +70,14 @@ public class NodeResourceService {
 		
 	}
 
-	public List<HostType> getReachableHost(String nffgId) throws ServiceException {
+	public List<ExtendedHostType> getReachableHost(String nffgId) throws ServiceException {
 		Neo4jServiceManager neo4jClient = new Neo4jServiceManager();
 		Nodes receivedNodes = neo4jClient.getReachableHost(nffgId);
-		List<HostType> hostList = new ArrayList<HostType>();
+		List<ExtendedHostType> hostList = new ArrayList<ExtendedHostType>();
 		
 		// elaborate the response of the neo4j service
 		for(Node newNode: receivedNodes.getNode()) {
-			HostType newHost = HostDao.getInstance().readHost(newNode.getProperties().getProperty().get(0).getValue());
+			ExtendedHostType newHost = HostDao.getInstance().readHost(newNode.getProperties().getProperty().get(0).getValue());
 			hostList.add(newHost);
 		}
 		return hostList;

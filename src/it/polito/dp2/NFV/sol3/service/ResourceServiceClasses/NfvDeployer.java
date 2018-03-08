@@ -43,10 +43,9 @@ public class NfvDeployer implements ApplicationEventListener{
 
 	@Override
 	public void onEvent(ApplicationEvent applicationEvent) {
-	
+		// at the startup of the tomcat servlet call the intiNfvDeployer function
 		switch(applicationEvent.getType()) {
 			case INITIALIZATION_START: {
-				// initialize the nfv deployer
 				initNfvDeployer();
 			}
 		}
@@ -71,7 +70,7 @@ public class NfvDeployer implements ApplicationEventListener{
 			
 			logger.log(Level.INFO, "try to read the nfv info from the nfv reader interface");
 			
-			// first: read all the host from the interface
+			// read all the host from the interface
 			for(HostReader hr: monitor.getHosts()) {
 				ExtendedHostType newHost = objFactory.createExtendedHostType();
 				
@@ -88,7 +87,7 @@ public class NfvDeployer implements ApplicationEventListener{
 			// add the list to the database
 			hostServer.setHostsAtStartup(hostList);
 			
-			logger.log(Level.INFO, "all the host are loaded in memory");
+			logger.log(Level.INFO, "all the hosts are loaded in memory");
 			
 			// deploy the network functions
 			Set<VNFTypeReader> vnfCatalog = monitor.getVNFCatalog();
@@ -118,9 +117,9 @@ public class NfvDeployer implements ApplicationEventListener{
 					host2 = innerHr;
 					
 					connReader = monitor.getConnectionPerformance(host1, host2);
+					
 					if(connReader != null) {
 						ConnectionType newConnection = new ConnectionType();
-						
 						newConnection.setHostname1(host1.getName());
 						newConnection.setHostname2(host2.getName());
 						newConnection.setLatency(BigInteger.valueOf(connReader.getLatency()));
@@ -141,11 +140,11 @@ public class NfvDeployer implements ApplicationEventListener{
 			newGraph.setNodes(new NffgGraphType.Nodes());
 			newGraph.setLinks(new NffgGraphType.Links());
 			
-			List<NodeType> nodeList = newGraph.getNodes().getNode();
+			List<RestrictedNodeType> nodeList = newGraph.getNodes().getNode();
 			List<ExtendedLinkType> linkList = newGraph.getLinks().getLink();
 			
 			for(NodeReader nr: nfgr.getNodes()) {
-				NodeType newNode = new NodeType();
+				RestrictedNodeType newNode = new RestrictedNodeType();
 				newNode.setHostname(nr.getHost().getName());
 				newNode.setVNF(nr.getFuncType().getName());
 				newNode.setName(nr.getName());
@@ -165,7 +164,7 @@ public class NfvDeployer implements ApplicationEventListener{
 			}
 			
 			nffgServer.deployNewNffgGraph(newGraph);
-			logger.log(Level.INFO, "the first graph is loaded");
+			logger.log(Level.INFO, "Nffg-0  is loaded");
 			
 		} catch(NfvReaderException ne) {
 			logger.log(Level.SEVERE, "impossible to lauch the nfv deployer web service: " + ne.getMessage());

@@ -50,13 +50,15 @@ public class GraphDao {
 		
 		List<RestrictedNodeType> graphNodeList = newNffg.getNodes().getNode();
 		List<ExtendedLinkType> graphLinkList = newNffg.getLinks().getLink();
+		
+		// this map convert the name given by the user in the name assigned by this server
 		Map<String, String> nameResolverMap = new HashMap<String, String>();
 		
 		// create the nffg name
 		String nffgName = nffgBaseName .concat(Integer.toString(nffgCounter.incrementAndGet()));
 		newNffg.setNffgName(nffgName);
 		
-		// update the list of nodes
+		// update the list of nodes with the new name
 		for(RestrictedNodeType node: graphNodeList) {
 			String newNodeName = nodeBaseName.concat(Integer.toString(nodeCounter.incrementAndGet()));
 			String oldNodeName = node.getName();
@@ -65,11 +67,11 @@ public class GraphDao {
 			node.setNfFg(nffgName);
 			node.setName(newNodeName);
 			
-			// put the node into the map 
+			// put the node into the name converter map
 			nodeIDMap.put(newNodeName, node);
 		}
 		
-		// update the list of links
+		// update the list of links with the new name
 		for(ExtendedLinkType link: graphLinkList) {
 			String linkName = linkBaseName.concat(Integer.toString(linkCounter.incrementAndGet()));
 			String oldDestNodeName = link.getDestinationNode();
@@ -135,7 +137,7 @@ public class GraphDao {
 	/*
 	 * read all the nffg that are stored into the database
 	 */
-	public Collection<NffgGraphType> readAllGraph() {
+	public Collection<NffgGraphType> readAllGraphs() {
 		return graphMap.values();
 	}
 	
@@ -147,14 +149,14 @@ public class GraphDao {
 		NffgGraphType queryResultGraph = graphMap.get(nffgId);
 		
 		if(queryResultGraph == null) {
-			throw new GraphNotFoundException();
+			throw new GraphNotFoundException("the graph " + nffgId + "doesn't exist into the database");
 		} else {
 		
 			neo4jXMLclient = Neo4jServiceManager.getInstance();
+			
+			// assign to the node a new name
 			String nodeName = nodeBaseName;
 			nodeName.concat(Integer.toString(nodeCounter.incrementAndGet()));
-				
-			// genetate a new node name
 			newNode.setName(nodeName);
 				
 			// create a ne4j node for the forwarding
@@ -197,10 +199,8 @@ public class GraphDao {
 		NffgGraphType queryResultGraph = graphMap.get(nffgId);
 		
 		if(queryResultGraph == null) {
-			throw new InternalServerErrorException("the graph " + nffgId + " doesn't exist");
+			throw new GraphNotFoundException("the graph " + nffgId + " doesn't exist into the database");
 		} else {
-			String linkName = linkBaseName;
-			
 			// synchronize the access to the single graph where the link should allocated
 			synchronized(queryResultGraph) {
 			
@@ -222,7 +222,8 @@ public class GraphDao {
 				if(graphLinkList.stream().filter(linkPredicate).findFirst().get() == null && !newLink.isOverwrite()) 
 					throw new LinkAlreadyPresentException();
 	
-				// update the list of links
+				// assign to the link a new name
+				String linkName = linkBaseName;
 				newLink.setLinkName(linkName.concat(Integer.toString(linkCounter.incrementAndGet())));
 				queryResultGraph.getLinks().getLink().add(newLink);
 		

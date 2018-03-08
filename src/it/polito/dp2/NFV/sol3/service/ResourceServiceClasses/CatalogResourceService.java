@@ -9,9 +9,7 @@ import java.util.Set;
 
 public class CatalogResourceService {
 	
-	public CatalogResourceService() {
-		
-	}
+	public CatalogResourceService() {}
 	
 	// read the vnf catalog from the dao class
 	public CatalogType getCatalog() {		
@@ -28,6 +26,7 @@ public class CatalogResourceService {
 		}
 	}
 	
+	// get a single function from the database
 	public FunctionType getFunction(String vnfName) {
 		return VnfDao.getInstance().readVnf(vnfName);
 	}

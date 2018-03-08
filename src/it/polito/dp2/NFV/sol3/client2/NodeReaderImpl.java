@@ -45,7 +45,7 @@ public class NodeReaderImpl implements NodeReader {
 
 	@Override
 	public HostReader getHost() {
-		HostReader hr;
+		HostReader hr = null;
 		try {
 			ExtendedHostType host = serviceManager.getHost(node.getHostname());
 			hr = new HostReaderImpl(host, serviceManager);

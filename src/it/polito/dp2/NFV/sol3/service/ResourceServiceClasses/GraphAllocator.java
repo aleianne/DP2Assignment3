@@ -24,6 +24,7 @@ import javax.xml.datatype.DatatypeFactory;
 
 import it.polito.dp2.NFV.lab3.AllocationException;
 import it.polito.dp2.NFV.lab3.ServiceException;
+
 public class GraphAllocator {
 	
 	private Map<Integer, String> targetHostMap;
@@ -86,7 +87,9 @@ public class GraphAllocator {
 		return false;
 	}*/
 
-	
+	/*
+	 *  this method search if the host specified into the node is available 
+	 */
 	public void findSelectedHost(List<FunctionType> vnfList, List<RestrictedNodeType> nodeList, HostDao hostDao) {
 		
 		/* 
@@ -101,7 +104,7 @@ public class GraphAllocator {
 		for(RestrictedNodeType node: nodeList) {
 			String hostname = node.getHostname();
 			
-			logger.log(Level.SEVERE, "try to allocate function n: " + index + " " + vnfList.get(index).getName() + " on host " + hostname);
+			logger.log(Level.INFO, "try to allocate function n: " + index + " " + vnfList.get(index).getName() + " on host " + hostname);
 			
 			if(hostname != null) {
 				ExtendedHostType host = hostDao.readHost(hostname);
@@ -153,7 +156,10 @@ public class GraphAllocator {
 		
 		minVnfAllocated = numAllocatedNodes = usedMemory = usedStorage = 0;
 		
-		// order the list 
+		/*
+		 *  implements a custom compare method for the sorting operation 
+		 *  performend before the application of the best fit decreasing algorithm
+		 */
 		Collections.sort(hostList, new Comparator<ExtendedHostType>() {
 
 			@Override
@@ -220,7 +226,9 @@ public class GraphAllocator {
 			index++;
 		}
 	}
-	
+	/*
+	 * this function allocate the list of nodes passed as parameter into the host 
+	 */
 	public void allocateGraph(List<RestrictedNodeType> nodeList, HostDao hostDao) throws InternalServerErrorException {
 		int index = 0;
 		
@@ -243,8 +251,10 @@ public class GraphAllocator {
 			node.setHostname(hostname);*/
 			
 			List<FunctionType> vnfAllocated = allocatedNodeMap.get(hostname);
-			if(vnfAllocated == null) 
+			if(vnfAllocated == null) {
+				logger.log(Level.SEVERE, "inconsistent state, the host doesn't contain any node");
 				throw new InternalServerErrorException();
+			}
 			
 			for(FunctionType virtualFunction: vnfAllocated) {
 				hostDao.updateHost(hostname, virtualFunction);

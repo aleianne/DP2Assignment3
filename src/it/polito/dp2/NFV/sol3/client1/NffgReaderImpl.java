@@ -36,10 +36,11 @@ public class NffgReaderImpl implements NffgReader {
 	@Override
 	public Calendar getDeployTime() {
 		Calendar deployDate;
+		DateConverter dateConverter = new DateConverter();
 		try {
 			// convert from  xml gregorian calendar to Calendar instance
 			// if the conversion encour in some problem the deploy-date is setted to null
-			deployDate = DateConverter.fromXMLGregorianCalendar(newGraph.getDeployDate());
+			deployDate = dateConverter.fromXMLGregorianCalendar(newGraph.getDeployDate());
 		} catch(DatatypeConfigurationException dce) {
 			deployDate = null;
 		}

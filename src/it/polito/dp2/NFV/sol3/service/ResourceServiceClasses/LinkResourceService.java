@@ -12,6 +12,9 @@ import it.polito.dp2.NFV.sol3.service.Exceptions.GraphNotFoundException;
 
 public class LinkResourceService {
 
+	/*
+	 * add a new link into the web service
+	 */
 	public void addLink(String graphId, ExtendedLinkType newLink) throws ServiceException, NoNodeException, LinkAlreadyPresentException, InternalServerErrorException, GraphNotFoundException {
 		GraphDao graphDao = GraphDao.getInstance();
 		synchronized(graphDao) {
@@ -19,6 +22,9 @@ public class LinkResourceService {
 		}	
 	}
 	
+	/*
+	 * get a single link instance
+	 */
 	public void getLink(String linkId) {
 	
 	}

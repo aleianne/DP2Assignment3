@@ -4,6 +4,7 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 import it.polito.dp2.NFV.sol3.service.Exceptions.GraphNotFoundException;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -91,16 +92,16 @@ public class NffgsResource {
     		@ApiResponse(code = 500, message = "Internal Server Error")
     	})
 	@Produces(MediaType.APPLICATION_XML)
-	public Response getNffgs(@QueryParam("date") Date inputDate) {
+	public Response getNffgs(@QueryParam("date") String param_date) {
 		JAXBElement<NffgsInfoType> nffgsXmlElement;
 		nffgServer = new NffgResourceService();
 
-		if(inputDate == null) {
+		if(param_date == null) {
 			// return all the nffg infos in the server
 			nffgsXmlElement = objFactory.createNffgs(nffgServer.getAllNffgs());
 		} else {
 			// select only the nffg that are deployed before the date
-			NffgsInfoType resultValue = nffgServer.selectNffgs(inputDate);
+			NffgsInfoType resultValue = nffgServer.selectNffgs(param_date);
 			
 			// if the nffgs resource is empty return 204 No Content error
 			if(resultValue == null) 
@@ -128,7 +129,7 @@ public class NffgsResource {
 	@Produces(MediaType.APPLICATION_XML)
 	public Response getNffg(@PathParam("nffgId") String nffgId) {
 		if(nffgId == null) {
-			logger.log(Level.SEVERE, "the nffgId parameter received by the server id null");
+			logger.log(Level.SEVERE, "nffg ID is null");
 			throw new NotFoundException();
 		}
 		// interrogate the database to find the nffg graph
@@ -205,18 +206,18 @@ public class NffgsResource {
 	    })
 	@Produces(MediaType.TEXT_PLAIN)
 	@Consumes(MediaType.APPLICATION_XML)
-	public Response createNewNode(JAXBElement<NodeType> reqBodyNode, @PathParam("nffgId") String nffgId) {
+	public Response createNewNode(JAXBElement<RestrictedNodeType> reqBodyNode, @PathParam("nffgId") String nffgId) {
 		try {
 			if(nffgId == null) 
 				throw new NotFoundException();
 			if(reqBodyNode == null) 
 				logger.log(Level.INFO, "the  request body is empty");
 			
-			NodeType nodeXmlElement = reqBodyNode.getValue();
+			RestrictedNodeType nodeXmlElement = reqBodyNode.getValue();
 			if(nodeXmlElement != null) {
 				NodeResourceService nodeServer = new NodeResourceService();
 				nodeServer.addNode(nffgId, nodeXmlElement);
-				JAXBElement<NodeType> resBodyNode = objFactory.createNode(nodeXmlElement);
+				JAXBElement<RestrictedNodeType> resBodyNode = objFactory.createNode(nodeXmlElement);
 				return Response.ok(resBodyNode, MediaType.APPLICATION_XML).build();
 			} else {
 				logger.log(Level.SEVERE, "the xml element is null");
@@ -271,10 +272,11 @@ public class NffgsResource {
 			}
 		
 			NodeResourceService nodeServer = new NodeResourceService();
-			
+		
 			HostsType reachableHosts = new HostsType();
 			reachableHosts.getHost().add((HostType) nodeServer.getReachableHost(nodeId));
 			if(reachableHosts.getHost().isEmpty()) {
+				logger.log(Level.INFO, "from the node specified is not possible to reach any host");
 				return Response.noContent().build();
 			} else {
 				JAXBElement<HostsType> hostsXmlElement = objFactory.createHosts(reachableHosts);
@@ -308,7 +310,7 @@ public class NffgsResource {
 				throw new ForbiddenException();
 			
 			if(reqBodyNode == null) 
-				logger.log(Level.INFO, "the request Body si null");
+				logger.log(Level.INFO, "the request Body is null");
 			
 			ExtendedLinkType link = reqBodyNode.getValue();
 			if(link != null) {

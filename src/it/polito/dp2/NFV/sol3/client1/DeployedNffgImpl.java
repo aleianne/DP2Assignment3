@@ -35,19 +35,16 @@ public class DeployedNffgImpl implements DeployedNffg {
 	@Override
 	public NodeReader addNode(VNFTypeReader type, String hostName) throws AllocationException, ServiceException {		
 		// create a new node
-		NodeType xmlNode = new NodeType();
+		RestrictedNodeType xmlNode = new RestrictedNodeType();
 		xmlNode.setVNF(type.getName());
 		xmlNode.setHostname(hostName);
 		xmlNode.setNfFg(nffgId);
 		
 		// forward the node to the webserver
-		String nodeName = serviceManager.postNode(xmlNode, nffgId);
-		
-		// set the name returned by the server into the node
-		xmlNode.setName(nodeName);
+		RestrictedNodeType resNode = serviceManager.postNode(xmlNode, nffgId);
 		
 		// put the information into the nodeReader interface
-		NodeReader nodeReader = new NodeReaderImpl(xmlNode, newGraph);
+		NodeReader nodeReader = new NodeReaderImpl(resNode, serviceManager);
 		return nodeReader;
 	}
 
@@ -69,13 +66,13 @@ public class DeployedNffgImpl implements DeployedNffg {
 		ExtendedLinkType link = serviceManager.postLink(xmlLink, nffgId);
 	
 		// create a new link reader interface  in order to read the link infos
-		LinkReader linkReader = new LinkReaderImpl(link, newGraph);
+		LinkReader linkReader = new LinkReaderImpl(link, newGraph, serviceManager);
 		return linkReader;
 	}
 
 	@Override
 	public NffgReader getReader() throws ServiceException {
-		NffgReader nffgReader = new NffgReaderImpl(newGraph);
+		NffgReader nffgReader = new NffgReaderImpl(newGraph, serviceManager);
 		return nffgReader;
 	}
 

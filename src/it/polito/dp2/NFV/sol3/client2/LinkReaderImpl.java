@@ -58,7 +58,7 @@ public class LinkReaderImpl implements LinkReader {
 
 	@Override
 	public float getThroughput() {
-		return link.getThroughtput();
+		return link.getThroughput();
 	}
 
 }

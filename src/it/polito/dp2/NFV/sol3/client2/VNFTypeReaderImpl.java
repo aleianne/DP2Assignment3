@@ -20,7 +20,7 @@ public class VNFTypeReaderImpl implements VNFTypeReader{
 
 	@Override
 	public FunctionalType getFunctionalType() {
-		return FunctionalType.valueOf(function.getType());
+		return FunctionalType.valueOf(function.getType().toString());
 	}
 
 	@Override

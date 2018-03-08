@@ -16,6 +16,10 @@
 	<property name="src.dir" location="${basedir}/src"/>
 	<property name="lib.dir" location="${basedir}/lib"/>
 	
+	<property name="client1.dir" location="${src.dir}/it/polito/dp2/NFV/sol3/client1"/>
+	<property name="client2.dir" location="${src.dir}/it/polito/dp2/NFV/sol3/client2"/>
+	
+	
 	<!-- Declation of the the libray folder -->
 	<property name="shared.location" location="/opt/dp2/shared"/>
 	<property name="ext.lib.dir" location="${shared.location}/lib" />
@@ -97,6 +101,24 @@
 		<echo>Done.</echo>
 		<echo>delete the generate folder...</echo>
 		<delete dir= "${gen.dir}"/>
+	</target>
+	
+	
+	<target name="build-client" depends="generate-artifacts">
+		<echo>Bilding the client number 1 and number 2</echo>
+		<javac destdir="${build.dir}" debug="${debug}" debuglevel="${debuglevel}" source="${source}" target="${target}" includeantruntime="false">
+			<src path="${client1.dir}"/>
+			<src path="${client2.dir}"/>
+			<src path="${gen.dir}"/>
+			<include name="it/polito/dp2/NFV/sol3/**" />
+			 <classpath>
+				<path refid="sol.classpath" />
+			</classpath>
+		</javac>
+		<echo>Done.</echo>
+		<echo>delete the generate folder...</echo>
+		<delete dir= "${gen.dir}"/>
+		
 	</target>
 	
 </project>

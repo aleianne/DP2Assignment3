@@ -18,8 +18,9 @@ public class ConnectionDao {
 		return connDao;
 	}
 	
-	/* DAO methods */
-	
+	/*
+	 * create a new connection starting from a list of xml connection representation
+	 */
 	public void createConnection(List<ConnectionType> connectionList) {
 		// put all the connections inside the list 
 		for(ConnectionType conn: connectionList) {
@@ -30,6 +31,9 @@ public class ConnectionDao {
 		}
 	}
 	
+	/*
+	 * store into the map a single connection 
+	 */
 	public void createConnection(ConnectionType newConnection) {
 		String host1 = newConnection.getHostname1();
 		String host2 = newConnection.getHostname2();
@@ -37,10 +41,16 @@ public class ConnectionDao {
 		connectionMap.put(newStringPair, newConnection);
 	}
 	
+	/*
+	 * return a collection of all the connection stored into the hashmap
+	 */
 	public Collection<ConnectionType> readAllConnections() {
 		return connectionMap.values();
 	}
 	
+	/*
+	 * read a single connection from the hashmap
+	 */
 	public ConnectionType readConnection(String host1, String host2) {
 		StringPair newStringPair = new StringPair(host1, host2);
 		return connectionMap.get(newStringPair);

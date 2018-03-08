@@ -4,25 +4,6 @@
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
 	xmlns:nfv="http://www.example.com/nfv" 
 	elementFormDefault="qualified">
-
-	<!-- <xsd:include schemaLocation="DataTypeDeclaration.xsd"/>
-	
-	<xsd:annotation>
-		<xsd:documentation>
-			this is the schema file of the web service 
-		</xsd:documentation>
-	</xsd:annotation>
-	
-	<xsd:element name="Nffg" type="nfv:nffgType"/>
-	<xsd:element name="Nffgs" type="nfv:nffgsType"/>
-	<xsd:element name="Link" type="nfv:linkType"/>
-	<xsd:element name="Node" type="nfv:nodeType"/>
-	<xsd:element name="Graph" type="nfv:graphType"/>
-	<xsd:element name="Host" type="nfv:hostType"/>
-	<xsd:element name="Hosts" type="nfv:hostsType"/>
-	<xsd:element name="Connection" type="nfv:connectionType"/>
-	<xsd:element name="Catalog" type="nfv:catalogType"/>
-	-->
 	
 	<xsd:include schemaLocation="nfvInfo.xsd"/>
 	
@@ -33,9 +14,8 @@
 	<xsd:element name="nodes" type="nfv:nodesType"/>
 	<xsd:element name="function" type="nfv:functionType"/>
 	<xsd:element name="functions" type="nfv:catalogType"/>
-	<!-- <xsd:element name="connections" type="nfv:connectionsType"/>  -->
 	<xsd:element name="connection" type="nfv:connectionType"/>
-	<xsd:element name="hosts" type="nfv:extendedHostsType"/>
+	<xsd:element name="hosts" type="nfv:hostsType"/>
 	<xsd:element name="host" type="nfv:hostType"/>
 
 
@@ -88,9 +68,9 @@
 		</xsd:sequence>
 	</xsd:complexType>
 	
-	<xsd:complexType name="extendedHostsType">
+	<xsd:complexType name="hostsType">
 		<xsd:sequence>
-			<xsd:element name="host" type="nfv:extendedHostsType" maxOccurs="unbounded"/>
+			<xsd:element name="host" type="nfv:hostType" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	
@@ -105,12 +85,6 @@
 			</xsd:extension>
 		</xsd:complexContent>
 	</xsd:complexType>
-	
-	<!-- <xsd:complexType name="connectionsType">
-		<xsd:sequence>
-			<xsd:element name="connection" type="nfv:connectionType" maxOccurs="unbounded"/>
-		</xsd:sequence>
-	</xsd:complexType>  -->
 	
 	<xsd:complexType name="extendedLinkType">
 		<xsd:complexContent>

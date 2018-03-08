@@ -27,9 +27,10 @@ public class NfvReaderImpl implements NfvReader {
 	public ConnectionPerformanceReader getConnectionPerformance(HostReader host1, HostReader host2) {
 		ConnectionPerformanceReader cpr = null;
 		try {
-			ConnectionType conn = serviceManager.getConnection(host1, host2);
+			ConnectionType conn = serviceManager.getConnection(host1.getName(), host2.getName());
 			cpr = new ConnectionPerformanceReaderImpl(conn);
 		} catch(ServiceException se) {
+			System.err.println("impossible to implement the connection reader interface");
 			System.err.println(se.getMessage());
 		}
 		return cpr;
@@ -40,7 +41,7 @@ public class NfvReaderImpl implements NfvReader {
 		HostReader hr = null;
 		try {
 			ExtendedHostType host = serviceManager.getHost(host1);
-			hr = new HostReaderImpl(host);
+			hr = new HostReaderImpl(host, serviceManager);
 		} catch(ServiceException se) {
 			System.err.println("impossible to create the HostReader instance");
 			System.err.println(host1);
@@ -52,9 +53,11 @@ public class NfvReaderImpl implements NfvReader {
 	public Set<HostReader> getHosts() {
 		Set<HostReader> hrSet = new HashSet<HostReader> ();
 		try {
-			ExtendedHostType host = serviceManager.getHosts();
-			HostReader hr = new HostReaderImpl(host);
-			hrSet.add(hr);
+			HostsType hosts = serviceManager.getHosts();
+			for(HostType host: hosts.getHost()) {
+				HostReader hr = new HostReaderImpl(host, serviceManager);
+				hrSet.add(hr);
+			}
 		} catch(ServiceException se) {
 			System.err.println("impossible to create the HostReader interface set");
 			System.err.println(se.getMessage());
@@ -64,14 +67,7 @@ public class NfvReaderImpl implements NfvReader {
 
 	@Override
 	public NffgReader getNffg(String nffgId) {
-		NffgReader nfgr = null;
-		try {
-			nfgr = new NffgReaderImpl(nffgId, serviceManager);
-		} catch(ServiceException se) {
-			System.err.println("impossible to implement the nffg Reader interface");
-			System.err.println(se.getMessage());
-		}
-		return nfgr;
+		return new NffgReaderImpl(nffgId, serviceManager);
 	}
 
 	@Override
@@ -80,8 +76,8 @@ public class NfvReaderImpl implements NfvReader {
 		
 		try {
 			NffgsInfoType nffgs = serviceManager.getGraphs(date);
-			for(NffgsInfoType.NffgInfo info: nffgs.getNffgs().get) {
-				NffgReader nfgr = new NffgReaderImpl(info.getNffgName());
+			for(NffgsInfoType.NffgInfo info: nffgs.getNffgInfo()) {
+				NffgReader nfgr = new NffgReaderImpl(info.getNffgName(), serviceManager);
 				nrSet.add(nfgr);
 			}
 		} catch(ServiceException se) {
@@ -95,7 +91,6 @@ public class NfvReaderImpl implements NfvReader {
 	@Override
 	public Set<VNFTypeReader> getVNFCatalog() {
 		Set<VNFTypeReader> vnfSet = new HashSet<VNFTypeReader> ();
-		
 		try {
 			CatalogType catalog = serviceManager.getCatalog();
 			for(FunctionType function: catalog.getFunction()) {
@@ -106,8 +101,6 @@ public class NfvReaderImpl implements NfvReader {
 			System.err.println("impossible to retrieve the VNF catalog interface");
 			System.err.println(se.getMessage());
 		}
-		
 		return vnfSet;
 	}
-
 }

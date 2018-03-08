@@ -10,10 +10,10 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 public class HostReaderImpl implements HostReader {
 
-	private ExtendedHostType host;
+	private HostType host;
 	private NfvDeployerServiceManager serviceManager;
 	
-	public HostReaderImpl(ExtendedHostType host, NfvDeployerServiceManager serviceManager) {
+	public HostReaderImpl(HostType host, NfvDeployerServiceManager serviceManager) {
 		this.host = host;
 		this.serviceManager = serviceManager;
 	}

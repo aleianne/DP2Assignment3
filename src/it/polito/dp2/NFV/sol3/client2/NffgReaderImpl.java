@@ -5,11 +5,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+
 import it.polito.dp2.NFV.NffgReader;
 import it.polito.dp2.NFV.NodeReader;
 import it.polito.dp2.NFV.lab3.ServiceException;
 import it.polito.dp2.NFV.sol3.client1.NfvDeployerServiceManager;
-
+import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.DateConverter;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 public class NffgReaderImpl implements NffgReader {
@@ -35,7 +37,13 @@ public class NffgReaderImpl implements NffgReader {
 
 	@Override
 	public Calendar getDeployTime() {
-		return nffg.getDeployDate();
+		try {
+			DateConverter dateConverter = new DateConverter();
+			Calendar date = dateConverter.fromXMLGregorianCalendar(nffg.getDeployDate());
+			return date;
+		} catch(DatatypeConfigurationException dce) {
+			return null;
+		}
 	}
 
 	@Override
@@ -54,12 +62,10 @@ public class NffgReaderImpl implements NffgReader {
 	@Override
 	public Set<NodeReader> getNodes() {
 		Set<NodeReader> nrSet = new HashSet<NodeReader> ();
-		
 		for(RestrictedNodeType node: nffg.getNodes().getNode()) {
 			NodeReader nr = new NodeReaderImpl(node, serviceManager);
 			nrSet.add(nr);
 		}
-		
 		return nrSet;
 	}
 

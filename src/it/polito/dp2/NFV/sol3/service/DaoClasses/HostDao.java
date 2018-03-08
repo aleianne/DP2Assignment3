@@ -80,7 +80,7 @@ public class HostDao {
 	 * update of the list of deployed node
 	 * update total allocated Storage and Memory
 	 */
-	public void updateHost(String hostname, FunctionType functionToBeDeployed) {
+	public void updateHost(String hostname, FunctionType functionToBeDeployed) throws InternalServerErrorException {
 		// interrogate the database in order to obtain the host to be update
 		ExtendedHostType queryResultHost = hostMap.get(hostname);
 		if(queryResultHost == null) {
@@ -99,7 +99,7 @@ public class HostDao {
 		queryResultHost.setStorageUsed(BigInteger.valueOf(availableStorage + nodeStorage));
 	}
 	
-	public void updateHost(String hostname, RestrictedNodeType nodeToBeDeployed) {
+	public void updateHost(String hostname, RestrictedNodeType nodeToBeDeployed) throws InternalServerErrorException {
 		// interrogate the database in order to obtain the host to be update
 		ExtendedHostType queryResultHost = hostMap.get(hostname);
 		if(queryResultHost == null) {
