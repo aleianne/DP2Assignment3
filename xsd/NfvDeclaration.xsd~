@@ -10,37 +10,37 @@
 	<xsd:annotation>
 		<xsd:documentation>
 		
-				This is the declaration of the root element
+				This is the declaration of the root element tha 
 			
 		</xsd:documentation>
 	</xsd:annotation>
 	
 	<xsd:element name="nffgs" type="nfv:nffgsInfoType"/>
 	<xsd:element name="nffg" type="nfv:nffgGraphType">
-	
 		<xsd:key name="unique-nffg">
-			<xsd:selector xpath="nfv:nffg-name"/>
-			<xsd:field xpath="."/>
+			<xsd:selector xpath="nffg-name"></xsd:selector>
+			<xsd:field xpath="."></xsd:field>
 		</xsd:key>
-				
+		
+					
 		<xsd:key name="unique-node">
-			<xsd:selector xpath="nfv:nodes/nfv:node/nfv:name"/>
-			<xsd:field xpath="."/>
+			<xsd:selector xpath="nodes/node"></xsd:selector>
+			<xsd:field xpath="name"></xsd:field>
 		</xsd:key>
 		
 		<xsd:keyref name="node-nffg-ref" refer="nfv:unique-nffg">
-			<xsd:selector xpath="nfv:nodes/nfv:node/nfv:nf-fg"/>
-			<xsd:field xpath="."/>	
+			<xsd:selector xpath="nodes/node"></xsd:selector>
+			<xsd:field xpath="nf-fg"></xsd:field>	
 		</xsd:keyref>
 		
 		<xsd:keyref name="node-link-ref" refer="nfv:unique-node">
-			<xsd:selector xpath="nfv:links/nfv:link/nfv:destinationNode"/>
-			<xsd:field xpath="."/>
+			<xsd:selector xpath="links/link"></xsd:selector>
+			<xsd:field xpath="destinationNode"></xsd:field>
 		</xsd:keyref>
 		
 		<xsd:keyref name="node-link-ref-2" refer="nfv:unique-node">
-			<xsd:selector xpath="nfv:links/nfv:link/nfv:sourceNode"/>
-			<xsd:field xpath="."/>
+			<xsd:selector xpath="links/link"></xsd:selector>
+			<xsd:field xpath="sourceNode"></xsd:field>
 		</xsd:keyref>
 	
 	</xsd:element>
@@ -53,12 +53,6 @@
 	<xsd:element name="hosts" type="nfv:hostsType"/>
 	<xsd:element name="host" type="nfv:hostType"/>
 
-
-	<xsd:annotation>
-		<xsd:documentation>
-			declaration of the data types
-		</xsd:documentation>
-	</xsd:annotation>
 
 	<xsd:complexType name="nffgsInfoType">
 		<xsd:sequence>
@@ -83,6 +77,8 @@
 						<xsd:element name="node" type="nfv:restrictedNodeType" maxOccurs="unbounded"/>
 					</xsd:sequence>
 				</xsd:complexType>
+	
+				
 			</xsd:element>
 			<xsd:element name="links">
 				<xsd:complexType>

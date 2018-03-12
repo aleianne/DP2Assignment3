@@ -2,6 +2,7 @@ package it.polito.dp2.NFV.sol3.service.DaoClasses;
 
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 import it.polito.dp2.NFV.sol3.service.Exceptions.GraphNotFoundException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.UnknowNodeException;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
 import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.*;
 
@@ -14,6 +15,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
 
 import it.polito.dp2.NFV.lab3.LinkAlreadyPresentException;
@@ -77,6 +79,9 @@ public class GraphDao {
 			String oldDestNodeName = link.getDestinationNode();
 			String oldSrcNodeName = link.getSourceNode();
 						
+			String newDestNodeName = nameResolverMap.get(oldDestNodeName);
+			String newSourceNodeName = nameResolverMap.get(oldSrcNodeName);
+			
 			link.setDestinationNode(nameResolverMap.get(oldDestNodeName));
 			link.setSourceNode(nameResolverMap.get(oldSrcNodeName));
 			link.setLinkName(linkName);

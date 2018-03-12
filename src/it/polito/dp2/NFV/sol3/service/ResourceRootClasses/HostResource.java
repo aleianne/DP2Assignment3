@@ -38,7 +38,7 @@ public class HostResource {
 	@GET
 	@ApiOperation(	value = "get the hosts collection", notes = "return all host that are available inside the web service")
     @ApiResponses(	value = {
-    		@ApiResponse(code = 201, message = "OK"),
+    		@ApiResponse(code = 200, message = "OK"),
     		@ApiResponse(code = 204, message = "No Content"),
     		@ApiResponse(code = 500, message = "Internal Server Error")
     	})
@@ -66,7 +66,7 @@ public class HostResource {
 	@Path("{hostId}")
 	@ApiOperation(	value = "get a single host", notes = "return to the client the representation of a single host")
     @ApiResponses(	value = {
-    		@ApiResponse(code = 201, message ="OK"),
+    		@ApiResponse(code = 200, message ="OK"),
     		@ApiResponse(code = 404, message = "Not Found"),
     		@ApiResponse(code = 500, message = "Internal Server Error")
     	})
@@ -92,7 +92,7 @@ public class HostResource {
 	@Path("{hostId}/nodes")
 	@ApiOperation(	value = "get all the nodes", notes = "return to the client the entire collection of nodes allocated on the host")
     @ApiResponses(	value = {
-    		@ApiResponse(code = 201, message = "OK"),
+    		@ApiResponse(code = 200, message = "OK"),
     		@ApiResponse(code = 204, message = "No Content"),
     		@ApiResponse(code = 404, message = "Not Found"),
     		@ApiResponse(code = 500, message = "Internal Server Error")

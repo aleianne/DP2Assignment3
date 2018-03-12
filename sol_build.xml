@@ -15,10 +15,13 @@
 	<property name="build.dir" location="${basedir}/build"/>
 	<property name="src.dir" location="${basedir}/src"/>
 	<property name="lib.dir" location="${basedir}/lib"/>
+	<property name="web_content.dir" location="${basedir}/WebContent"/>
 	
 	<property name="client1.dir" location="${src.dir}/it/polito/dp2/NFV/sol3/client1"/>
 	<property name="client2.dir" location="${src.dir}/it/polito/dp2/NFV/sol3/client2"/>
 	
+	
+	<property name="web-inf.dir" location="${web_content.dir}/WEB-INF/classes/xsd"/>
 	
 	<!-- Declation of the the libray folder -->
 	<property name="shared.location" location="/opt/dp2/shared"/>
@@ -101,6 +104,11 @@
 		<echo>Done.</echo>
 		<echo>delete the generate folder...</echo>
 		<delete dir= "${gen.dir}"/>
+		
+		
+		<echo>Copy the schema file from the xsd directory into the web-inf folder</echo>
+		<copy file="${xsd.dir}/NfvDeclaration.xsd" todir="${web-inf.dir}"></copy>
+		
 	</target>
 	
 	

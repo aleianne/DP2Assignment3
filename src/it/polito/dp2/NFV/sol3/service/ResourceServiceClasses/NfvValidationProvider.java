@@ -56,8 +56,8 @@ public class NfvValidationProvider implements MessageBodyReader<JAXBElement<?>> 
 			}
             jaxbContext = JAXBContext.newInstance( jaxbPackage );
             SchemaFactory sf = SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
-            schema = sf.newSchema(new Source[] {new StreamSource(schemaStream1), new StreamSource(schemaStream2)});
-            //schema = sf.newSchema(new StreamSource(schemaStream2));
+          //schema = sf.newSchema(new Source[] {new StreamSource(schemaStream1), new StreamSource(schemaStream2)});
+            schema = sf.newSchema(new StreamSource(schemaStream2));
             
 			InputStream templateStream = NfvValidationProvider.class.getResourceAsStream("/html/BadRequestBodyTemplate.html");
 			if (templateStream == null) {
@@ -74,7 +74,7 @@ public class NfvValidationProvider implements MessageBodyReader<JAXBElement<?>> 
 
             logger.log(Level.INFO, "Nfv deployer initialized successfully");
 		} catch (SAXException | JAXBException | IOException se) {
-			logger.log(Level.SEVERE, "Error parsing xml directory file. Service will not work properly. ciao", se);
+			logger.log(Level.SEVERE, "Error parsing xml directory file. Service will not work properly.", se);
 		}
 	}
 

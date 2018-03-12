@@ -104,10 +104,10 @@ public class GraphAllocator {
 		for(RestrictedNodeType node: nodeList) {
 			String hostname = node.getHostname();
 			
-			logger.log(Level.INFO, "try to allocate function n: " + index + " " + vnfList.get(index).getName() + " on host " + hostname);
-			
 			if(hostname != null) {
 				ExtendedHostType host = hostDao.readHost(hostname);
+				
+				logger.log(Level.INFO, "try to allocate function n: " + index + " " + vnfList.get(index).getName() + " on host " + hostname);
 				
 				if(host != null) {
 					usedStorage = host.getStorageUsed().intValue();
@@ -180,22 +180,23 @@ public class GraphAllocator {
 			minVnfAllocated = Integer.MAX_VALUE;
 			targetHost = null;
 			
+		
 			for(ExtendedHostType host: hostList) {
 				// initialize the resource value variables
-				numAllocatedNodes += host.getTotalVNFallocated().intValue();
-				usedMemory += host.getAvailableStorage().intValue();
-				usedStorage += host.getAvailableMemory().intValue();
+				numAllocatedNodes = host.getTotalVNFallocated().intValue();
+				usedMemory = host.getMemoryUsed().intValue();
+				usedStorage = host.getStorageUsed().intValue();
 				
 				// search the data into the hashMap
 				allocatedVnfList = allocatedNodeMap.get(host.getHostname());
-				if(vnfList != null) {
+				if(allocatedVnfList != null) {
 					for(FunctionType allocatedVnf: allocatedVnfList) {
 						numAllocatedNodes++;
 						usedMemory += allocatedVnf.getRequiredMemory().intValue();
 						usedStorage += allocatedVnf.getRequiredStorage().intValue();
 					}
 				}
-				
+								
 				// check if the host can contain such node
 				if(numAllocatedNodes < host.getMaxVNF().intValue() &&
 						usedMemory + virtualFunction.getRequiredMemory().intValue() <= host.getAvailableMemory().intValue() &&
@@ -207,8 +208,10 @@ public class GraphAllocator {
 			}
 		
 			// put the data into the map 
-			if(targetHost == null) 
-				throw new AllocationException("Impossible to find a suitable host for vnf " + virtualFunction.getType());
+			if(targetHost == null) {
+				logger.log(Level.INFO, "Impossible to find a suitable host for vnf " + virtualFunction.getType());
+				throw new AllocationException();
+			}
 			else {
 				allocatedVnfList = allocatedNodeMap.get(targetHost.getHostname());
 				if(allocatedVnfList == null) {
@@ -226,6 +229,7 @@ public class GraphAllocator {
 			index++;
 		}
 	}
+	
 	/*
 	 * this function allocate the list of nodes passed as parameter into the host 
 	 */
@@ -234,23 +238,8 @@ public class GraphAllocator {
 		
 		// insert into the host the virtual function allocated
 		for(String hostname: allocatedNodeMap.keySet()) {
-			
-			/*String hostname = targetHostMap.get(index);
-			host = hostDao.readHost(hostname);
-			
-			if(host == null) {
-				throw new InternalServerErrorException();
-			}
-		
-			// update the host
-			host.setUsedMemory(usedMemory + host.getUsedMemory().intValue());
-			host.setUsedStorage(usedStorage + host.getUsedStorage().intValue());
-			host.setTotalVNFallocated(vnfAllocated.length() + host.getTotalVNFallocated().intValue());
-			
-			// update the node
-			node.setHostname(hostname);*/
-			
 			List<FunctionType> vnfAllocated = allocatedNodeMap.get(hostname);
+			
 			if(vnfAllocated == null) {
 				logger.log(Level.SEVERE, "inconsistent state, the host doesn't contain any node");
 				throw new InternalServerErrorException();
@@ -261,7 +250,11 @@ public class GraphAllocator {
 			}
 		}
 		
-		
+		// insert into the node the information about the target host
+		for(RestrictedNodeType node: nodeList) {
+			node.setHostname(targetHostMap.get(index));
+			index++;
+		}
 	}
 	
 	

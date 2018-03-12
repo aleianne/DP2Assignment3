@@ -53,7 +53,7 @@ public class NffgsResource {
 	public Response postNewNffg(JAXBElement<NffgGraphType> reqBodyNffg) {
 		try {
 			
-			if(reqBodyNffg != null)
+			if(reqBodyNffg == null)
 				logger.log(Level.INFO, "the request body is empty");
 			
 			// get the nffg graph type xml instance from the req body
@@ -76,7 +76,7 @@ public class NffgsResource {
 		} catch(AllocationException ae) {
 			logger.log(Level.SEVERE, "impossible to deploy the graph");
 			throw new ForbiddenException();
-		}
+		} 
 	}
 	
 	

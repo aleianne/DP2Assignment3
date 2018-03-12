@@ -17,9 +17,12 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.InternalServerErrorException;
+
 
 import it.polito.dp2.NFV.lab3.ServiceException;
 
@@ -93,8 +96,11 @@ public class HostDao {
 		
 		int availableStorage = queryResultHost.getStorageUsed().intValue();
 		int availableMemory = queryResultHost.getMemoryUsed().intValue();
-		
+		int totalVNF = queryResultHost.getTotalVNFallocated().intValue();
+			
 		// update the host resource information
+		totalVNF++;
+		queryResultHost.setTotalVNFallocated(BigInteger.valueOf(totalVNF));
 		queryResultHost.setMemoryUsed(BigInteger.valueOf(availableMemory + nodeMem));
 		queryResultHost.setStorageUsed(BigInteger.valueOf(availableStorage + nodeStorage));
 	}
