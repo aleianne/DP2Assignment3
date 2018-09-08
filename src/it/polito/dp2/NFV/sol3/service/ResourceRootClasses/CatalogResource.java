@@ -33,11 +33,11 @@ public class CatalogResource {
 	private static Logger logger = Logger.getLogger(CatalogResource.class.getName()); 
 
 	/*
-	 * GET operation performed on the catalog resource give back the list of all the VNFs available into the NFV system
+	 * GET operation performed on the catalog resource, return back the list of all VNFs available into the NFV system
 	 */
 	@GET
-    @ApiOperation(	value = "get the catalog", notes = "return to the client the entire catalog of VNF that are available into the web service")
-    @ApiResponses(	value = {
+    @ApiOperation(value = "get the catalog", notes = "return to client the entire catalog of VNF that are available into web service")
+    @ApiResponses(value = {
     		@ApiResponse(code = 200, message = "OK"),
     		@ApiResponse(code = 204, message = "No Content"),
     		@ApiResponse(code = 500, message = "Internal Server Error")
@@ -74,7 +74,7 @@ public class CatalogResource {
 		FunctionType function = catalogServer.getFunction(vnfId);
 		
 		if(function == null) {
-			logger.log(Level.SEVERE, "the virtul function " + vnfId + " doesn't exist");
+			logger.log(Level.SEVERE, "the virtual function " + vnfId + " doesn't exist");
 			throw new NotFoundException();
 		} else {
 			JAXBElement<FunctionType> catalogElement = objFactory.createFunction(function);

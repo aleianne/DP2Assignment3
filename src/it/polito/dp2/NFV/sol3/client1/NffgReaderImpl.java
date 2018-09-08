@@ -1,9 +1,6 @@
 package it.polito.dp2.NFV.sol3.client1;
 
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -39,7 +36,6 @@ public class NffgReaderImpl implements NffgReader {
 		DateConverter dateConverter = new DateConverter();
 		try {
 			// convert from  xml gregorian calendar to Calendar instance
-			// if the conversion encour in some problem the deploy-date is setted to null
 			deployDate = dateConverter.fromXMLGregorianCalendar(newGraph.getDeployDate());
 		} catch(DatatypeConfigurationException dce) {
 			deployDate = null;
@@ -50,31 +46,36 @@ public class NffgReaderImpl implements NffgReader {
 	@Override
 	public NodeReader getNode(String nodeName) {
 		List<RestrictedNodeType> graphNodeList = newGraph.getNodes().getNode();
-		RestrictedNodeType node;
-		NodeReader nodeReader;
-		
+
 		// return null if the node is empty 
 		if(graphNodeList.isEmpty()) 
 			return null;
 		
 		// check if the node searched is inside the graph
 		Predicate<RestrictedNodeType> nodePredicate = p-> p.getName() == nodeName;
-		node = graphNodeList.stream().filter(nodePredicate).findFirst().get();
-		nodeReader = new NodeReaderImpl(node, serviceManager);
-		
-		return nodeReader;
+		Optional<RestrictedNodeType> retrievedObject = graphNodeList.stream().filter(nodePredicate).findFirst();
+
+		if (((Optional) retrievedObject).isPresent())
+			return new NodeReaderImpl(retrievedObject.get(), serviceManager);
+
+		return null;
 	}
 
 	@Override
 	public Set<NodeReader> getNodes() {
-		Set<NodeReader> nodeSet = new HashSet<NodeReader> ();
-		
-		// put all the graph's nodes into the node reader set
-		for(RestrictedNodeType xmlNode: newGraph.getNodes().getNode()) {
-			NodeReader nodeReader = new NodeReaderImpl(xmlNode, serviceManager);
-			nodeSet.add(nodeReader);
+		Set<NodeReader> nodeSet = new HashSet<> ();
+
+		try {
+			NodesType nodes = serviceManager.getGraphNodes(newGraph.getNffgName());
+
+			// put all graph nodes into the node reader set
+			for (RestrictedNodeType node : nodes.getNode())
+				nodeSet.add(new NodeReaderImpl(node, serviceManager));
+
+		} catch(ServiceException se) {
+			System.err.println(se.getMessage());
 		}
-		
+
 		return nodeSet;
 	}
 	

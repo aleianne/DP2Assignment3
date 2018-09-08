@@ -18,18 +18,18 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 public class DeployedNffgImpl implements DeployedNffg {
 
 	private NffgGraphType newGraph;
-	private Map<NodeDescriptor, String> nodeDescriptorMap;
+	//private Map<NodeDescriptor, String> nodeDescriptorMap;
 	private NfvDeployerServiceManager serviceManager;
 	private String nffgId;
 	
 	
-	// the costructor receive the graph, a map that represent the association of nodedDescriptor and name assigned by the server
+	// the constructor receive the graph, a map that represent the association of nodeDescriptor and name assigned by the server
 	// it receives also the reference of the NFV Deployer service
-	public DeployedNffgImpl(NffgGraphType newGraph, Map<NodeDescriptor, String> nodeDescriptionMap, NfvDeployerServiceManager serviceManager) {
+	public DeployedNffgImpl(NffgGraphType newGraph, NfvDeployerServiceManager serviceManager) {
 		this.newGraph = newGraph;
-		this.nodeDescriptorMap = nodeDescriptionMap;
+		//this.nodeDescriptorMap = nodeDescriptionMap;
 		this.serviceManager = serviceManager;
-		nffgId = newGraph.getNffgName();
+		this.nffgId = newGraph.getNffgName();
 	}
 	
 	@Override
@@ -42,38 +42,42 @@ public class DeployedNffgImpl implements DeployedNffg {
 		
 		// forward the node to the webserver
 		RestrictedNodeType resNode = serviceManager.postNode(xmlNode, nffgId);
-		
+
+		// add a new node into the nffg representation saved into the client
+		//newGraph.getNodes().getNode().add(resNode);
+
 		// put the information into the nodeReader interface
-		NodeReader nodeReader = new NodeReaderImpl(resNode, serviceManager);
-		return nodeReader;
+		return new NodeReaderImpl(resNode, serviceManager);
 	}
 
 	@Override
 	public LinkReader addLink(NodeReader source, NodeReader dest, boolean overwrite)
 			throws NoNodeException, LinkAlreadyPresentException, ServiceException {
 		// get the link name from the resolver
-		String destName = nodeDescriptorMap.get(dest);
-		String sourceName = nodeDescriptorMap.get(source);
+//
+//		String destName = nodeDescriptorMap.get(dest);
+//		String sourceName = nodeDescriptorMap.get(source);
 		
 		ExtendedLinkType xmlLink = new ExtendedLinkType();
-		xmlLink.setDestinationNode(destName);
-		xmlLink.setSourceNode(sourceName);
+		xmlLink.setDestinationNode(dest.getName());
+		xmlLink.setSourceNode(source.getName());
 		xmlLink.setOverwrite(overwrite);
 		
-		if(destName == null || sourceName == null)
-			throw new NoNodeException();
+//		if(destName == null || sourceName == null)
+//			throw new NoNodeException();
 		
 		ExtendedLinkType link = serviceManager.postLink(xmlLink, nffgId);
+
+		// add the link into the nffg representation saved into the client
+		//newGraph.getLinks().getLink().add(link);
 	
 		// create a new link reader interface  in order to read the link infos
-		LinkReader linkReader = new LinkReaderImpl(link, newGraph, serviceManager);
-		return linkReader;
+		return new LinkReaderImpl(link, serviceManager);
 	}
 
 	@Override
 	public NffgReader getReader() throws ServiceException {
-		NffgReader nffgReader = new NffgReaderImpl(newGraph, serviceManager);
-		return nffgReader;
+		return new NffgReaderImpl(newGraph, serviceManager);
 	}
 
 }

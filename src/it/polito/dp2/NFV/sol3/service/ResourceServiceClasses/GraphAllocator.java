@@ -93,7 +93,7 @@ public class GraphAllocator {
 	public void findSelectedHost(List<FunctionType> vnfList, List<RestrictedNodeType> nodeList, HostDao hostDao) {
 		
 		/* 
-		 * in those arrays at the same position there is a correspondance between the node and is virtual function
+		 * in those arrays at the same position there is a correspondence between the node and his virtual function
 		 */
 		
 		int index = 0;
@@ -127,13 +127,9 @@ public class GraphAllocator {
 							usedMemory + vnfList.get(index).getRequiredMemory().intValue() <= host.getAvailableMemory().intValue() &&
 							usedStorage + vnfList.get(index).getRequiredStorage().intValue() <= host.getAvailableStorage().intValue()) {
 						
-						if(hostVnfAllocatedList != null) {
-							hostVnfAllocatedList.add(vnfList.get(index));
-						} else {
-							List<FunctionType> functionList = new ArrayList<FunctionType>();
-							functionList.add(vnfList.get(index));
-							allocatedNodeMap.put(hostname, functionList);
-						}
+						// insert the function into the map of the allocated host 
+						updateAllocatedVnfMap(hostVnfAllocatedList, vnfList.get(index), hostname);
+						
 						// insert the vnf into the list of elment ot be removed and add the hostname into the list of target
 						vnfAllocatedList.add(vnfList.get(index));
 						targetHostMap.put(index, hostname);
@@ -142,12 +138,16 @@ public class GraphAllocator {
 			}
 			index++;
 		}
-		// delete the allocated function from the list
+		// delete the allocated functions from the list
 		for(FunctionType function: vnfAllocatedList) {
 			vnfList.remove(function);
 		}
 	}
 	
+	
+	/*
+	 *  find the best suitable host using a best fit descreasing algorithm
+	 */
 	public void findBestHost(List<FunctionType> vnfList, List<ExtendedHostType> hostList) throws AllocationException{
 		int minVnfAllocated, numAllocatedNodes, usedMemory, usedStorage;
 		ExtendedHostType targetHost;
@@ -158,7 +158,7 @@ public class GraphAllocator {
 		
 		/*
 		 *  implements a custom compare method for the sorting operation 
-		 *  performend before the application of the best fit decreasing algorithm
+		 *  performed before the algorithm application
 		 */
 		Collections.sort(hostList, new Comparator<ExtendedHostType>() {
 
@@ -179,8 +179,7 @@ public class GraphAllocator {
 		for(FunctionType virtualFunction: vnfList) {
 			minVnfAllocated = Integer.MAX_VALUE;
 			targetHost = null;
-			
-		
+
 			for(ExtendedHostType host: hostList) {
 				// initialize the resource value variables
 				numAllocatedNodes = host.getTotalVNFallocated().intValue();
@@ -213,14 +212,10 @@ public class GraphAllocator {
 				throw new AllocationException();
 			}
 			else {
+				
 				allocatedVnfList = allocatedNodeMap.get(targetHost.getHostname());
-				if(allocatedVnfList == null) {
-					List<FunctionType> functionList = new ArrayList<FunctionType> ();
-					functionList.add(virtualFunction);
-					allocatedNodeMap.put(targetHost.getHostname(), functionList);
-				} else {
-					allocatedVnfList.add(virtualFunction);
-				}
+				// update the allocated vnf map
+				updateAllocatedVnfMap(allocatedVnfList, virtualFunction, targetHost.getHostname());
 				// set the hostname into the target list 
 				targetHostMap.put(index, targetHost.getHostname());
 			}
@@ -250,22 +245,26 @@ public class GraphAllocator {
 			}
 		}
 		
-		// insert into the node the information about the target host
 		for(RestrictedNodeType node: nodeList) {
+			// insert into the node the information about the target host
 			node.setHostname(targetHostMap.get(index));
-			index++;
-		}
-	}
-	
-	
-	public void updateHost(List<RestrictedNodeType> nodeList, HostDao hostDao) {
-		// insert into the host the deployed node
-		int index = 0;
-		for(RestrictedNodeType node: nodeList) {
+			// insert into the host the deployed node
 			hostDao.updateHost(targetHostMap.get(index), node);
 			index++;
 		}
 	}
+	
+	
+	private void updateAllocatedVnfMap(List<FunctionType> allocatedVnfList, FunctionType virtualFunction, String hostname) {
+		if(allocatedVnfList == null) {
+			List<FunctionType> functionList = new ArrayList<FunctionType> ();
+			functionList.add(virtualFunction);
+			allocatedNodeMap.put(hostname, functionList);
+		} else {
+			allocatedVnfList.add(virtualFunction);
+		}
+	}
+	
 	/*
 	public void commit(List<String> nodeNameList) throws AllocationException {
 		int index = 0;

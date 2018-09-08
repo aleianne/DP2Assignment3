@@ -39,8 +39,7 @@ public class NffgReaderImpl implements NffgReader {
 	public Calendar getDeployTime() {
 		try {
 			DateConverter dateConverter = new DateConverter();
-			Calendar date = dateConverter.fromXMLGregorianCalendar(nffg.getDeployDate());
-			return date;
+			return dateConverter.fromXMLGregorianCalendar(nffg.getDeployDate());
 		} catch(DatatypeConfigurationException dce) {
 			return null;
 		}

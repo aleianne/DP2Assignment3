@@ -6,6 +6,7 @@ import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,7 +31,7 @@ import it.polito.dp2.NFV.lab3.ServiceException;
 @Api(value = "/nffgs")
 public class NffgsResource {
 
-	private NffgResourceService nffgServer;
+	private NffgResourceService nffgServer = new NffgResourceService();
 	
 	private static ObjectFactory objFactory = ObjectFactoryManager.getObjectFactory();
 	private static Logger logger = Logger.getLogger(NffgsResource.class.getName());
@@ -41,8 +42,9 @@ public class NffgsResource {
 	 * and return the response to the client.
 	 */
 	@POST
-    @ApiOperation(	value = "create a new nffg", notes = "deploy a new nffg into the infrastructure network")
-    @ApiResponses(	value = {
+    @ApiOperation(value = "create a new nffg",
+			notes = "deploy a new nffg into the infrastructure network")
+    @ApiResponses(value = {
     		@ApiResponse(code = 201, message = "Created"),
     		@ApiResponse(code = 400, message = "Bad Request"),
     		@ApiResponse(code = 404, message = "Forbidden"),
@@ -59,19 +61,19 @@ public class NffgsResource {
 			// get the nffg graph type xml instance from the req body
 			NffgGraphType nffgXmlElement = reqBodyNffg.getValue();								
 			if(nffgXmlElement != null) {
-				nffgServer = new NffgResourceService();
-				
+				//nffgServer = new NffgResourceService();
 				// put the graph into the database and then return it to the client
 				nffgServer.deployNewNffgGraph(nffgXmlElement);							
 				JAXBElement<NffgGraphType> xmlResponse = objFactory.createNffg(nffgXmlElement);
+				// TODO: cambiare la risposta in modo da restituire l'uri della risorsa
 				return Response.ok(xmlResponse, MediaType.APPLICATION_XML).build();
 			} else {
-				logger.log(Level.SEVERE, "empty xml represeantion of graph to be deployed");
+				logger.log(Level.SEVERE, "impossible to deploy a graph, the xml representation is empty");
 				throw new BadRequestException();
 			}
 			
 		} catch(ServiceException se) {
-			logger.log(Level.SEVERE, "Service Exception: " + se.getMessage());
+			logger.log(Level.SEVERE, "service exception: " + se.getMessage());
 			throw new InternalServerErrorException();
 		} catch(AllocationException ae) {
 			logger.log(Level.SEVERE, "impossible to deploy the graph");
@@ -85,8 +87,9 @@ public class NffgsResource {
 	 * or only those that are deployed before the date passed as parameter, if present
 	 */
 	@GET 
-    @ApiOperation(	value = "get nffgs collections", notes = "return the xml representation of the nffg graphs deployed into the system")
-    @ApiResponses(	value = {
+    @ApiOperation(value = "get nffgs collections",
+			notes = "return the xml representation of the nffg graphs deployed into the system")
+    @ApiResponses(value = {
     		@ApiResponse(code = 200, message = "OK"),
     		@ApiResponse(code = 204, message = "No Content"),
     		@ApiResponse(code = 500, message = "Internal Server Error")
@@ -94,23 +97,18 @@ public class NffgsResource {
 	@Produces(MediaType.APPLICATION_XML)
 	public Response getNffgs(@QueryParam("date") String param_date) {
 		JAXBElement<NffgsInfoType> nffgsXmlElement;
-		nffgServer = new NffgResourceService();
-
+		//nffgServer = new NffgResourceService();
 		if(param_date == null) {
 			// return all the nffg infos in the server
 			nffgsXmlElement = objFactory.createNffgs(nffgServer.getAllNffgs());
 		} else {
 			// select only the nffg that are deployed before the date
 			NffgsInfoType resultValue = nffgServer.selectNffgs(param_date);
-			
-			// if the nffgs resource is empty return 204 No Content error
 			if(resultValue == null) 
 				return Response.noContent().build();
-			else {
+			else
 				nffgsXmlElement = objFactory.createNffgs(resultValue);
-			}
 		}
-		// return the response 
 		return Response.ok(nffgsXmlElement, MediaType.APPLICATION_XML).build();
 	}
 	
@@ -120,8 +118,9 @@ public class NffgsResource {
 	 */
 	@GET
 	@Path("{nffgId}")
-	@ApiOperation(	value = "get a single nffg", notes = "return the xml representation of the nffg graphs deployed into the system")
-    @ApiResponses(	value = {
+	@ApiOperation(value = "get a single nffg",
+			notes = "return the xml representation of the nffg graphs deployed into the system")
+    @ApiResponses(value = {
     		@ApiResponse(code = 200, message = "OK"),
     		@ApiResponse(code = 404, message = "Not Found"),
     		@ApiResponse(code = 500, message = "Internal Server Error")
@@ -132,18 +131,15 @@ public class NffgsResource {
 			logger.log(Level.SEVERE, "nffg ID is null");
 			throw new NotFoundException();
 		}
-		// interrogate the database to find the nffg graph
-		nffgServer = new NffgResourceService();
+		// find the nffg graph
+//		nffgServer = new NffgResourceService();
 		NffgGraphType queryResultNffg = nffgServer.getSingleNffg(nffgId);												// query the database to obtain the nffg that correspond to the ID
-	
-		if(queryResultNffg != null) { 
-			
+		if(queryResultNffg != null) {
 			// synchronize the access to the graph in order to prevent change during the GET operation
 			synchronized(queryResultNffg)  {
 				JAXBElement<NffgGraphType> nffgXmlElement = objFactory.createNffg(queryResultNffg);
 				return Response.ok(nffgXmlElement, MediaType.APPLICATION_XML).build();
 			}
-			
 		} else {
 			logger.log(Level.SEVERE, "the resource requested by the client doesn't exist");
 			throw new NotFoundException();
@@ -155,8 +151,9 @@ public class NffgsResource {
 	 */
 	@DELETE
 	@Path("{nffgId}")
-    @ApiOperation(	value = "delete a nffg", notes = "delete an nffg and his graph")
-    @ApiResponses(	value = {
+    @ApiOperation(value = "delete a nffg",
+			notes = "delete an nffg and his graph")
+    @ApiResponses(value = {
     		@ApiResponse(code = 501, message = "Not Implemented"),
     		@ApiResponse(code = 404, message = "Not Found"),
     		@ApiResponse(code = 500, message = "Internal Server Error")
@@ -198,8 +195,9 @@ public class NffgsResource {
 	 */
 	@POST
 	@Path("{nffgId}/nodes")
-	@ApiOperation(	value = "create a node", notes = "delete a nf-fg node")
-	@ApiResponses(	value = {
+	@ApiOperation(value = "create a node",
+			notes = "create a new network node into the nf-fg graph")
+	@ApiResponses(value = {
 	    @ApiResponse(code = 201, message = "Created"),
 	    @ApiResponse(code = 404, message = "Forbidden"),
 	    @ApiResponse(code = 500, message = "Internal Server Error")
@@ -211,7 +209,7 @@ public class NffgsResource {
 			if(nffgId == null) 
 				throw new NotFoundException();
 			if(reqBodyNode == null) 
-				logger.log(Level.INFO, "the  request body is empty");
+				logger.log(Level.INFO, "request body is empty");
 			
 			RestrictedNodeType nodeXmlElement = reqBodyNode.getValue();
 			if(nodeXmlElement != null) {
@@ -234,10 +232,85 @@ public class NffgsResource {
 			throw new ForbiddenException();
 		}
 	}
-		
-	/*
-	* this operation is mapped to a java method but is not necessary for the assignment
-	 */
+
+	@GET
+	@Path("{nffgId}/nodes")
+	@ApiOperation(value = "retrieve a list of node",
+		notes = "retrieve all the nodes associated to the graph")
+	@ApiResponses( value = {
+			@ApiResponse(code = 200, message = "OK"),
+			@ApiResponse(code = 400, message = "Bad Request"),
+			@ApiResponse(code = 404, message = "Not Found"),
+			@ApiResponse(code = 500, message = "Internal server error")
+	})
+	public Response getNodeList(@PathParam("nffgId") String nffgId) {
+		if (nffgId == null)
+			throw new BadRequestException();
+
+		NodesType nodes = objFactory.createNodesType();
+		List<RestrictedNodeType> nodeList = nodes.getNode();
+		nodeList = nffgServer.getNodeList(nffgId);
+
+		if (nodeList == null || ((List) nodeList).isEmpty())
+			throw new NotFoundException();
+
+		JAXBElement<NodesType> resNodeXml = objFactory.createNodes(nodes);
+		return Response.ok(resNodeXml, MediaType.APPLICATION_XML).build();
+	}
+
+	@GET
+	@Path("{nffgId}/links")
+	@ApiOperation(value = "retrieve a list of link",
+			notes = "retrieve all the links associated to the graph")
+	@ApiResponses( value = {
+			@ApiResponse(code = 200, message = "OK"),
+			@ApiResponse(code = 400, message = "Bad Request"),
+			@ApiResponse(code = 404, message = "Not Found"),
+			@ApiResponse(code = 500, message = "Internal server error")
+	})
+	public Response getLinkList(@PathParam("nffgId") String nffgId) {
+		if (nffgId == null)
+			throw new BadRequestException();
+
+		LinksType links = objFactory.createLinksType();
+		List<ExtendedLinkType> linkList = links.getLink();
+		linkList = nffgServer.getLinkList(nffgId);
+
+		if (linkList == null || ((List) linkList).isEmpty())
+			throw new NotFoundException();
+
+		JAXBElement<LinksType> resNodeXml = objFactory.createLinks(links);
+		return Response.ok(resNodeXml, MediaType.APPLICATION_XML).build();
+	}
+
+
+	@GET
+	@Path("{nffgId}/nodes/{nodeId}")
+	@ApiOperation(value = "retrieve a specific node from the graph",
+			notes = "search into the graph a node with the specified name"
+	)
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "OK"),
+			@ApiResponse(code = 404, message = "Not Found"),
+			@ApiResponse(code = 400, message = "Bad request"),
+			@ApiResponse(code = 500, message = "Internal server error")
+	})
+	@Produces(MediaType.APPLICATION_XML)
+	public Response searchNode(@PathParam("nffgId") String nffgId, @PathParam("nodeId") String nodeId) {
+		if (nffgId == null || nodeId == null)
+			throw new BadRequestException();
+
+		NodeResourceService nodeServer = new NodeResourceService();
+		RestrictedNodeType node = nodeServer.searchNodeIntoGraph(nffgId, nodeId);
+
+		if (node != null ) {
+			JAXBElement<RestrictedNodeType> resBodyNode = objFactory.createNode(node);
+			return Response.ok(resBodyNode).build();
+		}
+
+		throw new NotFoundException();
+	}
+
 	@DELETE
 	@Path("{nffgId}/nodes/{nodeId}")
 	@ApiOperation( value = "delete a node", notes = "delete a nf-fg node")
@@ -249,8 +322,7 @@ public class NffgsResource {
 	public void deleteNode(@PathParam("nodeId") String nodeId, @PathParam("nffgId") String nffgId) {
 		throw new ServiceUnavailableException();
 	}
-	
-	
+
 	/*
 	 * return all the reachable host starting from the node id
 	 */
@@ -283,7 +355,7 @@ public class NffgsResource {
 				return Response.ok(hostsXmlElement, MediaType.APPLICATION_XML).build();
 			}
 		} catch(ServiceException se) {
-			logger.log(Level.SEVERE, "Service Exception: " + se.getMessage());
+			logger.log(Level.SEVERE, "service exception: " + se.getMessage());
 			throw new InternalServerErrorException();
 		}
 	}
@@ -297,6 +369,7 @@ public class NffgsResource {
 	@ApiResponses(	value = {
 	    @ApiResponse(code = 201, message = "Created"),
 	    @ApiResponse(code = 404, message = "Not Found"),
+        @ApiResponse(code = 409, message = "resource already exists"),
 	    @ApiResponse(code = 403, message = "Forbidden"),
 	    @ApiResponse(code = 500, message = "Internal Server Error")
 	  })
@@ -304,16 +377,15 @@ public class NffgsResource {
 	@Consumes(MediaType.APPLICATION_XML)
 	public Response createNewLink(JAXBElement<ExtendedLinkType> reqBodyNode, @PathParam("nffgId") String nffgId) {
 		try {
-			LinkResourceService linkServer = new LinkResourceService();
-			
 			if(nffgId == null) 
 				throw new ForbiddenException();
 			
 			if(reqBodyNode == null) 
-				logger.log(Level.INFO, "the request Body is null");
+				logger.log(Level.INFO, "request body is empty");
 			
 			ExtendedLinkType link = reqBodyNode.getValue();
 			if(link != null) {
+				LinkResourceService linkServer = new LinkResourceService();
 				linkServer.addLink(nffgId, link);
 				JAXBElement<ExtendedLinkType> xmlLinkElement = objFactory.createLink(link);
 				return Response.ok(xmlLinkElement, MediaType.APPLICATION_XML).build();
@@ -325,10 +397,13 @@ public class NffgsResource {
 		} catch(ServiceException se) {
 			logger.log(Level.SEVERE, "Service Exception " + se.getMessage());
 			throw new InternalServerErrorException();
-		} catch(NoNodeException | LinkAlreadyPresentException ae) {
+		} catch(NoNodeException ne) {
 			throw new ForbiddenException();
 		} catch(GraphNotFoundException gfe) {
 			logger.log(Level.SEVERE, "the graph specified doesn't exist");
+			throw new NotFoundException();
+		} catch (LinkAlreadyPresentException le) {
+			// TODO lanciare un errore 409
 			throw new NotFoundException();
 		}
 	}

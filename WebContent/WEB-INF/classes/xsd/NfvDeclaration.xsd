@@ -4,8 +4,8 @@
 	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
 	xmlns:nfv="http://www.example.com/nfv" 
 	elementFormDefault="qualified">
-	
-	<!-- <xsd:include schemaLocation="nfvInfo.xsd"/> -->
+
+	<!--<xsd:include schemaLocation="nfvInfo.xsd"/>-->
 	
 	<xsd:annotation>
 		<xsd:documentation>
@@ -47,6 +47,7 @@
 	<xsd:element name="link" type="nfv:extendedLinkType"/>
 	<xsd:element name="node" type="nfv:restrictedNodeType"/>
 	<xsd:element name="nodes" type="nfv:nodesType"/>
+	<xsd:element name="links" type="nfv:linksType"/>
 	<xsd:element name="function" type="nfv:functionType"/>
 	<xsd:element name="functions" type="nfv:catalogType"/>
 	<xsd:element name="connection" type="nfv:connectionType"/>
@@ -97,6 +98,12 @@
 	<xsd:complexType name="nodesType">
 		<xsd:sequence>
 			<xsd:element name="node" type="nfv:restrictedNodeType" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="linksType">
+		<xsd:sequence>
+			<xsd:element name="link" type="nfv:extendedLinkType" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	
@@ -180,16 +187,16 @@
 	
 	<xsd:simpleType name="function_enumeration">
 		<xsd:restriction base="xsd:string">
-			<xsd:enumeration value="VPN"></xsd:enumeration>
-			<xsd:enumeration value="WEB_SERVER"></xsd:enumeration>
-			<xsd:enumeration value="WEB_CLIENT"></xsd:enumeration>
-			<xsd:enumeration value="SPAM"></xsd:enumeration>
-			<xsd:enumeration value="NAT"></xsd:enumeration>
-			<xsd:enumeration value="MAIL_SERVER"></xsd:enumeration>
-			<xsd:enumeration value="MAIL_CLIENT"></xsd:enumeration>
-			<xsd:enumeration value="FW"></xsd:enumeration>
-			<xsd:enumeration value="DPI"></xsd:enumeration>
-			<xsd:enumeration value="CACHE"></xsd:enumeration>
+			<xsd:enumeration value="VPN"/>
+			<xsd:enumeration value="WEB_SERVER"/>
+			<xsd:enumeration value="WEB_CLIENT"/>
+			<xsd:enumeration value="SPAM"/>
+			<xsd:enumeration value="NAT"/>
+			<xsd:enumeration value="MAIL_SERVER"/>
+			<xsd:enumeration value="MAIL_CLIENT"/>
+			<xsd:enumeration value="FW"/>
+			<xsd:enumeration value="DPI"/>
+			<xsd:enumeration value="CACHE"/>
 		</xsd:restriction>
 	</xsd:simpleType>
 	
@@ -207,8 +214,7 @@
 			<xsd:element name="function" type="nfv:functionType" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
-	
-	
+
 	<xsd:simpleType name="throughputType">
 		<xsd:restriction base="xsd:float">
 			<xsd:minInclusive value="0.0"/>
@@ -224,7 +230,7 @@
 	
 	<xsd:simpleType name="nfvName">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z][a-zA-Z0-9]*"></xsd:pattern>
+			<xsd:pattern value="[a-zA-Z][a-zA-Z0-9]*"/>
 		</xsd:restriction>
 	</xsd:simpleType>
 

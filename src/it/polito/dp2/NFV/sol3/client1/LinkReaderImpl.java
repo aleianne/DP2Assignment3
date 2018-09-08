@@ -15,7 +15,7 @@ public class LinkReaderImpl implements LinkReader{
 	private Predicate<RestrictedNodeType> linkPredicate;
 	private NfvDeployerServiceManager serviceManager;
 	
-	public LinkReaderImpl(ExtendedLinkType link, NffgGraphType nffg, NfvDeployerServiceManager serviceManager) {
+	public LinkReaderImpl(ExtendedLinkType link, NfvDeployerServiceManager serviceManager) {
 		this.link = link;
 		this.nffg = nffg;
 	}
@@ -30,8 +30,7 @@ public class LinkReaderImpl implements LinkReader{
 		// filter the list 
 		linkPredicate = p-> p.getName() == link.getDestinationNode();
 		RestrictedNodeType destNode = nffg.getNodes().getNode().stream().filter(linkPredicate).findFirst().get();
-		NodeReader nr = new NodeReaderImpl(destNode, serviceManager);
-		return nr;
+		return new NodeReaderImpl(destNode, serviceManager);
 	}
 
 	@Override
@@ -44,15 +43,12 @@ public class LinkReaderImpl implements LinkReader{
 		// filter the list 
 		linkPredicate = p-> p.getName() == link.getSourceNode();
 		RestrictedNodeType srcNode = nffg.getNodes().getNode().stream().filter(linkPredicate).findFirst().get();
-		NodeReader nr = new NodeReaderImpl(srcNode, serviceManager);
-		return nr;
+		return new NodeReaderImpl(srcNode, serviceManager);
 	}
 
 	@Override
 	public float getThroughput() {
 		return link.getThroughput();
 	}
-	
-	
-	
+
 }

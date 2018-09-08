@@ -2,6 +2,7 @@ package it.polito.dp2.NFV.sol3.client1;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import it.polito.dp2.NFV.lab3.AllocationException;
@@ -32,15 +33,15 @@ public class Client1Impl implements NfvClient {
 		// the second map is used to assocate a nodeDescriptor to the name returned by the server
 		
 		int nodeCounter = 0;
-		Map<NodeDescriptor, String> nodeMap = new HashMap<NodeDescriptor, String> ();
-		Map<NodeDescriptor, String> nodeResponseMap = new HashMap<NodeDescriptor, String> ();
+		Map<NodeDescriptor, String> nodeMap = new HashMap<> ();
+		Map<NodeDescriptor, String> nodeResponseMap = new HashMap<> ();
 		
 		// convert the nffg descriptor into the xml type for the forward
 		NffgGraphType newGraph = new NffgGraphType();
 		newGraph.setNodes(new NffgGraphType.Nodes());
 		newGraph.setLinks(new NffgGraphType.Links());
 		
-		// create the xml instance for the node inside the graph
+		// create a new xml instance for the nodes inside the graph
 		for(NodeDescriptor node: nffg.getNodes()) {
 			RestrictedNodeType xmlNode = new RestrictedNodeType();
 			
@@ -74,14 +75,16 @@ public class Client1Impl implements NfvClient {
 		// forward the graph to the remote service
 		NffgGraphType responseGraph = serviceManager.postNffg(newGraph);
 		
-		// put all the node deployed into an hashmap that contain all the association of node and name assigned by the server
-		int index = 0;
-		for(NodeDescriptor node: nffg.getNodes()) {
-			nodeResponseMap.put(node, responseGraph.getNodes().getNode().get(index).getName());
-			index++;
-		}
+//		// put all the nodes deployed into an hashmap that contains all the association of the client node name and the name assigned by the server
+//		int index = 0;
+//		for(NodeDescriptor node: nffg.getNodes()) {
+//			nodeResponseMap.put(node, responseGraph.getNodes().getNode().get(index).getName());
+//			index++;
+//		}
+
+		List<RestrictedNodeType> nodesList = responseGraph.getNodes().getNode();
 		
-		DeployedNffg deployedNffg = new DeployedNffgImpl(responseGraph, nodeResponseMap, serviceManager);
+		DeployedNffg deployedNffg = new DeployedNffgImpl(responseGraph, serviceManager);
 		nffgMap.put(responseGraph.getNffgName(), deployedNffg);
 		
 		return deployedNffg;
@@ -91,9 +94,8 @@ public class Client1Impl implements NfvClient {
 	public DeployedNffg getDeployedNffg(String name) throws UnknownEntityException, ServiceException {
 		DeployedNffg nffg = nffgMap.get(name);
 		
-		if(nffg == null) {
+		if(nffg == null)
 			throw new UnknownEntityException();
-		} 
 		
 		return nffg;
 	}

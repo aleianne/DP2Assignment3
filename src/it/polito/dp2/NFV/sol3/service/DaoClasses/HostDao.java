@@ -29,8 +29,9 @@ import it.polito.dp2.NFV.lab3.ServiceException;
 public class HostDao {
 
 	private static ConcurrentMap<String, ExtendedHostType> hostMap = new ConcurrentHashMap<String, ExtendedHostType>();
+	private static final String hostLabelName = "host";
 	
-	static private HostDao hostDao = new HostDao();
+	private static HostDao hostDao = new HostDao();
 	
 	public static HostDao getInstance() {
 		return hostDao;
@@ -47,17 +48,16 @@ public class HostDao {
 		Property neo4jProperty = new Property();
 		Labels hostLabel = new Labels();
 		
-		// declarate a new property inside the neo4jnode
+		// declare a new property inside the neo4j node
 		neo4jNode.setProperties(new Properties());
 		neo4jNode.getProperties().getProperty().add(neo4jProperty);
-		
-		// set the value of the label as Host
-		hostLabel.getLabel().add("host");
+
+		hostLabel.getLabel().add(hostLabelName);
 		
 		for(ExtendedHostType host: hostList) {
 			hostMap.put(host.getHostname(), host);
 			
-			// set the neo4j node property a and forward it
+			// set neo4j graph node property and forward it
 			neo4jNode.getProperties().getProperty().get(0).setName("name");
 			neo4jNode.getProperties().getProperty().get(0).setValue(host.getHostname());
 			neo4jXMLclient.postNode(neo4jNode, hostLabel);
@@ -86,10 +86,10 @@ public class HostDao {
 	public void updateHost(String hostname, FunctionType functionToBeDeployed) throws InternalServerErrorException {
 		// interrogate the database in order to obtain the host to be update
 		ExtendedHostType queryResultHost = hostMap.get(hostname);
-		if(queryResultHost == null) {
+
+		if(queryResultHost == null)
 			throw new InternalServerErrorException();
-		}
-		
+
 		// update the storage and memory value inside the host
 		int nodeMem = functionToBeDeployed.getRequiredMemory().intValue();
 		int nodeStorage = functionToBeDeployed.getRequiredStorage().intValue();
@@ -106,23 +106,22 @@ public class HostDao {
 	}
 	
 	public void updateHost(String hostname, RestrictedNodeType nodeToBeDeployed) throws InternalServerErrorException {
-		// interrogate the database in order to obtain the host to be update
+		// query the database in order to obtain the host to be update
 		ExtendedHostType queryResultHost = hostMap.get(hostname);
-		if(queryResultHost == null) {
+
+		if(queryResultHost == null)
 			throw new InternalServerErrorException();
-		}
-		
-		ExtendedHostType.DeployedNodes deployedNodes = queryResultHost.getDeployedNodes();
+
+		ExtendedHostType.DeployedNodes hostDeployedNodes = queryResultHost.getDeployedNodes();
 		DeployedNodeType node = new DeployedNodeType();
 		node.setNodeName(nodeToBeDeployed.getName());
-		
-		// if the list of deployed into the host in empty create it
-		if(deployedNodes == null) {
-			deployedNodes = new ExtendedHostType.DeployedNodes();
-			deployedNodes.getNode().add(node);
-			queryResultHost.setDeployedNodes(deployedNodes);
+
+		if(hostDeployedNodes == null) {
+			hostDeployedNodes = new ExtendedHostType.DeployedNodes();
+			hostDeployedNodes.getNode().add(node);
+			queryResultHost.setDeployedNodes(hostDeployedNodes);
 		} else {
-			deployedNodes.getNode().add(node);
+			hostDeployedNodes.getNode().add(node);
 		}
 	}
 	
@@ -138,7 +137,7 @@ public class HostDao {
 	public void deleteHost(ExtendedHostType host) {}
 	
 	/*
-	 * return a collection of hosts that satidfy the constraint of memory and storage
+	 * return a collection of hosts that satisfy the constraint of memory and storage
 	 */
 	public Collection<ExtendedHostType> queryHost(int minStorage, int minMemory) {
 		// apply the filter predicate to the hashmap

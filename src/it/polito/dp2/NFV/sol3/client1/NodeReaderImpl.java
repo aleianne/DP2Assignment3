@@ -20,12 +20,6 @@ public class NodeReaderImpl implements NodeReader {
 	public NodeReaderImpl(RestrictedNodeType newNode, NfvDeployerServiceManager serviceManager) {
 		this.node = newNode;
 		this.serviceManager = serviceManager;
-		
-		try {
-			graphResponse = serviceManager.getGraph(node.getNfFg());
-		} catch(ServiceException se) {
-			
-		}
 	}
 	
 	@Override
@@ -56,20 +50,26 @@ public class NodeReaderImpl implements NodeReader {
 		} catch(ServiceException se) {
 			System.err.println(se.getMessage());
 		}
+
 		return hostReader;
 	}
 
 	@Override
 	public Set<LinkReader> getLinks() {
-		Set<LinkReader> linkReaderSet = new HashSet<LinkReader> ();
-		
-		// filter only those that have the source node name equal to this node
-		for(ExtendedLinkType link: graphResponse.getLinks().getLink()) {
-			if(link.getSourceNode() == node.getName()) {
-				LinkReader lr = new LinkReaderImpl(link, graphResponse, serviceManager);
-				linkReaderSet.add(lr);
+		Set<LinkReader> linkReaderSet = new HashSet<> ();
+
+		try {
+			LinksType links = serviceManager.getGraphLinks(node.getNfFg());
+
+			// filter only those that have the source node name equal to this node
+			for(ExtendedLinkType link: links.getLink()) {
+				if(link.getSourceNode() == node.getName())
+					linkReaderSet.add(new LinkReaderImpl(link, serviceManager));
 			}
+		} catch(ServiceException se) {
+			System.err.println(se.getMessage());
 		}
+
 		return linkReaderSet;
 	}
 
@@ -78,6 +78,7 @@ public class NodeReaderImpl implements NodeReader {
 		NffgReader nffgReader = null;
 		
 		try {
+			NffgGraphType responseGraph = serviceManager.getGraph(node.getNfFg());
 			nffgReader = new NffgReaderImpl(graphResponse, serviceManager);
 		} catch(ServiceException se) {
 			System.err.println(se.getMessage());

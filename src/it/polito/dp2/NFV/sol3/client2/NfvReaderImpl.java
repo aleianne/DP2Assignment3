@@ -21,6 +21,7 @@ public class NfvReaderImpl implements NfvReader {
 	
 	public NfvReaderImpl() {
 		serviceManager = new NfvDeployerServiceManager();
+
 	}
 	
 	@Override

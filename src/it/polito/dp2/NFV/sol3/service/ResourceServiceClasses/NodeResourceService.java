@@ -59,7 +59,6 @@ public class NodeResourceService {
 			GraphDao.getInstance().updateGraph(graphId, newNode);
 				
 			allocator.allocateGraph(nodeList, hostDao);
-			allocator.updateHost(nodeList, hostDao);
 		}
 			
 		return nodeList.get(0).getName();
@@ -68,6 +67,21 @@ public class NodeResourceService {
 	
 	public void getNode(String nodeId) {
 		
+	}
+
+	public RestrictedNodeType searchNodeIntoGraph(String nffgId, String nodeId) {
+		// get the nffg from the graphDao
+		NffgGraphType retrievedNffg = GraphDao.getInstance().readGraph(nffgId);
+
+		if (retrievedNffg == null)
+			return null;
+
+		List<RestrictedNodeType> nodeList = retrievedNffg.getNodes().getNode();
+
+		if (nodeList == null || nodeList.isEmpty())
+			return null;
+
+		return nodeList.stream().filter(p -> p.getName() == nodeId).findFirst().get();
 	}
 
 	public List<ExtendedHostType> getReachableHost(String nffgId) throws ServiceException {

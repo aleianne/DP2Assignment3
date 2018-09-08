@@ -167,7 +167,7 @@ public class NfvDeployer implements ApplicationEventListener{
 			logger.log(Level.INFO, "Nffg-0  is loaded");
 			
 		} catch(NfvReaderException ne) {
-			logger.log(Level.SEVERE, "impossible to lauch the nfv deployer web service: " + ne.getMessage());
+			logger.log(Level.SEVERE, "impossible to launch the nfv deployer web service: " + ne.getMessage());
 		} catch(ServiceException se) {
 			logger.log(Level.SEVERE, "Service Exception: " + se.getMessage());
 		} catch(AllocationException ae) {
