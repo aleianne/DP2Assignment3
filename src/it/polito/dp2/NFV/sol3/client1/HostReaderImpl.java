@@ -11,55 +11,54 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.DeployedNodeType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.ExtendedHostType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.HostType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.NffgGraphType;
-import it.polito.dp2.NFV.sol3.service.ServiceXML.NodeType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.NodesType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.RestrictedNodeType;
- 
-public class HostReaderImpl implements HostReader{
 
-	private HostType host;
-	private NfvDeployerServiceManager serviceManager;
-	
-	public HostReaderImpl(HostType host2, NfvDeployerServiceManager serviceManager) {
-		this.host = host2;
-		this.serviceManager = serviceManager;
-	}
+public class HostReaderImpl implements HostReader {
 
-	@Override
-	public String getName() {
-		return host.getHostname();
-	}
+    private HostType host;
+    private NfvDeployerServiceManager serviceManager;
 
-	@Override
-	public int getAvailableMemory() {
-		return host.getAvailableMemory().intValue();
-	}
+    public HostReaderImpl(HostType host2, NfvDeployerServiceManager serviceManager) {
+        this.host = host2;
+        this.serviceManager = serviceManager;
+    }
 
-	@Override
-	public int getAvailableStorage() {
-		return host.getAvailableStorage().intValue();
-	}
+    @Override
+    public String getName() {
+        return host.getHostname();
+    }
 
-	@Override
-	public int getMaxVNFs() {
-		return host.getMaxVNF().intValue();
-	}
+    @Override
+    public int getAvailableMemory() {
+        return host.getAvailableMemory().intValue();
+    }
 
-	@Override
-	public Set<NodeReader> getNodes() {
-		Set<NodeReader> nodeReaderSet = new HashSet<NodeReader> ();
-		NodesType nodeList = null;
-		
-		try {
-			nodeList = serviceManager.getHostNode(host.getHostname());
-			for(RestrictedNodeType deployedNode: nodeList.getNode()) {
-				NodeReader newNodeReader = new NodeReaderImpl(deployedNode, serviceManager);
-				nodeReaderSet.add(newNodeReader);
-			}
-		} catch(ServiceException se) {
-			System.err.println(se.getMessage());
-		}
-		
-		return nodeReaderSet;
-	}
+    @Override
+    public int getAvailableStorage() {
+        return host.getAvailableStorage().intValue();
+    }
+
+    @Override
+    public int getMaxVNFs() {
+        return host.getMaxVNF().intValue();
+    }
+
+    @Override
+    public Set<NodeReader> getNodes() {
+        Set<NodeReader> nodeReaderSet = new HashSet<NodeReader>();
+        NodesType nodeList = null;
+
+        try {
+            nodeList = serviceManager.getHostNode(host.getHostname());
+            for (RestrictedNodeType deployedNode : nodeList.getNode()) {
+                NodeReader newNodeReader = new NodeReaderImpl(deployedNode, serviceManager);
+                nodeReaderSet.add(newNodeReader);
+            }
+        } catch (ServiceException se) {
+            System.err.println(se.getMessage());
+        }
+
+        return nodeReaderSet;
+    }
 }

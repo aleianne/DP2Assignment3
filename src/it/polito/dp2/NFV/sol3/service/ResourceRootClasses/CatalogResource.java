@@ -27,58 +27,55 @@ import io.swagger.annotations.ApiResponses;
 @Api(value = "/catalog")
 public class CatalogResource {
 
-	public CatalogResource() {}
+    private static Logger logger = Logger.getLogger(CatalogResource.class.getName());
+    private ObjectFactory objFactory = new ObjectFactory();
+    public CatalogResource() {
+    }
 
-	private ObjectFactory objFactory = new ObjectFactory();
-	private static Logger logger = Logger.getLogger(CatalogResource.class.getName()); 
-
-	/*
-	 * GET operation performed on the catalog resource, return back the list of all VNFs available into the NFV system
-	 */
-	@GET
+    /*
+     * GET operation performed on the catalog resource, return back the list of all VNFs available into the NFV system
+     */
+    @GET
     @ApiOperation(value = "get the catalog", notes = "return to client the entire catalog of VNF that are available into web service")
     @ApiResponses(value = {
-    		@ApiResponse(code = 200, message = "OK"),
-    		@ApiResponse(code = 204, message = "No Content"),
-    		@ApiResponse(code = 500, message = "Internal Server Error")
-    	})
-	@Produces(MediaType.APPLICATION_XML)
-	public Response getCatalog() {
-		CatalogResourceService catalogServer = new CatalogResourceService();
-		CatalogType catalogXmlElement = catalogServer.getCatalog();
-		
-		if(catalogXmlElement.getFunction().isEmpty()) {
-			logger.log(Level.INFO, "the catalog is empty");
-			return Response.noContent().build();
-		} else {
-			JAXBElement<CatalogType> catalogElement = objFactory.createFunctions(catalogXmlElement);
-			return Response.ok(catalogElement, MediaType.APPLICATION_XML).build();
-		}
-	}
-	
-	
-	/*
-	 * return a single vnf function
-	 */
-	@GET
-	@Path("/{vnfId}")
-    @ApiOperation(	value = "get a single VNF", notes = "get a single virtual node function")
-    @ApiResponses(	value = {
-    		@ApiResponse(code = 200, message = "OK"),
-    		@ApiResponse(code = 404, message = "Not Found"),
-    		@ApiResponse(code = 500, message = "Internal Server Error")
-    	})
-	@Produces(MediaType.APPLICATION_XML)
-	public Response getVNF(@PathParam("vnfId") String vnfId) {
-		CatalogResourceService catalogServer = new CatalogResourceService();
-		FunctionType function = catalogServer.getFunction(vnfId);
-		
-		if(function == null) {
-			logger.log(Level.SEVERE, "the virtual function " + vnfId + " doesn't exist");
-			throw new NotFoundException();
-		} else {
-			JAXBElement<FunctionType> catalogElement = objFactory.createFunction(function);
-			return Response.ok(catalogElement, MediaType.APPLICATION_XML).build();
-		}
-	}
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 204, message = "No Content"),
+            @ApiResponse(code = 500, message = "Internal Server Error")
+    })
+    @Produces(MediaType.APPLICATION_XML)
+    public Response getCatalog() {
+        CatalogResourceService catalogServer = new CatalogResourceService();
+        CatalogType catalogXmlElement = catalogServer.getCatalog();
+
+        if (catalogXmlElement.getFunction().isEmpty()) {
+            logger.log(Level.INFO, "the catalog of VNF in the NFV system is empty");
+            return Response.noContent().build();
+        }
+
+        return Response.ok(objFactory.createFunctions(catalogXmlElement), MediaType.APPLICATION_XML).build();
+    }
+
+    /*
+     * return a single vnf function
+     */
+    @GET
+    @Path("/{vnfId}")
+    @ApiOperation(value = "get a single VNF", notes = "get a single virtual node function")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 404, message = "Not Found"),
+            @ApiResponse(code = 500, message = "Internal Server Error")
+    })
+    @Produces(MediaType.APPLICATION_XML)
+    public Response getVNF(@PathParam("vnfId") String vnfId) {
+        CatalogResourceService catalogServer = new CatalogResourceService();
+        FunctionType function = catalogServer.getFunction(vnfId);
+
+        if (function == null) {
+            logger.log(Level.SEVERE, "the virtual function " + vnfId + " doesn't exist");
+            throw new NotFoundException();
+        }
+
+        return Response.ok(objFactory.createFunction(function), MediaType.APPLICATION_XML).build();
+    }
 }

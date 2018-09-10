@@ -10,48 +10,48 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 public class HostReaderImpl implements HostReader {
 
-	private HostType host;
-	private NfvDeployerServiceManager serviceManager;
-	
-	public HostReaderImpl(HostType host, NfvDeployerServiceManager serviceManager) {
-		this.host = host;
-		this.serviceManager = serviceManager;
-	}
-	
-	@Override
-	public String getName() {
-		return host.getHostname();
-	}
+    private HostType host;
+    private NfvDeployerServiceManager serviceManager;
 
-	@Override
-	public int getAvailableMemory() {
-		return host.getAvailableMemory().intValue();
-	}
+    public HostReaderImpl(HostType host, NfvDeployerServiceManager serviceManager) {
+        this.host = host;
+        this.serviceManager = serviceManager;
+    }
 
-	@Override
-	public int getAvailableStorage() {
-		return host.getAvailableStorage().intValue();
-	}
+    @Override
+    public String getName() {
+        return host.getHostname();
+    }
 
-	@Override
-	public int getMaxVNFs() {
-		return host.getMaxVNF().intValue();
-	}
+    @Override
+    public int getAvailableMemory() {
+        return host.getAvailableMemory().intValue();
+    }
 
-	@Override
-	public Set<NodeReader> getNodes() {
-		Set<NodeReader> nrSet = null;
-		try {
-			NodesType nodes = serviceManager.getHostNode(host.getHostname());
-			for(RestrictedNodeType node: nodes.getNode()) {
-				NodeReader nr = new NodeReaderImpl(node, serviceManager);
-				nrSet.add(nr);
-			}
-		} catch(ServiceException se) {
-			System.err.println("impossible to implement the node reader");
-			System.err.println(se.getMessage());
-		}
-		return nrSet;
-	}
+    @Override
+    public int getAvailableStorage() {
+        return host.getAvailableStorage().intValue();
+    }
+
+    @Override
+    public int getMaxVNFs() {
+        return host.getMaxVNF().intValue();
+    }
+
+    @Override
+    public Set<NodeReader> getNodes() {
+        Set<NodeReader> nrSet = null;
+        try {
+            NodesType nodes = serviceManager.getHostNode(host.getHostname());
+            for (RestrictedNodeType node : nodes.getNode()) {
+                NodeReader nr = new NodeReaderImpl(node, serviceManager);
+                nrSet.add(nr);
+            }
+        } catch (ServiceException se) {
+            System.err.println("impossible to implement the node reader");
+            System.err.println(se.getMessage());
+        }
+        return nrSet;
+    }
 
 }

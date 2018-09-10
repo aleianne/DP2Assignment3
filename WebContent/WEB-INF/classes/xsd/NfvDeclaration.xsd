@@ -27,6 +27,11 @@
 			<xsd:selector xpath="nfv:nodes/nfv:node/nfv:name"/>
 			<xsd:field xpath="."/>
 		</xsd:key>
+
+		<xsd:key name="unique-link">
+			<xsd:selector xpath="nfv:links/nfv:link/nfv:link-name"/>
+			<xsd:field xpath="."/>
+		</xsd:key>
 		
 		<xsd:keyref name="node-nffg-ref" refer="nfv:unique-nffg">
 			<xsd:selector xpath="nfv:nodes/nfv:node/nfv:nf-fg"/>
@@ -67,7 +72,7 @@
 				<xsd:complexType>
 					<xsd:sequence>
 						<xsd:element name="nffg-name" type="nfv:nfvName"/>
-						<xsd:element name="deploy-date" type="xsd:date"/>
+						<xsd:element name="deploy-date" type="xsd:dateTime"/>
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
@@ -77,7 +82,7 @@
 	<xsd:complexType name="nffgGraphType">
 		<xsd:sequence>
 			<xsd:element name="nffg-name" type="nfv:nfvName"/>
-			<xsd:element name="deploy-date" type="xsd:date" minOccurs="0"/>
+			<xsd:element name="deploy-date" type="xsd:dateTime" minOccurs="0"/>
 			<xsd:element name="nodes">
 				<xsd:complexType>
 					<xsd:sequence>

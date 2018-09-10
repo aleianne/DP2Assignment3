@@ -28,124 +28,125 @@ import it.polito.dp2.NFV.lab3.ServiceException;
 
 public class HostDao {
 
-	private static ConcurrentMap<String, ExtendedHostType> hostMap = new ConcurrentHashMap<String, ExtendedHostType>();
-	private static final String hostLabelName = "host";
-	
-	private static HostDao hostDao = new HostDao();
-	
-	public static HostDao getInstance() {
-		return hostDao;
-	}
-	
-	/* 
-	 * insertion of data inside the database
-	 * insertion of data inside the local hashmap
-	 */
-	public void createHost(List<ExtendedHostType> hostList) throws ServiceException {
-		Neo4jServiceManager neo4jXMLclient = Neo4jServiceManager.getInstance();
-		
-		Node neo4jNode = new Node();
-		Property neo4jProperty = new Property();
-		Labels hostLabel = new Labels();
-		
-		// declare a new property inside the neo4j node
-		neo4jNode.setProperties(new Properties());
-		neo4jNode.getProperties().getProperty().add(neo4jProperty);
+    private static final String hostLabelName = "host";
+    private static ConcurrentMap<String, ExtendedHostType> hostMap = new ConcurrentHashMap<String, ExtendedHostType>();
+    private static HostDao hostDao = new HostDao();
 
-		hostLabel.getLabel().add(hostLabelName);
-		
-		for(ExtendedHostType host: hostList) {
-			hostMap.put(host.getHostname(), host);
-			
-			// set neo4j graph node property and forward it
-			neo4jNode.getProperties().getProperty().get(0).setName("name");
-			neo4jNode.getProperties().getProperty().get(0).setValue(host.getHostname());
-			neo4jXMLclient.postNode(neo4jNode, hostLabel);
-		}
-	}
-	
-	/*
-	 * read the entire collection of data stored locally in the hashmap
-	 */
-	public Collection<ExtendedHostType> readAllHosts() {
-		return hostMap.values();
-	}
-	
-	/*
-	 * read a single host starting from his hostname
-	 */
-	public ExtendedHostType readHost(String hostname) {
-		return hostMap.get(hostname);
-	}
-	
-	/*
-	 * update a single host
-	 * update of the list of deployed node
-	 * update total allocated Storage and Memory
-	 */
-	public void updateHost(String hostname, FunctionType functionToBeDeployed) throws InternalServerErrorException {
-		// interrogate the database in order to obtain the host to be update
-		ExtendedHostType queryResultHost = hostMap.get(hostname);
+    public static HostDao getInstance() {
+        return hostDao;
+    }
 
-		if(queryResultHost == null)
-			throw new InternalServerErrorException();
+    /*
+     * insertion of data inside the database
+     * insertion of data inside the local hashmap
+     */
+    public void createHosts(List<ExtendedHostType> hostList) throws ServiceException {
+        Neo4jServiceManager neo4jXMLclient = Neo4jServiceManager.getInstance();
 
-		// update the storage and memory value inside the host
-		int nodeMem = functionToBeDeployed.getRequiredMemory().intValue();
-		int nodeStorage = functionToBeDeployed.getRequiredStorage().intValue();
-		
-		int availableStorage = queryResultHost.getStorageUsed().intValue();
-		int availableMemory = queryResultHost.getMemoryUsed().intValue();
-		int totalVNF = queryResultHost.getTotalVNFallocated().intValue();
-			
-		// update the host resource information
-		totalVNF++;
-		queryResultHost.setTotalVNFallocated(BigInteger.valueOf(totalVNF));
-		queryResultHost.setMemoryUsed(BigInteger.valueOf(availableMemory + nodeMem));
-		queryResultHost.setStorageUsed(BigInteger.valueOf(availableStorage + nodeStorage));
-	}
-	
-	public void updateHost(String hostname, RestrictedNodeType nodeToBeDeployed) throws InternalServerErrorException {
-		// query the database in order to obtain the host to be update
-		ExtendedHostType queryResultHost = hostMap.get(hostname);
+        Node neo4jNode = new Node();
+        Property neo4jProperty = new Property();
+        Labels hostLabel = new Labels();
 
-		if(queryResultHost == null)
-			throw new InternalServerErrorException();
+        // declare a new property inside the neo4j node
+        neo4jNode.setProperties(new Properties());
+        neo4jNode.getProperties().getProperty().add(neo4jProperty);
 
-		ExtendedHostType.DeployedNodes hostDeployedNodes = queryResultHost.getDeployedNodes();
-		DeployedNodeType node = new DeployedNodeType();
-		node.setNodeName(nodeToBeDeployed.getName());
+        hostLabel.getLabel().add(hostLabelName);
 
-		if(hostDeployedNodes == null) {
-			hostDeployedNodes = new ExtendedHostType.DeployedNodes();
-			hostDeployedNodes.getNode().add(node);
-			queryResultHost.setDeployedNodes(hostDeployedNodes);
-		} else {
-			hostDeployedNodes.getNode().add(node);
-		}
-	}
-	
-	/*public void updateHostDeployedNode(String hostName, String nodeId) {
-		ExtendedHostType targetHost = hostMap.get(hostName);
-		
-		ExtendedHostType.DeployedNode newDeployedNode = new ExtendedHostType.DeployedNode();
-		newDeployedNode.setNodeName(nodeId);
-		
-		targetHost.getDeployedNode().add(newDeployedNode);
-	}
-	*/
-	public void deleteHost(ExtendedHostType host) {}
-	
-	/*
-	 * return a collection of hosts that satisfy the constraint of memory and storage
-	 */
-	public Collection<ExtendedHostType> queryHost(int minStorage, int minMemory) {
-		// apply the filter predicate to the hashmap
-		Map<String, ExtendedHostType> hostSet = hostMap.entrySet()
-				.stream()
-				.filter(p -> p.getValue().getAvailableMemory().intValue() >= minMemory && p.getValue().getAvailableStorage().intValue() >= minStorage)
-				.collect(Collectors.toMap(p-> p.getKey(), p-> p.getValue()));
-				
-		return hostSet.values();
-	}
+        for (ExtendedHostType host : hostList) {
+            hostMap.put(host.getHostname(), host);
+
+            // set neo4j graph node property and forward it
+            neo4jNode.getProperties().getProperty().get(0).setName("name");
+            neo4jNode.getProperties().getProperty().get(0).setValue(host.getHostname());
+            neo4jXMLclient.postNode(neo4jNode, hostLabel);
+        }
+    }
+
+    /*
+     * read the entire collection of data stored locally in the hashmap
+     */
+    public Collection<ExtendedHostType> readAllHosts() {
+        return hostMap.values();
+    }
+
+    /*
+     * read a single host starting from his hostname
+     */
+    public ExtendedHostType readHost(String hostname) {
+        return hostMap.get(hostname);
+    }
+
+    /*
+     * update total memory allocated field and total storage used field
+     */
+    public void updateHost(String hostname, FunctionType functionToBeDeployed) throws InternalServerErrorException {
+        // interrogate the database in order to obtain the host to be update
+        ExtendedHostType queryResultHost = hostMap.get(hostname);
+
+        if (queryResultHost == null)
+            throw new InternalServerErrorException();
+
+        // update the storage and memory value inside the host
+        int nodeMem = functionToBeDeployed.getRequiredMemory().intValue();
+        int nodeStorage = functionToBeDeployed.getRequiredStorage().intValue();
+
+        int availableStorage = queryResultHost.getStorageUsed().intValue();
+        int availableMemory = queryResultHost.getMemoryUsed().intValue();
+        int totalVNF = queryResultHost.getTotalVNFallocated().intValue();
+
+        // update the host resource information
+        totalVNF++;
+        queryResultHost.setTotalVNFallocated(BigInteger.valueOf(totalVNF));
+        queryResultHost.setMemoryUsed(BigInteger.valueOf(availableMemory + nodeMem));
+        queryResultHost.setStorageUsed(BigInteger.valueOf(availableStorage + nodeStorage));
+    }
+
+    /*
+        update the list of host deployed node
+     */
+    public void updateHost(String hostname, RestrictedNodeType nodeToBeDeployed) throws InternalServerErrorException {
+        // query the database in order to obtain the host to be update
+        ExtendedHostType queryResultHost = hostMap.get(hostname);
+
+        if (queryResultHost == null)
+            throw new InternalServerErrorException();
+
+        ExtendedHostType.DeployedNodes hostDeployedNodes = queryResultHost.getDeployedNodes();
+        DeployedNodeType node = new DeployedNodeType();
+        node.setNodeName(nodeToBeDeployed.getName());
+
+        if (hostDeployedNodes == null) {
+            hostDeployedNodes = new ExtendedHostType.DeployedNodes();
+            hostDeployedNodes.getNode().add(node);
+            queryResultHost.setDeployedNodes(hostDeployedNodes);
+        } else {
+            hostDeployedNodes.getNode().add(node);
+        }
+    }
+
+    /*public void updateHostDeployedNode(String hostName, String nodeId) {
+        ExtendedHostType targetHost = hostMap.get(hostName);
+
+        ExtendedHostType.DeployedNode newDeployedNode = new ExtendedHostType.DeployedNode();
+        newDeployedNode.setNodeName(nodeId);
+
+        targetHost.getDeployedNode().add(newDeployedNode);
+    }*/
+
+    public void deleteHost(ExtendedHostType host) {
+    }
+
+    /*
+     * return a collection of hosts that satisfy the constraint of memory and storage
+     */
+    public Collection<ExtendedHostType> queryHost(int minStorage, int minMemory) {
+        // apply the filter predicate to the hashmap
+        Map<String, ExtendedHostType> hostSet = hostMap.entrySet()
+                .stream()
+                .filter(p -> p.getValue().getAvailableMemory().intValue() >= minMemory && p.getValue().getAvailableStorage().intValue() >= minStorage)
+                .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
+
+        return hostSet.values();
+    }
 }

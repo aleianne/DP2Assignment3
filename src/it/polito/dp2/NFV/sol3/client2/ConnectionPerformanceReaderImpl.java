@@ -6,20 +6,20 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 public class ConnectionPerformanceReaderImpl implements ConnectionPerformanceReader {
 
-	private ConnectionType conn;
-	
-	public ConnectionPerformanceReaderImpl(ConnectionType conn) {
-		this.conn = conn;
-	}
-	
-	@Override
-	public int getLatency() {
-		return conn.getLatency().intValue();
-	}
+    private ConnectionType conn;
 
-	@Override
-	public float getThroughput() {
-		return conn.getThroughput();
-	}
+    public ConnectionPerformanceReaderImpl(ConnectionType conn) {
+        this.conn = conn;
+    }
+
+    @Override
+    public int getLatency() {
+        return conn.getLatency().intValue();
+    }
+
+    @Override
+    public float getThroughput() {
+        return conn.getThroughput();
+    }
 
 }

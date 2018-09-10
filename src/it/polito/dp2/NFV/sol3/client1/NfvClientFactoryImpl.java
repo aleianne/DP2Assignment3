@@ -7,9 +7,9 @@ import it.polito.dp2.NFV.lab3.ServiceException;
 
 public class NfvClientFactoryImpl extends NfvClientFactory {
 
-	@Override
-	public NfvClient newNfvClient() throws NfvClientException {
-		return new Client1Impl();
-	}
+    @Override
+    public NfvClient newNfvClient() throws NfvClientException {
+        return new Client1Impl();
+    }
 
 }

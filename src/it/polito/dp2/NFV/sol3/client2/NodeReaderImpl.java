@@ -16,60 +16,60 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 public class NodeReaderImpl implements NodeReader {
 
-	private NfvDeployerServiceManager serviceManager;
-	private RestrictedNodeType node;
-	private NffgGraphType graph;
-	
-	public NodeReaderImpl(RestrictedNodeType node, NfvDeployerServiceManager serviceManager) { 
-		this.node = node;
-		this.serviceManager = serviceManager;
-	}
-	
-	@Override
-	public String getName() {
-		return node.getName();
-	}
+    private NfvDeployerServiceManager serviceManager;
+    private RestrictedNodeType node;
+    private NffgGraphType graph;
 
-	@Override
-	public VNFTypeReader getFuncType() {
-		VNFTypeReader vnf = null;
-		try {
-			FunctionType function = serviceManager.getFunction(node.getVNF());
-			vnf = new VNFTypeReaderImpl(function);
-		} catch(ServiceException se) {
-			System.err.println("impossible to implement a VNF reader interface");
-			System.err.println(se.getMessage());
-		}
-		return vnf;
-	}
+    public NodeReaderImpl(RestrictedNodeType node, NfvDeployerServiceManager serviceManager) {
+        this.node = node;
+        this.serviceManager = serviceManager;
+    }
 
-	@Override
-	public HostReader getHost() {
-		HostReader hr = null;
-		try {
-			ExtendedHostType host = serviceManager.getHost(node.getHostname());
-			hr = new HostReaderImpl(host, serviceManager);
-		} catch(ServiceException se) {
-			System.err.println("impossible to implement the host reader interface");
-			System.err.println(se.getMessage());
-		}
-		return hr;
-	}
+    @Override
+    public String getName() {
+        return node.getName();
+    }
 
-	@Override
-	public Set<LinkReader> getLinks() {
-		Set<LinkReader> lrSet = new HashSet<LinkReader> ();
-		for(ExtendedLinkType link: graph.getLinks().getLink()) {
-			LinkReader lr = new LinkReaderImpl(link, graph, serviceManager);
-			lrSet.add(lr);
-		}
-		return lrSet;
-	}
+    @Override
+    public VNFTypeReader getFuncType() {
+        VNFTypeReader vnf = null;
+        try {
+            FunctionType function = serviceManager.getFunction(node.getVNF());
+            vnf = new VNFTypeReaderImpl(function);
+        } catch (ServiceException se) {
+            System.err.println("impossible to implement a VNF reader interface");
+            System.err.println(se.getMessage());
+        }
+        return vnf;
+    }
 
-	@Override
-	public NffgReader getNffg() {
-		NffgReader nfgr = new NffgReaderImpl(node.getNfFg(), serviceManager);
-		return nfgr;
-	}
+    @Override
+    public HostReader getHost() {
+        HostReader hr = null;
+        try {
+            ExtendedHostType host = serviceManager.getHost(node.getHostname());
+            hr = new HostReaderImpl(host, serviceManager);
+        } catch (ServiceException se) {
+            System.err.println("impossible to implement the host reader interface");
+            System.err.println(se.getMessage());
+        }
+        return hr;
+    }
+
+    @Override
+    public Set<LinkReader> getLinks() {
+        Set<LinkReader> lrSet = new HashSet<LinkReader>();
+        for (ExtendedLinkType link : graph.getLinks().getLink()) {
+            LinkReader lr = new LinkReaderImpl(link, graph, serviceManager);
+            lrSet.add(lr);
+        }
+        return lrSet;
+    }
+
+    @Override
+    public NffgReader getNffg() {
+        NffgReader nfgr = new NffgReaderImpl(node.getNfFg(), serviceManager);
+        return nfgr;
+    }
 
 }

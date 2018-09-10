@@ -13,70 +13,70 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 public class NffgReaderImpl implements NffgReader {
 
-	private NffgGraphType newGraph;
-	private NfvDeployerServiceManager serviceManager;
-	
-	public NffgReaderImpl(NffgGraphType newGraph, NfvDeployerServiceManager serviceManager) throws ServiceException {
-		if(newGraph == null) 
-			throw new ServiceException();
-		else {
-			this.newGraph = newGraph;
-			this.serviceManager = serviceManager;
-		}
-	}
+    private NffgGraphType newGraph;
+    private NfvDeployerServiceManager serviceManager;
 
-	@Override
-	public String getName() {
-		return newGraph.getNffgName();
-	}
+    public NffgReaderImpl(NffgGraphType newGraph, NfvDeployerServiceManager serviceManager) throws ServiceException {
+        if (newGraph == null)
+            throw new ServiceException();
+        else {
+            this.newGraph = newGraph;
+            this.serviceManager = serviceManager;
+        }
+    }
 
-	@Override
-	public Calendar getDeployTime() {
-		Calendar deployDate;
-		DateConverter dateConverter = new DateConverter();
-		try {
-			// convert from  xml gregorian calendar to Calendar instance
-			deployDate = dateConverter.fromXMLGregorianCalendar(newGraph.getDeployDate());
-		} catch(DatatypeConfigurationException dce) {
-			deployDate = null;
-		}
-		return deployDate;
-	}
+    @Override
+    public String getName() {
+        return newGraph.getNffgName();
+    }
 
-	@Override
-	public NodeReader getNode(String nodeName) {
-		List<RestrictedNodeType> graphNodeList = newGraph.getNodes().getNode();
+    @Override
+    public Calendar getDeployTime() {
+        Calendar deployDate;
+        DateConverter dateConverter = new DateConverter();
+        try {
+            // convert from  xml gregorian calendar to Calendar instance
+            deployDate = dateConverter.fromXMLGregorianCalendar(newGraph.getDeployDate());
+        } catch (DatatypeConfigurationException dce) {
+            deployDate = null;
+        }
+        return deployDate;
+    }
 
-		// return null if the node is empty 
-		if(graphNodeList.isEmpty()) 
-			return null;
-		
-		// check if the node searched is inside the graph
-		Predicate<RestrictedNodeType> nodePredicate = p-> p.getName() == nodeName;
-		Optional<RestrictedNodeType> retrievedObject = graphNodeList.stream().filter(nodePredicate).findFirst();
+    @Override
+    public NodeReader getNode(String nodeName) {
+        List<RestrictedNodeType> graphNodeList = newGraph.getNodes().getNode();
 
-		if (((Optional) retrievedObject).isPresent())
-			return new NodeReaderImpl(retrievedObject.get(), serviceManager);
+        // return null if the node is empty
+        if (graphNodeList.isEmpty())
+            return null;
 
-		return null;
-	}
+        // check if the node searched is inside the graph
+        Predicate<RestrictedNodeType> nodePredicate = p -> p.getName() == nodeName;
+        Optional<RestrictedNodeType> retrievedObject = graphNodeList.stream().filter(nodePredicate).findFirst();
 
-	@Override
-	public Set<NodeReader> getNodes() {
-		Set<NodeReader> nodeSet = new HashSet<> ();
+        if (((Optional) retrievedObject).isPresent())
+            return new NodeReaderImpl(retrievedObject.get(), serviceManager);
 
-		try {
-			NodesType nodes = serviceManager.getGraphNodes(newGraph.getNffgName());
+        return null;
+    }
 
-			// put all graph nodes into the node reader set
-			for (RestrictedNodeType node : nodes.getNode())
-				nodeSet.add(new NodeReaderImpl(node, serviceManager));
+    @Override
+    public Set<NodeReader> getNodes() {
+        Set<NodeReader> nodeSet = new HashSet<>();
 
-		} catch(ServiceException se) {
-			System.err.println(se.getMessage());
-		}
+        try {
+            NodesType nodes = serviceManager.getGraphNodes(newGraph.getNffgName());
 
-		return nodeSet;
-	}
-	
+            // put all graph nodes into the node reader set
+            for (RestrictedNodeType node : nodes.getNode())
+                nodeSet.add(new NodeReaderImpl(node, serviceManager));
+
+        } catch (ServiceException se) {
+            System.err.println(se.getMessage());
+        }
+
+        return nodeSet;
+    }
+
 }

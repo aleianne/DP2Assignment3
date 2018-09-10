@@ -25,92 +25,89 @@ import io.swagger.annotations.ApiResponses;
 @Path("/hosts")
 @Api(value = "/host")
 public class HostResource {
-	
-	public HostResource() {}
-	
-	private HostResourceService hostServer;
-	private ObjectFactory objFactory = ObjectFactoryManager.getObjectFactory();
-	private static Logger logger = Logger.getLogger(HostResource.class.getName());
-	
-	/*
-	 *  this request method return a hosts data type
-	 */
-	@GET
-	@ApiOperation(	value = "get the hosts collection", notes = "return all host that are available inside the web service")
-    @ApiResponses(	value = {
-    		@ApiResponse(code = 200, message = "OK"),
-    		@ApiResponse(code = 204, message = "No Content"),
-    		@ApiResponse(code = 500, message = "Internal Server Error")
-    	})
-	@Produces(MediaType.APPLICATION_XML)
-	public Response getHosts() {
-		HostsType hostsXmlElement = new HostsType();
-		hostServer = new HostResourceService();
-		List<ExtendedHostType> hostList = hostServer.getAllAvailableHost();
-		
-		if(hostList.isEmpty()) {
-			return Response.noContent().build();
-		} else {
-			for(ExtendedHostType hostElement: hostList) {
-				hostsXmlElement.getHost().add((HostType) hostElement);
-			}
-			JAXBElement<HostsType> hostResponse = objFactory.createHosts(hostsXmlElement);
-			return Response.ok(hostResponse, MediaType.APPLICATION_XML).build();
-		}
-	}
-	
-	/*
-	 * request a single host 
-	 */
-	@GET
-	@Path("{hostId}")
-	@ApiOperation(	value = "get a single host", notes = "return to the client the representation of a single host")
-    @ApiResponses(	value = {
-    		@ApiResponse(code = 200, message ="OK"),
-    		@ApiResponse(code = 404, message = "Not Found"),
-    		@ApiResponse(code = 500, message = "Internal Server Error")
-    	})
-	@Produces(MediaType.APPLICATION_XML)
-	public Response getHost(@PathParam("{hostId}") String hostname) {
-		hostServer = new HostResourceService();
-		HostType host = (HostType) hostServer.getSingleHost(hostname);
-		
-		if(host == null) {
-			logger.log(Level.SEVERE, "impossible to find the host: " + hostname);
-			throw new NotFoundException();
-		} else {
-			JAXBElement<HostType> hostResponse = objFactory.createHost((HostType) host);
-			return Response.ok(hostResponse, MediaType.APPLICATION_XML).build();									// return a host XML representation
-		}
-	}
-	
-	
-	/*
-	 * get all the nodes allocated into a specific host
-	 */
-	@GET
-	@Path("{hostId}/nodes")
-	@ApiOperation(	value = "get all the nodes", notes = "return to the client the entire collection of nodes allocated on the host")
-    @ApiResponses(	value = {
-    		@ApiResponse(code = 200, message = "OK"),
-    		@ApiResponse(code = 204, message = "No Content"),
-    		@ApiResponse(code = 404, message = "Not Found"),
-    		@ApiResponse(code = 500, message = "Internal Server Error")
-    	})
-	@Produces(MediaType.APPLICATION_XML)
-	public Response getNodeAllocated(@PathParam("{hostId}") String hostname) {
-		hostServer = new HostResourceService();
-		
-	
-		NodesType xmlNodes = new NodesType();
-		xmlNodes.getNode().addAll(hostServer.getAllocatedNodes(hostname));
-			
-		if(xmlNodes.getNode().isEmpty()) {
-			logger.log(Level.SEVERE, "the host doesn't contain any node");
-			return Response.noContent().build();
-		}
-			
-		JAXBElement<NodesType> hostResponse = objFactory.createNodes(xmlNodes);
-		return Response.ok(hostResponse, MediaType.APPLICATION_XML).build();									// return a host XML representation
-	}
+
+    private static Logger logger = Logger.getLogger(HostResource.class.getName());
+    private HostResourceService hostServer = new HostResourceService();
+    private ObjectFactory objFactory = ObjectFactoryManager.getObjectFactory();
+
+    public HostResource() {
+    }
+
+    /*
+     *  this request method return a hosts data type
+     */
+    @GET
+    @ApiOperation(value = "get the hosts collection",
+            notes = "return all hosts that are available into the NFV system")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 204, message = "No Content"),
+            @ApiResponse(code = 500, message = "Internal Server Error")
+    })
+    @Produces(MediaType.APPLICATION_XML)
+    public Response getHosts() {
+        HostsType hostsXmlElement = new HostsType();
+        List<ExtendedHostType> hostList = hostServer.getAllAvailableHost();
+
+        if (!hostList.isEmpty()) {
+            for (ExtendedHostType hostElement : hostList) {
+                hostsXmlElement.getHost().add((HostType) hostElement);
+            }
+
+            return Response.ok(objFactory.createHosts(hostsXmlElement), MediaType.APPLICATION_XML).build();
+        }
+
+        return Response.noContent().build();
+    }
+
+    /*
+     * request a single host
+     */
+    @GET
+    @Path("{hostId}")
+    @ApiOperation(value = "get a single host",
+            notes = "return to the client the representation of a single host")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 404, message = "Not Found"),
+            @ApiResponse(code = 500, message = "Internal Server Error")
+    })
+    @Produces(MediaType.APPLICATION_XML)
+    public Response getHost(@PathParam("hostId") String hostname) {
+        HostType host = (HostType) hostServer.getSingleHost(hostname);
+
+        if (host == null) {
+            logger.log(Level.SEVERE, "impossible to find the host: " + hostname);
+            throw new NotFoundException();
+        }
+
+        return Response.ok(objFactory.createHost((HostType) host), MediaType.APPLICATION_XML).build();                                    // return a host XML representation
+    }
+
+
+    /*
+     * get all the nodes allocated into a specific host
+     */
+    @GET
+    @Path("{hostId}/nodes")
+    @ApiOperation(value = "get all the nodes",
+            notes = "return to the client the entire collection of nodes allocated on the host")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "OK"),
+            @ApiResponse(code = 204, message = "No Content"),
+            @ApiResponse(code = 404, message = "Not Found"),
+            @ApiResponse(code = 500, message = "Internal Server Error")
+    })
+    @Produces(MediaType.APPLICATION_XML)
+    public Response getNodeAllocated(@PathParam("hostId") String hostname) {
+        NodesType xmlNodes = new NodesType();
+        xmlNodes.getNode().addAll(hostServer.getAllocatedNodes(hostname));
+
+        if (xmlNodes.getNode().isEmpty()) {
+            logger.log(Level.SEVERE, "the host doesn't contain any node");
+            return Response.noContent().build();
+        }
+
+        return Response.ok(objFactory.createNodes(xmlNodes), MediaType.APPLICATION_XML).build();                                    // return a host XML representation
+    }
 }

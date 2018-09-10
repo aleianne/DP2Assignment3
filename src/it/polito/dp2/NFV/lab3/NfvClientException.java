@@ -1,6 +1,6 @@
 /*
  * File: NFFGClientException.java
- * 
+ *
  * Copyright (C) 2005-2008 - Politecnico di Torino
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -10,10 +10,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Author(s): Paolo Maggi <paolo.maggi@polito.it>
- *  
+ *
  * Created on Jan 16, 2008
  *
  */
@@ -39,65 +39,65 @@ package it.polito.dp2.NFV.lab3;
 @SuppressWarnings("serial")
 public class NfvClientException extends Exception {
 
-	/**
-	 * The underlying cause of this exception, if any.
-	 */
-	private Exception exception;
+    /**
+     * The underlying cause of this exception, if any.
+     */
+    private Exception exception;
 
-	/**
-	 * Constructor with no detail message.
-	 */
-	public NfvClientException() {
-		super();
-	}
+    /**
+     * Constructor with no detail message.
+     */
+    public NfvClientException() {
+        super();
+    }
 
-	/**
-	 * Constructor with the specified detail message.
-	 * 
-	 * @param msg the detail message
-	 */
-	public NfvClientException(String msg) {
-		super(msg);
-	}
+    /**
+     * Constructor with the specified detail message.
+     *
+     * @param msg the detail message
+     */
+    public NfvClientException(String msg) {
+        super(msg);
+    }
 
-	/**
-	 * Constructor with the specified underlying cause.
-	 * 
-	 * @param e the underlying cause of this exception
-	 */
-	public NfvClientException(Exception e) {
-		super(e);
-		exception = e;
-	}
+    /**
+     * Constructor with the specified underlying cause.
+     *
+     * @param e the underlying cause of this exception
+     */
+    public NfvClientException(Exception e) {
+        super(e);
+        exception = e;
+    }
 
-	/**
-	 * Constructor with the specified underlying cause and detail message.
-	 * 
-	 * @param e the underlying cause of this exception
-	 * @param msg the detail message
-	 */
-	public NfvClientException(Exception e, String msg) {
-		super(msg, e);
-		exception = e;
-	}
+    /**
+     * Constructor with the specified underlying cause and detail message.
+     *
+     * @param e   the underlying cause of this exception
+     * @param msg the detail message
+     */
+    public NfvClientException(Exception e, String msg) {
+        super(msg, e);
+        exception = e;
+    }
 
-	/**
-	 * Returns the message for this exception, if any.
-	 */
-	public String getMessage() {
-		String message = super.getMessage();
-		if (message == null && exception != null) {
-			message = exception.getMessage();
-		}
-		return message;
-	}
+    /**
+     * Returns the message for this exception, if any.
+     */
+    public String getMessage() {
+        String message = super.getMessage();
+        if (message == null && exception != null) {
+            message = exception.getMessage();
+        }
+        return message;
+    }
 
-	/**
-	 * Returns the underlying cause of this error, if any.
-	 * 
-	 * @return Returns the underlying cause of this error, if any.
-	 */
-	public Exception getException() {
-		return exception;
-	}
+    /**
+     * Returns the underlying cause of this error, if any.
+     *
+     * @return Returns the underlying cause of this error, if any.
+     */
+    public Exception getException() {
+        return exception;
+    }
 }
