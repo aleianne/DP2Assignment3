@@ -195,17 +195,16 @@ public class GraphDao {
                 List<RestrictedNodeType> GraphNodeList = queryResultGraph.getNodes().getNode();
 
                 // filter the list in order to obtain all the links that have a specified source node and a specified destination node
-                Predicate<ExtendedLinkType> linkPredicate = p -> p.getDestinationNode() == newLink.getDestinationNode() && p.getSourceNode() == newLink.getSourceNode();
-
+                Predicate<ExtendedLinkType> linkPredicate = p -> p.getDestinationNode().compareTo(newLink.getDestinationNode()) == 0 && p.getSourceNode().compareto(newLink.getSourceNode()) == 0;
                 // filter the node list, check if there are the nodes specified
-                Predicate<RestrictedNodeType> nodePredicate = p -> p.getName() == newLink.getDestinationNode();
-                Predicate<RestrictedNodeType> nodePredicate2 = p -> p.getName() == newLink.getSourceNode();
+                Predicate<RestrictedNodeType> nodePredicate = p -> p.getName().compareTo(newLink.getDestinationNode()) == 0;
+                Predicate<RestrictedNodeType> nodePredicate2 = p -> p.getName().compareTo(newLink.getSourceNode()) == 0;
 
-                if (GraphNodeList.stream().filter(nodePredicate).findFirst().get() == null
-                        || GraphNodeList.stream().filter(nodePredicate2).findFirst().get() == null)
+                if (!GraphNodeList.stream().filter(nodePredicate).findFirst().isPresent()
+                        || !GraphNodeList.stream().filter(nodePredicate2).findFirst().isPresent())
                     throw new NoNodeException();
 
-                if (graphLinkList.stream().filter(linkPredicate).findFirst().get() == null && !newLink.isOverwrite())
+                if (!graphLinkList.stream().filter(linkPredicate).findFirst().isPresent() && !newLink.isOverwrite())
                     throw new LinkAlreadyPresentException();
 
                 // assign to the link a new name

@@ -19,13 +19,14 @@ import it.polito.dp2.NFV.lab3.AllocationException;
 public class GraphAllocator {
 
     private static Logger logger = Logger.getLogger(GraphAllocator.class.getName());
-    private Map<Integer, String> targetHostMap;
+    private Map<String, Integer> targetHostMap;
+    private Map<Integer, String> reverseTargetHostMap;
     private Map<String, List<FunctionType>> vnfAllocatedIntoHostMap;
 
     public GraphAllocator() {
         vnfAllocatedIntoHostMap = new HashMap<String, List<FunctionType>>();
         // has been used an hashmap instead of a list because there isn't an order of node allocation
-        targetHostMap = new HashMap<Integer, String>();
+        reverseTargetHostMap = new HashMap<Integer, String> ();
     }
 	
 	/*public boolean findSuitableHost(FunctionType functionToBeDeployed, RestrictedNodeType newNode) {
@@ -122,7 +123,7 @@ public class GraphAllocator {
 
                         // insert the vnf into the list of element ot be removed and add the hostname into the list of target
                         vnfAllocatedList.add(vnfList.get(index));
-                        targetHostMap.put(index, hostname);
+                        reverseTargetHostMap.put(index, hostname);
                     }
                 }
             }
@@ -196,7 +197,7 @@ public class GraphAllocator {
                 // update the allocated vnf map
                 updateAllocatedVnfMap(allocatedVnfList, virtualFunction, targetHost.getHostname());
                 // set the hostname into the target list
-                targetHostMap.put(index, targetHost.getHostname());
+                reverseTargetHostMap.put(index, targetHost.getHostname());
             }
 
             // update index
@@ -223,8 +224,15 @@ public class GraphAllocator {
             int index = 0;
             for (FunctionType virtualFunction : vnfAllocated) {
                 hostDao.updateHost(hostname, virtualFunction);
-                hostDao.updateHost(targetHostMap.get(index), nodeList.get(index));
+                //hostDao.updateHost(targetHostMap.get(index), nodeList.get(index));
             }
+        }
+
+        int index = 0;
+        for (RestrictedNodeType node : nodeList) {
+            hostDao.updateHost(reverseTargetHostMap.get(index), nodeList.get(index));
+            logger.log(Level.INFO, "the target host is " + reverseTargetHostMap.get(index) + " the node is " + nodeList.get(index));
+            index++;
         }
     }
 
@@ -233,7 +241,7 @@ public class GraphAllocator {
 
         for (RestrictedNodeType node : nodeList) {
             // insert into the node the information about the target host
-            node.setHostname(targetHostMap.get(index));
+            node.setHostname(reverseTargetHostMap.get(index));
             index++;
         }
     }

@@ -35,6 +35,27 @@ public class ConnectionResource {
     public ConnectionResource() {
     }
 
+
+    @GET
+    @ApiOperation(value = "get all the physical connections")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Ok"),
+            @ApiResponse(code = 204, message = "No Content"),
+            @ApiResponse(code = 500, message = "InternalServerError")
+    })
+    @Produces(MediaType.APPLICATION_XML)
+    public Response getAllConnections() {
+        ConnectionResourceService connectionService = new ConnectionResourceService();
+        List<ConnectionType> connectionList = connectionService.getConnections();
+
+        if (connectionList.isEmpty())
+            return Response.noContent().build();
+
+        ConnectionsType xmlResBody = new ConnectionsType();
+        xmlResBody.getConnection().addAll(connectionList);
+        return Response.ok(objFactory.createConnections(xmlResBody), MediaType.APPLICATION_XML).build();
+    }
+
     /*
      * GET operation performed on the connections resoure retrieve the connection performance of the link between two host
      */

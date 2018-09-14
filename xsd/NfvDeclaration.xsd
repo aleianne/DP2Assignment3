@@ -56,6 +56,7 @@
 	<xsd:element name="function" type="nfv:functionType"/>
 	<xsd:element name="functions" type="nfv:catalogType"/>
 	<xsd:element name="connection" type="nfv:connectionType"/>
+	<xsd:element name="connections" type="nfv:connectionsType"/>
 	<xsd:element name="hosts" type="nfv:hostsType"/>
 	<xsd:element name="host" type="nfv:hostType"/>
 
@@ -187,6 +188,12 @@
 			<xsd:element name="hostname2" type="nfv:nfvName" maxOccurs="1"/>
 			<xsd:element name="latency" type="nfv:positiveInt" maxOccurs="1"/>
 			<xsd:element name="throughput" type="nfv:throughputType" maxOccurs="1"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="connectionsType">
+		<xsd:sequence>
+			<xsd:element name="connection" type="nfv:connectionType" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	

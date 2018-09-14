@@ -2,7 +2,6 @@ package it.polito.dp2.NFV.sol3.client1;
 
 import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import it.polito.dp2.NFV.lab3.AllocationException;
@@ -22,6 +21,7 @@ public class Client1Impl implements NfvClient {
     private NfvDeployerServiceManager serviceManager;
 
     public Client1Impl() {
+        // this is the map that contains the association between the node assigned by the client and the
         nffgMap = new HashMap<String, DeployedNffg>();
         serviceManager = new NfvDeployerServiceManager();
     }
@@ -30,13 +30,13 @@ public class Client1Impl implements NfvClient {
     public DeployedNffg deployNffg(NffgDescriptor nffg) throws AllocationException, ServiceException {
         // use a counter for the name of the node
         // the first map is used to associate a nodeDescriptor to a name in order to forward the link of the graph
-        // the second map is used to assocate a nodeDescriptor to the name returned by the server
+        // the second map is used to associate a nodeDescriptor to the name returned by the server
 
         int nodeCounter = 0;
         Map<NodeDescriptor, String> nodeMap = new HashMap<>();
-        Map<NodeDescriptor, String> nodeResponseMap = new HashMap<>();
+        //Map<NodeDescriptor, String> nodeResponseMap = new HashMap<>();
 
-        // convert the nffg descriptor into the xml type for the forward
+        // convert the nffg descriptor into an instance of xml binded class
         NffgGraphType newGraph = new NffgGraphType();
         newGraph.setNodes(new NffgGraphType.Nodes());
         newGraph.setLinks(new NffgGraphType.Links());
@@ -53,7 +53,6 @@ public class Client1Impl implements NfvClient {
             nodeCounter++;
         }
 
-        // crete the links xml description
         for (NodeDescriptor node : nffg.getNodes()) {
             for (LinkDescriptor link : node.getLinks()) {
                 ExtendedLinkType xmlLink = new ExtendedLinkType();
@@ -82,9 +81,9 @@ public class Client1Impl implements NfvClient {
 //			index++;
 //		}
 
-        List<RestrictedNodeType> nodesList = responseGraph.getNodes().getNode();
+        //List<RestrictedNodeType> nodesList = responseGraph.getNodes().getNode();
 
-        DeployedNffg deployedNffg = new DeployedNffgImpl(responseGraph, serviceManager);
+        DeployedNffg deployedNffg = new DeployedNffgImpl(responseGraph.getNffgName(), serviceManager);
         nffgMap.put(responseGraph.getNffgName(), deployedNffg);
 
         return deployedNffg;

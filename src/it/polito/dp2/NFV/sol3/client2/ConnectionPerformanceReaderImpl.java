@@ -8,7 +8,7 @@ public class ConnectionPerformanceReaderImpl implements ConnectionPerformanceRea
 
     private ConnectionType conn;
 
-    public ConnectionPerformanceReaderImpl(ConnectionType conn) {
+    protected ConnectionPerformanceReaderImpl(ConnectionType conn) {
         this.conn = conn;
     }
 

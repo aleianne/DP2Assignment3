@@ -1,7 +1,5 @@
 package it.polito.dp2.NFV.sol3.client1;
 
-import java.util.Map;
-
 import it.polito.dp2.NFV.LinkReader;
 import it.polito.dp2.NFV.NffgReader;
 import it.polito.dp2.NFV.NodeReader;
@@ -10,7 +8,6 @@ import it.polito.dp2.NFV.lab3.AllocationException;
 import it.polito.dp2.NFV.lab3.DeployedNffg;
 import it.polito.dp2.NFV.lab3.LinkAlreadyPresentException;
 import it.polito.dp2.NFV.lab3.NoNodeException;
-import it.polito.dp2.NFV.lab3.NodeDescriptor;
 import it.polito.dp2.NFV.lab3.ServiceException;
 
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
@@ -25,11 +22,10 @@ public class DeployedNffgImpl implements DeployedNffg {
 
     // the constructor receive the graph, a map that represent the association of nodeDescriptor and name assigned by the server
     // it receives also the reference of the NFV Deployer service
-    public DeployedNffgImpl(NffgGraphType newGraph, NfvDeployerServiceManager serviceManager) {
-        this.newGraph = newGraph;
+    protected DeployedNffgImpl(String nffgName, NfvDeployerServiceManager serviceManager) {
         //this.nodeDescriptorMap = nodeDescriptionMap;
         this.serviceManager = serviceManager;
-        this.nffgId = newGraph.getNffgName();
+        this.nffgId = nffgName;
     }
 
     @Override
@@ -72,11 +68,12 @@ public class DeployedNffgImpl implements DeployedNffg {
         //newGraph.getLinks().getLink().add(link);
 
         // create a new link reader interface  in order to read the link infos
-        return new LinkReaderImpl(link, serviceManager);
+        return new LinkReaderImpl(link, nffgId, serviceManager);
     }
 
     @Override
     public NffgReader getReader() throws ServiceException {
+        NffgGraphType newGraph = serviceManager.getGraph(nffgId);
         return new NffgReaderImpl(newGraph, serviceManager);
     }
 

@@ -2,7 +2,6 @@ package it.polito.dp2.NFV.sol3.client1;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import it.polito.dp2.NFV.HostReader;
 import it.polito.dp2.NFV.NodeReader;
@@ -19,7 +18,7 @@ public class HostReaderImpl implements HostReader {
     private HostType host;
     private NfvDeployerServiceManager serviceManager;
 
-    public HostReaderImpl(HostType host2, NfvDeployerServiceManager serviceManager) {
+    protected HostReaderImpl(HostType host2, NfvDeployerServiceManager serviceManager) {
         this.host = host2;
         this.serviceManager = serviceManager;
     }
@@ -46,7 +45,7 @@ public class HostReaderImpl implements HostReader {
 
     @Override
     public Set<NodeReader> getNodes() {
-        Set<NodeReader> nodeReaderSet = new HashSet<NodeReader>();
+        Set<NodeReader> nodeReaderSet = new HashSet<>();
         NodesType nodeList = null;
 
         try {

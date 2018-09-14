@@ -46,7 +46,7 @@ public class NffgsResource {
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Created"),
             @ApiResponse(code = 400, message = "Bad Request"),
-            @ApiResponse(code = 404, message = "Forbidden"),
+            @ApiResponse(code = 403, message = "Forbidden"),
             @ApiResponse(code = 500, message = "Internal Server Error")
     })
     @Produces(MediaType.TEXT_PLAIN)
@@ -68,14 +68,17 @@ public class NffgsResource {
                 return Response.ok(xmlResponse, MediaType.APPLICATION_XML).build();
             } else {
                 logger.log(Level.SEVERE, "impossible to deploy a graph, the xml representation is empty");
+                logger.log(Level.SEVERE, "return status code 400");
                 throw new BadRequestException();
             }
 
         } catch (ServiceException se) {
             logger.log(Level.SEVERE, "service exception: " + se.getMessage());
+            logger.log(Level.SEVERE, "return status code 500");
             throw new InternalServerErrorException();
         } catch (AllocationException ae) {
             logger.log(Level.SEVERE, "impossible to deploy the graph");
+            logger.log(Level.SEVERE, "return status code 403");
             throw new ForbiddenException();
         }
     }
@@ -135,9 +138,10 @@ public class NffgsResource {
     public Response getNffg(@PathParam("nffgId") String nffgId) {
         if (nffgId == null) {
             logger.log(Level.SEVERE, "nffg ID is null");
+            logger.log(Level.SEVERE, "return status code 500");
             throw new NotFoundException();
         }
-        // find the nffg graph
+
 //		nffgServer = new NffgResourceService();
         NffgGraphType queryResultNffg = nffgServer.getSingleNffg(nffgId);                                                // query the database to obtain the nffg that correspond to the ID
         if (queryResultNffg != null) {
@@ -147,6 +151,7 @@ public class NffgsResource {
             }
         } else {
             logger.log(Level.SEVERE, "the nffg" + nffgId + " requested by the client doesn't exist");
+            logger.log(Level.SEVERE, "return status code 404");
             throw new NotFoundException();
         }
     }
@@ -204,7 +209,7 @@ public class NffgsResource {
             notes = "create a new network node into the nf-fg graph")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Created"),
-            @ApiResponse(code = 404, message = "Forbidden"),
+            @ApiResponse(code = 403, message = "Forbidden"),
             @ApiResponse(code = 500, message = "Internal Server Error")
     })
     @Produces(MediaType.TEXT_PLAIN)
@@ -223,17 +228,21 @@ public class NffgsResource {
                 return Response.ok(objFactory.createNode(nodeXmlElement), MediaType.APPLICATION_XML).build();
             } else {
                 logger.log(Level.SEVERE, "the xml element is null");
+                logger.log(Level.SEVERE, "return status code 400");
                 throw new BadRequestException();
             }
 
         } catch (ServiceException se) {
             logger.log(Level.SEVERE, "Service Exception" + se.getMessage());
+            logger.log(Level.SEVERE, "return status code 500");
             throw new InternalServerErrorException();
         } catch (AllocationException ae) {
             logger.log(Level.SEVERE, "impossible to allocate all the nodes");
+            logger.log(Level.SEVERE, "return status code 403");
             throw new ForbiddenException();
         } catch (GraphNotFoundException gne) {
             logger.log(Level.SEVERE, "graph not found", nffgId);
+            logger.log(Level.SEVERE, "return status code 404");
             throw new ForbiddenException();
         }
     }
@@ -256,6 +265,7 @@ public class NffgsResource {
 
         if (retrievedNodeList == null) {
             logger.log(Level.SEVERE, "the nffg " + nffgId + "doesn't exist");
+            logger.log(Level.SEVERE,"return status code 404");
             throw new NotFoundException();
         }
 
@@ -287,11 +297,13 @@ public class NffgsResource {
 
         if (retrievedLinkList == null) {
             logger.log(Level.SEVERE, "the nffg " + nffgId + " doesn't exist");
+            logger.log(Level.SEVERE, "return status code 404");
             throw new NotFoundException();
         }
 
         if (retrievedLinkList.isEmpty()) {
             logger.log(Level.SEVERE, "the nffg " + nffgId + " doesn't contain any link");
+            logger.log(Level.SEVERE, "return status code 204");
             return Response.noContent().build();
         }
 
@@ -314,8 +326,11 @@ public class NffgsResource {
     })
     @Produces(MediaType.APPLICATION_XML)
     public Response searchNode(@PathParam("nffgId") String nffgId, @PathParam("nodeId") String nodeId) {
-        if (nffgId == null || nodeId == null)
-            throw new BadRequestException();
+        if (nffgId == null || nodeId == null){
+            logger.log(Level.SEVERE, "nffg id or node id null");
+            logger.log(Level.SEVERE, "return status code 500");
+            throw new InternalServerErrorException();
+        }
 
         NodeResourceService nodeServer = new NodeResourceService();
         RestrictedNodeType node = nodeServer.searchNodeIntoGraph(nffgId, nodeId);
@@ -352,6 +367,7 @@ public class NffgsResource {
         try {
             if (nodeId == null || nffgId == null) {
                 logger.log(Level.SEVERE, "node id or nffg id null");
+                logger.log(Level.SEVERE, "return status code 500");
                 throw new InternalServerErrorException();
             }
 
@@ -362,6 +378,7 @@ public class NffgsResource {
 
             if (reachableHosts.getHost().isEmpty()) {
                 logger.log(Level.INFO, "from the node specified is not possible to reach any host");
+                logger.log(Level.SEVERE, "return status code 204");
                 return Response.noContent().build();
             }
 
@@ -369,6 +386,7 @@ public class NffgsResource {
 
         } catch (ServiceException se) {
             logger.log(Level.SEVERE, "service exception: " + se.getMessage());
+            logger.log(Level.SEVERE, "return status code 500");
             throw new InternalServerErrorException();
         }
     }
@@ -382,7 +400,7 @@ public class NffgsResource {
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Created"),
             @ApiResponse(code = 404, message = "Not Found"),
-            @ApiResponse(code = 409, message = "resource already exists"),
+            @ApiResponse(code = 409, message = "Resource already exists"),
             @ApiResponse(code = 403, message = "Forbidden"),
             @ApiResponse(code = 500, message = "Internal Server Error")
     })
@@ -404,13 +422,17 @@ public class NffgsResource {
                 return Response.ok(xmlLinkElement, MediaType.APPLICATION_XML).build();
             } else {
                 logger.log(Level.SEVERE, "there isn't any type of data inside the request element");
+                logger.log(Level.SEVERE, "return status code 404");
                 throw new BadRequestException();
             }
 
         } catch (ServiceException se) {
             logger.log(Level.SEVERE, "Service Exception " + se.getMessage());
+            logger.log(Level.SEVERE, "return status code 500");
             throw new InternalServerErrorException();
         } catch (NoNodeException ne) {
+            logger.log(Level.SEVERE, "the node specified ");
+            logger.log(Level.SEVERE, "return status code 500");
             throw new ForbiddenException();
         } catch (GraphNotFoundException gfe) {
             logger.log(Level.SEVERE, "the graph specified doesn't exist");

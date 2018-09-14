@@ -17,9 +17,7 @@ public class LinkResourceService {
      */
     public void addLink(String graphId, ExtendedLinkType newLink) throws ServiceException, NoNodeException, LinkAlreadyPresentException, InternalServerErrorException, GraphNotFoundException {
         GraphDao graphDao = GraphDao.getInstance();
-        synchronized (graphDao) {
-            graphDao.updateGraph(graphId, newLink);
-        }
+        graphDao.updateGraph(graphId, newLink);
     }
 
     /*

@@ -7,7 +7,7 @@ public class NfvReaderFactory extends it.polito.dp2.NFV.NfvReaderFactory {
 
     @Override
     public NfvReader newNfvReader() throws NfvReaderException {
-        return null;
+        return new NfvReaderImpl();
     }
 
 }

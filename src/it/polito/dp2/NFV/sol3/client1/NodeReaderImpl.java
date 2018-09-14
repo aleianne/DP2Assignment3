@@ -17,7 +17,7 @@ public class NodeReaderImpl implements NodeReader {
     private NfvDeployerServiceManager serviceManager;
     private NffgGraphType graphResponse;
 
-    public NodeReaderImpl(RestrictedNodeType newNode, NfvDeployerServiceManager serviceManager) {
+    protected NodeReaderImpl(RestrictedNodeType newNode, NfvDeployerServiceManager serviceManager) {
         this.node = newNode;
         this.serviceManager = serviceManager;
     }
@@ -64,7 +64,7 @@ public class NodeReaderImpl implements NodeReader {
             // filter only those that have the source node name equal to this node
             for (ExtendedLinkType link : links.getLink()) {
                 if (link.getSourceNode() == node.getName())
-                    linkReaderSet.add(new LinkReaderImpl(link, serviceManager));
+                    linkReaderSet.add(new LinkReaderImpl(link, node.getNfFg(), serviceManager));
             }
         } catch (ServiceException se) {
             System.err.println(se.getMessage());

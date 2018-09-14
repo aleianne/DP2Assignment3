@@ -8,7 +8,7 @@ public class VNFTypeReaderImpl implements VNFTypeReader {
 
     public FunctionType function;
 
-    public VNFTypeReaderImpl(FunctionType function) {
+    protected VNFTypeReaderImpl(FunctionType function) {
         this.function = function;
     }
 

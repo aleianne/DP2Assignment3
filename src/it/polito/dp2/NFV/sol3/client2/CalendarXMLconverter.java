@@ -9,19 +9,18 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 public class CalendarXMLconverter {
 
-    public static Calendar fromXMLGregorianCalendar(XMLGregorianCalendar xc)
+    protected static Calendar fromXMLGregorianCalendar(XMLGregorianCalendar xc)
             throws DatatypeConfigurationException {
         Calendar c = Calendar.getInstance();
         c.setTimeInMillis(xc.toGregorianCalendar().getTimeInMillis());
         return c;
     }
 
-    public static XMLGregorianCalendar toXMLGregorianCalendar(Calendar c)
+    protected static XMLGregorianCalendar toXMLGregorianCalendar(Calendar c)
             throws DatatypeConfigurationException {
         GregorianCalendar gc = new GregorianCalendar();
         gc.setTimeInMillis(c.getTimeInMillis());
-        XMLGregorianCalendar xc = DatatypeFactory.newInstance().newXMLGregorianCalendar(gc);
-        return xc;
+        return DatatypeFactory.newInstance().newXMLGregorianCalendar(gc);
     }
 
 }

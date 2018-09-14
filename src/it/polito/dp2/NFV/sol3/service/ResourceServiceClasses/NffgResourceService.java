@@ -105,6 +105,7 @@ public class NffgResourceService {
 
         } catch (DatatypeConfigurationException | ParseException se) {
             logger.log(Level.SEVERE, "impossible to parse the date " + date + " sent by the client");
+            logger.log(Level.SEVERE, "return status code 500");
             throw new InternalServerErrorException();
         }
 

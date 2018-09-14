@@ -1,8 +1,8 @@
 package it.polito.dp2.NFV.sol3.client1;
 
 import java.util.*;
-import java.util.function.Predicate;
 
+import javax.ws.rs.NotFoundException;
 import javax.xml.datatype.DatatypeConfigurationException;
 
 import it.polito.dp2.NFV.NffgReader;
@@ -16,7 +16,7 @@ public class NffgReaderImpl implements NffgReader {
     private NffgGraphType newGraph;
     private NfvDeployerServiceManager serviceManager;
 
-    public NffgReaderImpl(NffgGraphType newGraph, NfvDeployerServiceManager serviceManager) throws ServiceException {
+    protected NffgReaderImpl(NffgGraphType newGraph, NfvDeployerServiceManager serviceManager) throws ServiceException {
         if (newGraph == null)
             throw new ServiceException();
         else {
@@ -45,20 +45,33 @@ public class NffgReaderImpl implements NffgReader {
 
     @Override
     public NodeReader getNode(String nodeName) {
-        List<RestrictedNodeType> graphNodeList = newGraph.getNodes().getNode();
 
-        // return null if the node is empty
-        if (graphNodeList.isEmpty())
+        // TODO it's possible to retrieve the node starting from the node name sending a request to the server
+        try {
+            RestrictedNodeType retrievedNode = serviceManager.getNodeIntoGraph(newGraph.getNffgName(), nodeName);
+            return new NodeReaderImpl(retrievedNode, serviceManager);
+        } catch (ServiceException se) {
+            System.err.println(se.getMessage());
             return null;
+        } catch (NotFoundException nfe) {
+            System.err.println("node "+ nodeName + " not found");
+            return null;
+        }
 
-        // check if the node searched is inside the graph
-        Predicate<RestrictedNodeType> nodePredicate = p -> p.getName() == nodeName;
-        Optional<RestrictedNodeType> retrievedObject = graphNodeList.stream().filter(nodePredicate).findFirst();
-
-        if (((Optional) retrievedObject).isPresent())
-            return new NodeReaderImpl(retrievedObject.get(), serviceManager);
-
-        return null;
+//        List<RestrictedNodeType> graphNodeList = newGraph.getNodes().getNode();
+//
+//        // return null if the node is empty
+//        if (graphNodeList.isEmpty())
+//            return null;
+//
+//        // check if the node searched is inside the graph
+//        Predicate<RestrictedNodeType> nodePredicate = p -> p.getName() == nodeName;
+//        Optional<RestrictedNodeType> retrievedObject = graphNodeList.stream().filter(nodePredicate).findFirst();
+//
+//        if (((Optional) retrievedObject).isPresent())
+//            return new NodeReaderImpl(retrievedObject.get(), serviceManager);
+//
+//        return null;
     }
 
     @Override
@@ -68,7 +81,7 @@ public class NffgReaderImpl implements NffgReader {
         try {
             NodesType nodes = serviceManager.getGraphNodes(newGraph.getNffgName());
 
-            // put all graph nodes into the node reader set
+            // put all nodes into the node reader set
             for (RestrictedNodeType node : nodes.getNode())
                 nodeSet.add(new NodeReaderImpl(node, serviceManager));
 

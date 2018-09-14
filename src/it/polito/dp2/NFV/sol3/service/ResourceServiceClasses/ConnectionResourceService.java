@@ -21,8 +21,7 @@ public class ConnectionResourceService {
 
     // get all the connection stored into the database
     public List<ConnectionType> getConnections() {
-        List<ConnectionType> connList = new ArrayList<ConnectionType>(ConnectionDao.getInstance().readAllConnections());
-        return connList;
+        return new ArrayList<ConnectionType>(ConnectionDao.getInstance().readAllConnections());
     }
 
     // get a single connection

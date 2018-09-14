@@ -16,18 +16,19 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 public class NffgReaderImpl implements NffgReader {
 
-    private NfvDeployerServiceManager serviceManager;
+    // private NfvDeployerServiceManager serviceManager;
     private NffgGraphType nffg;
-    private String nffgId;
+    private NfvHelper nfvHelper;
 
-    public NffgReaderImpl(String nffgId, NfvDeployerServiceManager serviceManager) {
-        this.nffgId = nffgId;
-        try {
-            this.nffg = serviceManager.getGraph(nffgId);
-        } catch (ServiceException se) {
-            System.err.println("impossible to implement the nffg reader interface");
-            System.err.println(se.getMessage());
-        }
+    protected NffgReaderImpl(NffgGraphType nffg, NfvHelper nfvHelper) {
+        this.nffg = nffg;
+//        try {
+//            this.nffg = serviceManager.getGraph(nffgId);
+//        } catch (ServiceException se) {
+//            System.err.println("impossible to implement the nffg reader interface");
+//            System.err.println(se.getMessage());
+//        }
+        this.nfvHelper = nfvHelper;
     }
 
     @Override
@@ -48,21 +49,21 @@ public class NffgReaderImpl implements NffgReader {
     @Override
     public NodeReader getNode(String nodeName) {
         // filter the node list in order to get the node
-        Predicate<RestrictedNodeType> nffgPredicate = p -> p.getName() == nodeName;
-        RestrictedNodeType node = nffg.getNodes().getNode().stream().filter(nffgPredicate).findFirst().get();
+        RestrictedNodeType node = nffg.getNodes().getNode().stream().filter(p -> p.getName() == nodeName).findFirst().get();
 
         if (node == null) {
+            System.out.println("node " + nodeName + " doesn't exist");
             return null;
-        } else {
-            return new NodeReaderImpl(node, serviceManager);
         }
+
+        return new NodeReaderImpl(node, nfvHelper);
     }
 
     @Override
     public Set<NodeReader> getNodes() {
         Set<NodeReader> nrSet = new HashSet<NodeReader>();
         for (RestrictedNodeType node : nffg.getNodes().getNode()) {
-            NodeReader nr = new NodeReaderImpl(node, serviceManager);
+            NodeReader nr = new NodeReaderImpl(node, nfvHelper);
             nrSet.add(nr);
         }
         return nrSet;

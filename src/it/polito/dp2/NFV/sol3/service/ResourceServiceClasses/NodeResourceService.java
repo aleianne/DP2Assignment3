@@ -31,7 +31,7 @@ public class NodeResourceService {
          */
 
         HostDao hostDao = HostDao.getInstance();
-        FunctionType virtualFunction = VnfDao.getInstance().readVnf(newNode.getName());
+        FunctionType virtualFunction = VnfDao.getInstance().readVnf(newNode.getVNF());
 
         if (virtualFunction == null)
             throw new AllocationException();
@@ -40,6 +40,7 @@ public class NodeResourceService {
         List<FunctionType> vnfList = new ArrayList<FunctionType>();
         List<RestrictedNodeType> nodeList = new ArrayList<RestrictedNodeType>();
         nodeList.add(newNode);
+        vnfList.add(virtualFunction);
 
         GraphAllocator allocator = new GraphAllocator();
 
@@ -61,6 +62,7 @@ public class NodeResourceService {
             GraphDao.getInstance().updateGraph(graphId, newNode);
 
             allocator.allocateGraph(nodeList, hostDao);
+            allocator.changeHostnameValueInGraph(nodeList);
         }
 
         return nodeList.get(0).getName();
@@ -81,7 +83,7 @@ public class NodeResourceService {
         if (nodeList == null || nodeList.isEmpty())
             throw new NotFoundException();
 
-        Optional<RestrictedNodeType> node = nodeList.stream().filter(p -> p.getName() == nodeId).findFirst();
+        Optional<RestrictedNodeType> node = nodeList.stream().filter(p -> p.getName().compareTo(nodeId) == 0).findFirst();
 
         if (node.isPresent())
             return node.get();

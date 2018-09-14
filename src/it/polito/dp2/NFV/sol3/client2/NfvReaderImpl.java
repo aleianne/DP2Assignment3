@@ -1,8 +1,6 @@
 package it.polito.dp2.NFV.sol3.client2;
 
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import it.polito.dp2.NFV.ConnectionPerformanceReader;
 import it.polito.dp2.NFV.HostReader;
@@ -14,76 +12,102 @@ import it.polito.dp2.NFV.sol3.client1.NfvDeployerServiceManager;
 
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeConstants;
+import javax.xml.datatype.XMLGregorianCalendar;
+
+import java.util.Optional;
+
 
 public class NfvReaderImpl implements NfvReader {
 
     private NfvDeployerServiceManager serviceManager;
+    private NfvHelper nfvHelper;
 
     public NfvReaderImpl() {
         serviceManager = new NfvDeployerServiceManager();
-
+        nfvHelper = new NfvHelper();
     }
 
     @Override
     public ConnectionPerformanceReader getConnectionPerformance(HostReader host1, HostReader host2) {
-        ConnectionPerformanceReader cpr = null;
-        try {
-            ConnectionType conn = serviceManager.getConnection(host1.getName(), host2.getName());
-            cpr = new ConnectionPerformanceReaderImpl(conn);
-        } catch (ServiceException se) {
-            System.err.println("impossible to implement the connection reader interface");
-            System.err.println(se.getMessage());
-        }
-        return cpr;
+
+        List<ConnectionType> connectionList = nfvHelper.getConnectionList();
+        Optional<ConnectionType> retrievedConnection = connectionList.stream().filter(p -> p.getHostname1().compareTo(host1.getName()) == 0 && p.getHostname2().compareTo(host2.getName()) == 0).findFirst();
+
+        if (retrievedConnection.isPresent())
+            return new ConnectionPerformanceReaderImpl(retrievedConnection.get());
+
+        System.out.println("the connection between " + host1.getName() + " and " + host2.getName() + " doesn't exist");
+        return null;
     }
 
     @Override
     public HostReader getHost(String host1) {
-        HostReader hr = null;
-        try {
-            ExtendedHostType host = serviceManager.getHost(host1);
-            hr = new HostReaderImpl(host, serviceManager);
-        } catch (ServiceException se) {
-            System.err.println("impossible to create the HostReader instance");
-            System.err.println(host1);
-        }
-        return hr;
+        List<HostType> hostList = nfvHelper.getHostList();
+        Optional<HostType> retrievedHost = hostList.stream().filter(p -> p.getHostname().compareTo(host1) == 0).findFirst();
+
+        if (retrievedHost.isPresent())
+            return new HostReaderImpl(retrievedHost.get(), nfvHelper);
+
+        System.out.println("the host " + host1 + " doesn't exist");
+        return null;
     }
 
     @Override
     public Set<HostReader> getHosts() {
-        Set<HostReader> hrSet = new HashSet<HostReader>();
-        try {
-            HostsType hosts = serviceManager.getHosts();
-            for (HostType host : hosts.getHost()) {
-                HostReader hr = new HostReaderImpl(host, serviceManager);
-                hrSet.add(hr);
-            }
-        } catch (ServiceException se) {
-            System.err.println("impossible to create the HostReader interface set");
-            System.err.println(se.getMessage());
+        Set<HostReader> hrSet = new HashSet<>();
+        List<HostType> hostList = nfvHelper.getHostList();
+        HostReader hr;
+
+        for (HostType host: hostList) {
+            hr = new HostReaderImpl(host, nfvHelper);
+            hrSet.add(hr);
         }
+
         return hrSet;
     }
 
     @Override
     public NffgReader getNffg(String nffgId) {
-        return new NffgReaderImpl(nffgId, serviceManager);
+        List<NffgGraphType> nffgList = nfvHelper.getGraphList();
+        Optional<NffgGraphType> retrievedNffg = nffgList.stream().filter(p -> p.getNffgName().compareTo(nffgId) == 0).findFirst();
+
+        if (((Optional) retrievedNffg).isPresent())
+            return new NffgReaderImpl(retrievedNffg.get(), nfvHelper);
+
+        System.out.println("the nffg " + nffgId + " doesn't exist");
+        return null;
     }
 
     @Override
     public Set<NffgReader> getNffgs(Calendar date) {
         Set<NffgReader> nrSet = new HashSet<NffgReader>();
 
+//        try {
+//            NffgsInfoType nffgs = serviceManager.getGraphs(date);
+//            for (NffgsInfoType.NffgInfo info : nffgs.getNffgInfo()) {
+//                NffgReader nfgr = new NffgReaderImpl(info.getNffgName(), nfvHelper);
+//                nrSet.add(nfgr);
+//            }
+//        } catch (ServiceException se) {
+//            System.err.println("impossible to implement the host Reader interface");
+//            System.err.println(se.getMessage());
+//        }
+
         try {
-            NffgsInfoType nffgs = serviceManager.getGraphs(date);
-            for (NffgsInfoType.NffgInfo info : nffgs.getNffgInfo()) {
-                NffgReader nfgr = new NffgReaderImpl(info.getNffgName(), serviceManager);
-                nrSet.add(nfgr);
+            XMLGregorianCalendar xmlDate = CalendarXMLconverter.toXMLGregorianCalendar(date);
+            NffgReader nr;
+            for (NffgGraphType graph : nfvHelper.getGraphList()) {
+                int res = graph.getDeployDate().compare(xmlDate);
+                if (res == DatatypeConstants.GREATER || res == DatatypeConstants.EQUAL) {
+                    nr = new NffgReaderImpl(graph, nfvHelper);
+                    nrSet.add(nr);
+                }
             }
-        } catch (ServiceException se) {
-            System.err.println("impossible to implement the host Reader interface");
-            System.err.println(se.getMessage());
+        } catch (DatatypeConfigurationException dte) {
+            System.out.println("impossible to convert the date passed as parameter");
+            return null;
         }
 
         return nrSet;
@@ -92,16 +116,13 @@ public class NfvReaderImpl implements NfvReader {
     @Override
     public Set<VNFTypeReader> getVNFCatalog() {
         Set<VNFTypeReader> vnfSet = new HashSet<VNFTypeReader>();
-        try {
-            CatalogType catalog = serviceManager.getCatalog();
-            for (FunctionType function : catalog.getFunction()) {
-                VNFTypeReader vnfReader = new VNFTypeReaderImpl(function);
-                vnfSet.add(vnfReader);
-            }
-        } catch (ServiceException se) {
-            System.err.println("impossible to retrieve the VNF catalog interface");
-            System.err.println(se.getMessage());
+        VNFTypeReader vnf;
+
+        for (FunctionType function : nfvHelper.getFunctionList()) {
+            vnf = new VNFTypeReaderImpl(function);
+            vnfSet.add(vnf);
         }
+
         return vnfSet;
     }
 }
