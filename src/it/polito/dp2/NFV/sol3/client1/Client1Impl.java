@@ -32,7 +32,7 @@ public class Client1Impl implements NfvClient {
         // the first map is used to associate a nodeDescriptor to a name in order to forward the link of the graph
         // the second map is used to associate a nodeDescriptor to the name returned by the server
 
-        int nodeCounter = 0;
+        int counter = 0;
         Map<NodeDescriptor, String> nodeMap = new HashMap<>();
         //Map<NodeDescriptor, String> nodeResponseMap = new HashMap<>();
 
@@ -48,14 +48,16 @@ public class Client1Impl implements NfvClient {
 
             xmlNode.setHostname(node.getHostName());
             xmlNode.setVNF(node.getFuncType().getName());
-            xmlNode.setName(Integer.toString(nodeCounter));
+            xmlNode.setName("node" + Integer.toString(counter));
             xmlNode.setNfFg("Nffg");
-            nodeMap.put(node, Integer.toString(nodeCounter));
+            nodeMap.put(node, Integer.toString(counter));
 
             newGraph.getNodes().getNode().add(xmlNode);
-            nodeCounter++;
+            counter++;
         }
 
+        
+        counter = 0;
         for (NodeDescriptor node : nffg.getNodes()) {
             for (LinkDescriptor link : node.getLinks()) {
                 ExtendedLinkType xmlLink = new ExtendedLinkType();
@@ -66,20 +68,21 @@ public class Client1Impl implements NfvClient {
                 if (destNode == null || srcNode == null)
                     throw new ServiceException();
 
-                xmlLink.setLinkName("link");
+                xmlLink.setLinkName("link" + Integer.toString(counter));
                 xmlLink.setDestinationNode(destNode);
                 xmlLink.setSourceNode(srcNode);
                 xmlLink.setThroughput(link.getThroughput());
                 xmlLink.setLatency(BigInteger.valueOf(link.getLatency()));
                 xmlLink.setOverwrite(false);
                 newGraph.getLinks().getLink().add(xmlLink);
+                counter++;
             }
         }
         
         System.out.println("nffg name "  + newGraph.getNffgName());
         
         for (RestrictedNodeType node : newGraph.getNodes().getNode()) {
-        	System.out.println("node" + node.getName());
+        	System.out.println("node " + node.getName());
         	System.out.println("host" + node.getHostname());
         	System.out.println("vnf " + node.getVNF());
         	System.out.println("nffg " + node.getNfFg());
