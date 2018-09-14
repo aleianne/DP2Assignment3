@@ -10,10 +10,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
@@ -195,7 +197,7 @@ public class GraphDao {
                 List<RestrictedNodeType> GraphNodeList = queryResultGraph.getNodes().getNode();
 
                 // filter the list in order to obtain all the links that have a specified source node and a specified destination node
-                Predicate<ExtendedLinkType> linkPredicate = p -> p.getDestinationNode().compareTo(newLink.getDestinationNode()) == 0 && p.getSourceNode().compareto(newLink.getSourceNode()) == 0;
+                Predicate<ExtendedLinkType> linkPredicate = p -> p.getDestinationNode().compareTo(newLink.getDestinationNode()) == 0 && p.getSourceNode().compareTo(newLink.getSourceNode()) == 0;
                 // filter the node list, check if there are the nodes specified
                 Predicate<RestrictedNodeType> nodePredicate = p -> p.getName().compareTo(newLink.getDestinationNode()) == 0;
                 Predicate<RestrictedNodeType> nodePredicate2 = p -> p.getName().compareTo(newLink.getSourceNode()) == 0;
@@ -204,13 +206,23 @@ public class GraphDao {
                         || !GraphNodeList.stream().filter(nodePredicate2).findFirst().isPresent())
                     throw new NoNodeException();
 
-                if (!graphLinkList.stream().filter(linkPredicate).findFirst().isPresent() && !newLink.isOverwrite())
-                    throw new LinkAlreadyPresentException();
-
-                // assign to the link a new name
-                String linkName = linkBaseName;
-                newLink.setLinkName(linkName.concat(Integer.toString(linkCounter.incrementAndGet())));
-                queryResultGraph.getLinks().getLink().add(newLink);
+                Optional<ExtendedLinkType> retrievedLink = graphLinkList.stream().filter(linkPredicate).findFirst();
+                if (retrievedLink.isPresent()) {
+                	ExtendedLinkType link = retrievedLink.get();
+                	if (!link.isOverwrite())
+                        throw new LinkAlreadyPresentException();
+                	else {
+                		link.setOverwrite(newLink.isOverwrite());
+                		link.setThroughput(newLink.getThroughput());
+                		link.setLatency(newLink.getLatency());
+                	}
+                } else {
+                	 // assign to the link a new name
+                    String linkName = linkBaseName;
+                    newLink.setLinkName(linkName.concat(Integer.toString(linkCounter.incrementAndGet())));
+                    queryResultGraph.getLinks().getLink().add(newLink);
+                }
+                	
             }
 
             // forward the relationship to Neo4j Database

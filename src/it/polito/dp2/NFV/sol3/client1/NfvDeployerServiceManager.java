@@ -48,7 +48,7 @@ public class NfvDeployerServiceManager {
                     .accept(MediaType.APPLICATION_XML)
                     .post(Entity.xml(nffg));
 
-            checkResponse(serverResponse);
+            //checkResponse(serverResponse);
 
             switch (serverResponse.getStatusInfo().getStatusCode()) {
                 case 201:

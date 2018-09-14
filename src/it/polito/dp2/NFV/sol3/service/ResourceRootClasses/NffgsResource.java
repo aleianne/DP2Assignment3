@@ -49,7 +49,7 @@ public class NffgsResource {
             @ApiResponse(code = 403, message = "Forbidden"),
             @ApiResponse(code = 500, message = "Internal Server Error")
     })
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public Response postNewNffg(JAXBElement<NffgGraphType> reqBodyNffg) {
         try {
@@ -212,7 +212,7 @@ public class NffgsResource {
             @ApiResponse(code = 403, message = "Forbidden"),
             @ApiResponse(code = 500, message = "Internal Server Error")
     })
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public Response createNewNode(JAXBElement<RestrictedNodeType> reqBodyNode, @PathParam("nffgId") String nffgId) {
         try {
@@ -404,7 +404,7 @@ public class NffgsResource {
             @ApiResponse(code = 403, message = "Forbidden"),
             @ApiResponse(code = 500, message = "Internal Server Error")
     })
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public Response createNewLink(JAXBElement<ExtendedLinkType> reqBodyNode, @PathParam("nffgId") String nffgId) {
         try {
@@ -431,14 +431,17 @@ public class NffgsResource {
             logger.log(Level.SEVERE, "return status code 500");
             throw new InternalServerErrorException();
         } catch (NoNodeException ne) {
-            logger.log(Level.SEVERE, "the node specified ");
-            logger.log(Level.SEVERE, "return status code 500");
+            logger.log(Level.SEVERE, "the node specified doesn't exist");
+            logger.log(Level.SEVERE, "return status code 403");
             throw new ForbiddenException();
         } catch (GraphNotFoundException gfe) {
             logger.log(Level.SEVERE, "the graph specified doesn't exist");
+            logger.log(Level.SEVERE,  "return status code 404");
             throw new NotFoundException();
         } catch (LinkAlreadyPresentException le) {
             // TODO lanciare un errore 409
+        	logger.log(Level.SEVERE, "the link already exists and cannot be overwritten");
+        	logger.log(Level.SEVERE, "return status code 409");
             throw new NotFoundException();
         }
     }

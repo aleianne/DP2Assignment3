@@ -38,6 +38,7 @@ public class Client1Impl implements NfvClient {
 
         // convert the nffg descriptor into an instance of xml binded class
         NffgGraphType newGraph = new NffgGraphType();
+        newGraph.setNffgName("Nffg");
         newGraph.setNodes(new NffgGraphType.Nodes());
         newGraph.setLinks(new NffgGraphType.Links());
 
@@ -47,6 +48,8 @@ public class Client1Impl implements NfvClient {
 
             xmlNode.setHostname(node.getHostName());
             xmlNode.setVNF(node.getFuncType().getName());
+            xmlNode.setName(Integer.toString(nodeCounter));
+            xmlNode.setNfFg("Nffg");
             nodeMap.put(node, Integer.toString(nodeCounter));
 
             newGraph.getNodes().getNode().add(xmlNode);
@@ -63,12 +66,32 @@ public class Client1Impl implements NfvClient {
                 if (destNode == null || srcNode == null)
                     throw new ServiceException();
 
+                xmlLink.setLinkName("link");
                 xmlLink.setDestinationNode(destNode);
                 xmlLink.setSourceNode(srcNode);
                 xmlLink.setThroughput(link.getThroughput());
                 xmlLink.setLatency(BigInteger.valueOf(link.getLatency()));
+                xmlLink.setOverwrite(false);
                 newGraph.getLinks().getLink().add(xmlLink);
             }
+        }
+        
+        System.out.println("nffg name "  + newGraph.getNffgName());
+        
+        for (RestrictedNodeType node : newGraph.getNodes().getNode()) {
+        	System.out.println("node" + node.getName());
+        	System.out.println("host" + node.getHostname());
+        	System.out.println("vnf " + node.getVNF());
+        	System.out.println("nffg " + node.getNfFg());
+        }
+        
+        
+        for (ExtendedLinkType link : newGraph.getLinks().getLink()) {
+        	System.out.println("link " +link.getLinkName());
+        	System.out.println("src node" + link.getDestinationNode());
+        	System.out.println("dest node" + link.getSourceNode());
+        	System.out.println("throughput " + link.getThroughput());
+        	System.out.println("latency " + link.getLatency());
         }
 
         // forward the graph to the remote service
