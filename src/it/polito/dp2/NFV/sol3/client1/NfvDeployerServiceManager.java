@@ -1,9 +1,6 @@
 package it.polito.dp2.NFV.sol3.client1;
 
 import java.net.URI;
-import java.util.Calendar;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
@@ -14,23 +11,19 @@ import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import javax.xml.bind.JAXBElement;
 import javax.xml.ws.Service;
 
-import io.swagger.models.Xml;
-import it.polito.dp2.NFV.lab3.AllocationException;
-import it.polito.dp2.NFV.lab3.LinkAlreadyPresentException;
-import it.polito.dp2.NFV.lab3.NoNodeException;
-import it.polito.dp2.NFV.lab3.ServiceException;
+import it.polito.dp2.NFV.lab3.*;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 public class NfvDeployerServiceManager {
-
-    private static Logger logger = Logger.getLogger(NfvDeployerServiceManager.class.getName());
 
     private static final String url = "http://localhost:8080/NfvDeployer/rest/";
     private Client client;
     private String serviceURL;
     private Response serverResponse;
+    private ObjectFactory objectFactory;
 
     public NfvDeployerServiceManager() {
         client = ClientBuilder.newClient();
@@ -39,22 +32,24 @@ public class NfvDeployerServiceManager {
         if (serviceURL == null)
             serviceURL = url;
 
+        objectFactory = new ObjectFactory();
     }
 
     public NffgGraphType postNffg(NffgGraphType nffg) throws ServiceException, AllocationException {
         try {
+
+            JAXBElement<NffgGraphType> xmlElement = objectFactory.createNffg(nffg);
+
             serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("nffgs").build())
                     .request()
                     .accept(MediaType.APPLICATION_XML)
-                    .post(Entity.xml(nffg));
-
-            //checkResponse(serverResponse);
+                    .post(Entity.xml(xmlElement));
 
             switch (serverResponse.getStatusInfo().getStatusCode()) {
-                case 201:
+                case 200:
                     return serverResponse.readEntity(NffgGraphType.class);
                 case 400:
-                    throw new ServiceException("the graph forwarded is not recogniezed by the server");
+                    throw new ServiceException("the graph forwarded is not recognized by the server");
                 case 404:
                     throw new AllocationException();
                 case 500:
@@ -70,15 +65,19 @@ public class NfvDeployerServiceManager {
 
     public RestrictedNodeType postNode(RestrictedNodeType node, String nffgId) throws ServiceException, AllocationException {
         try {
+
+            JAXBElement<RestrictedNodeType> xmlNode = objectFactory.createNode(node);
+
             serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("nffgs/" + nffgId + "/nodes").build())
                     .request()
                     .accept(MediaType.APPLICATION_XML)
-                    .post(Entity.xml(node));
+                    .post(Entity.xml(xmlNode));
 
-            // TODO da sistemare
             switch (serverResponse.getStatusInfo().getStatusCode()) {
-                case 201:
+                case 200:
                     return serverResponse.readEntity(RestrictedNodeType.class);
+                case 400:
+                    throw new ServiceException("the node forwarded isn't recognized by the server");
                 case 404:
                     throw new AllocationException();
                 case 500:
@@ -93,17 +92,20 @@ public class NfvDeployerServiceManager {
 
     public ExtendedLinkType postLink(ExtendedLinkType link, String nffgId) throws ServiceException, NoNodeException,
             LinkAlreadyPresentException {
+
         try {
+            JAXBElement<ExtendedLinkType> xmlLink = objectFactory.createLink(link);
+
             serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("nffgs/" + nffgId + "/links").build())
                     .request()
                     .accept(MediaType.APPLICATION_XML)
-                    .post(Entity.xml(link));
-
-            //checkResponse(serverResponse);
+                    .post(Entity.xml(xmlLink));
 
             switch (serverResponse.getStatusInfo().getStatusCode()) {
-                case 201:
+                case 200:
                     return serverResponse.readEntity(ExtendedLinkType.class);
+                case 400:
+                    throw new ServiceException("link not recognized by the server");
                 case 404:
                     throw new ServiceException("the nffg doesn't exists");
                 case 409:
@@ -121,7 +123,7 @@ public class NfvDeployerServiceManager {
         }
     }
 
-    public NffgGraphType getGraph(String nffgId) throws ServiceException, NotFoundException {
+    public NffgGraphType getGraph(String nffgId) throws ServiceException, UnknownEntityException {
         try {
             serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("nffgs/" + nffgId).build())
                     .request()
@@ -132,7 +134,7 @@ public class NfvDeployerServiceManager {
                 case 200:
                     return serverResponse.readEntity(NffgGraphType.class);
                 case 404:
-                    throw new NotFoundException();
+                    throw new UnknownEntityException();
                 case 500:
                     throw new ServiceException("server cannot fulfill the request");
                 default:
@@ -158,8 +160,6 @@ public class NfvDeployerServiceManager {
                     .accept(MediaType.APPLICATION_XML)
                     .get();
 
-            //checkResponse(serverResponse);
-
             switch(serverResponse.getStatusInfo().getStatusCode()) {
                 case 200:
                     return serverResponse.readEntity(NffgsInfoType.class);
@@ -176,7 +176,7 @@ public class NfvDeployerServiceManager {
         }
     }
 
-    public NodesType getHostNode(String hostname) throws ServiceException, NotFoundException {
+    public NodesType getHostNode(String hostname) throws ServiceException, UnknownEntityException {
         try {
             serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("hosts/" + hostname + "/nodes").build())
                     .request()
@@ -187,14 +187,13 @@ public class NfvDeployerServiceManager {
                 case 200:
                     return serverResponse.readEntity(NodesType.class);
                 case 404:
-                    throw new NotFoundException();
+                    throw new UnknownEntityException();
                 case 500:
                     throw new ServiceException("server cannot fulfill the request");
                 default:
                     throw new ServiceException("unknown status code");
             }
 
-            //checkResponse(serverResponse);
         } catch (ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
             throw new ServiceException("NfvDeployer client raised an exception: " + e.getMessage());
         }
@@ -218,13 +217,12 @@ public class NfvDeployerServiceManager {
                     throw new ServiceException("unknown status code");
             }
 
-            //throw new ServiceException("impossible to retrieve the catalog");
         } catch (ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
             throw new ServiceException("NfvDeployer client raised an exception: " + e.getMessage());
         }
     }
 
-    public NodesType getGraphNodes(String nffgId) throws ServiceException {
+    public NodesType getGraphNodes(String nffgId) throws ServiceException, UnknownEntityException {
         try {
             serverResponse = client.target(UriBuilder.fromUri(serviceURL).path("nffgs/" + nffgId + "/nodes").build())
                     .request()
@@ -235,15 +233,13 @@ public class NfvDeployerServiceManager {
                 case 200:
                     return serverResponse.readEntity(NodesType.class);
                 case 404:
-                    throw new NotFoundException();
+                    throw new UnknownEntityException();
                 case 500:
                     throw new ServiceException("server cannot fulfill the request");
                 default:
                     throw new ServiceException("unknown status code");
             }
 
-            //checkResponse(serverResponse);
-            //return serverResponse.readEntity(NodesType.class);
         } catch (ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
             throw new ServiceException("nfvDeployer client raised an exception: " + e.getMessage());
         }
@@ -323,8 +319,16 @@ public class NfvDeployerServiceManager {
                     .accept(MediaType.APPLICATION_XML)
                     .get();
 
-            checkResponse(serverResponse);
-            return serverResponse.readEntity(ConnectionType.class);
+            switch (serverResponse.getStatusInfo().getStatusCode()) {
+                case 200:
+                    return serverResponse.readEntity(ConnectionType.class);
+                case 404:
+                    throw new ServiceException();
+                case 500:
+                    throw new ServiceException();
+                default:
+                    throw new ServiceException();
+            }
         } catch (ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
             throw new ServiceException("NfvDeployer client raised an exception: " + e.getMessage());
         }
@@ -392,18 +396,16 @@ public class NfvDeployerServiceManager {
                 default:
                     throw new ServiceException("unknown status code");
             }
-
-            //checkResponse(serverResponse);
         } catch (ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
             throw new ServiceException("NfvDeployer client raised an exception: " + e.getMessage());
         }
     }
 
 
-    private void checkResponse(Response res) throws ServiceException {
-        Response.StatusType resStatus = res.getStatusInfo();
-        if (resStatus.getStatusCode() >= 400 && resStatus.getStatusCode() <= 599)
-            throw new ServiceException("Neo4jSimpleXML server returned an error: " + resStatus.getStatusCode() + " " + resStatus.getReasonPhrase());
-    }
+//    private void checkResponse(Response res) throws ServiceException {
+//        Response.StatusType resStatus = res.getStatusInfo();
+//        if (resStatus.getStatusCode() >= 400 && resStatus.getStatusCode() <= 599)
+//            throw new ServiceException("Neo4jSimpleXML server returned an error: " + resStatus.getStatusCode() + " " + resStatus.getReasonPhrase());
+//    }
 
 }

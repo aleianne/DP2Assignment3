@@ -19,51 +19,60 @@ public class Client1Impl implements NfvClient {
 
     private Map<String, DeployedNffg> nffgMap;
     private NfvDeployerServiceManager serviceManager;
+    private int nffgCounter;
+    private static final String nffgNameLabel = "Nffg";
+    private static final String nodeNameLabel = "Node";
 
     public Client1Impl() {
         // this is the map that contains the association between the node assigned by the client and the
-        nffgMap = new HashMap<String, DeployedNffg>();
+        //nffgMap = new HashMap<String, DeployedNffg>();
         serviceManager = new NfvDeployerServiceManager();
+        nffgCounter = 0;
     }
 
     @Override
     public DeployedNffg deployNffg(NffgDescriptor nffg) throws AllocationException, ServiceException {
-        // use a counter for the name of the node
+        // use a counter for the node name
         // the first map is used to associate a nodeDescriptor to a name in order to forward the link of the graph
         // the second map is used to associate a nodeDescriptor to the name returned by the server
 
         int counter = 0;
+        // associate a node reference to a random assigned name
         Map<NodeDescriptor, String> nodeMap = new HashMap<>();
-        //Map<NodeDescriptor, String> nodeResponseMap = new HashMap<>();
 
-        // convert the nffg descriptor into an instance of xml binded class
-        NffgGraphType newGraph = new NffgGraphType();
-        newGraph.setNffgName("Nffg");
-        newGraph.setNodes(new NffgGraphType.Nodes());
-        newGraph.setLinks(new NffgGraphType.Links());
+        // create a new nffg name
+        String nffgName = nffgNameLabel.concat(Integer.toString(nffgCounter));
+
+        // convert the nffg descriptor into an instance of xml mapped class
+        NffgGraphType graphToBeDeployed = new NffgGraphType();
+        graphToBeDeployed.setNffgName(nffgName);
+        graphToBeDeployed.setNodes(new NffgGraphType.Nodes());
+        graphToBeDeployed.setLinks(new NffgGraphType.Links());
 
         // create a new xml instance for the nodes inside the graph
-        for (NodeDescriptor node : nffg.getNodes()) {
+        for (NodeDescriptor nodeDescriptor : nffg.getNodes()) {
             RestrictedNodeType xmlNode = new RestrictedNodeType();
 
-            xmlNode.setHostname(node.getHostName());
-            xmlNode.setVNF(node.getFuncType().getName());
-            xmlNode.setName("node" + Integer.toString(counter));
-            xmlNode.setNfFg("Nffg");
-            nodeMap.put(node, Integer.toString(counter));
+            String nodeName = nodeNameLabel.concat(Integer.toString(counter));
 
-            newGraph.getNodes().getNode().add(xmlNode);
+            xmlNode.setHostname(nodeDescriptor.getHostName());
+            xmlNode.setVNF(nodeDescriptor.getFuncType().getName());
+            xmlNode.setName(nodeName);
+            xmlNode.setNfFg(nffgName);
+            nodeMap.put(nodeDescriptor, nodeName);
+
+            graphToBeDeployed.getNodes().getNode().add(xmlNode);
             counter++;
         }
 
-        
+        // refresh counter
         counter = 0;
-        for (NodeDescriptor node : nffg.getNodes()) {
-            for (LinkDescriptor link : node.getLinks()) {
-                ExtendedLinkType xmlLink = new ExtendedLinkType();
+        for (NodeDescriptor nodeDescriptor : nffg.getNodes()) {
+            for (LinkDescriptor linkDescriptor : nodeDescriptor.getLinks()) {
+                LinkType xmlLink = new LinkType();
 
-                String destNode = nodeMap.get(link.getDestinationNode());
-                String srcNode = nodeMap.get(link.getSourceNode());
+                String destNode = nodeMap.get(linkDescriptor.getDestinationNode());
+                String srcNode = nodeMap.get(linkDescriptor.getSourceNode());
 
                 if (destNode == null || srcNode == null)
                     throw new ServiceException();
@@ -71,58 +80,48 @@ public class Client1Impl implements NfvClient {
                 xmlLink.setLinkName("link" + Integer.toString(counter));
                 xmlLink.setDestinationNode(destNode);
                 xmlLink.setSourceNode(srcNode);
-                xmlLink.setThroughput(link.getThroughput());
-                xmlLink.setLatency(BigInteger.valueOf(link.getLatency()));
-                xmlLink.setOverwrite(false);
-                newGraph.getLinks().getLink().add(xmlLink);
+                xmlLink.setThroughput(linkDescriptor.getThroughput());
+                xmlLink.setLatency(BigInteger.valueOf(linkDescriptor.getLatency()));
+                graphToBeDeployed.getLinks().getLink().add(xmlLink);
                 counter++;
             }
         }
         
-        System.out.println("nffg name "  + newGraph.getNffgName());
-        
-        for (RestrictedNodeType node : newGraph.getNodes().getNode()) {
-        	System.out.println("node " + node.getName());
-        	System.out.println("host" + node.getHostname());
-        	System.out.println("vnf " + node.getVNF());
-        	System.out.println("nffg " + node.getNfFg());
-        }
-        
-        
-        for (ExtendedLinkType link : newGraph.getLinks().getLink()) {
-        	System.out.println("link " +link.getLinkName());
-        	System.out.println("src node" + link.getDestinationNode());
-        	System.out.println("dest node" + link.getSourceNode());
-        	System.out.println("throughput " + link.getThroughput());
-        	System.out.println("latency " + link.getLatency());
-        }
+//        System.out.println("nffg name "  + newGraph.getNffgName());
+//
+//        for (RestrictedNodeType node : newGraph.getNodes().getNode()) {
+//        	System.out.println("node " + node.getName());
+//        	System.out.println("host " + node.getHostname());
+//        	System.out.println("vnf " + node.getVNF());
+//        	System.out.println("nffg " + node.getNfFg());
+//        }
+//
+//
+//        for (ExtendedLinkType link : newGraph.getLinks().getLink()) {
+//        	System.out.println("link " +link.getLinkName());
+//        	System.out.println("src node " + link.getDestinationNode());
+//        	System.out.println("dest node " + link.getSourceNode());
+//        	System.out.println("throughput " + link.getThroughput());
+//        	System.out.println("latency " + link.getLatency());
+//        }
 
         // forward the graph to the remote service
-        NffgGraphType responseGraph = serviceManager.postNffg(newGraph);
-
-//		// put all the nodes deployed into an hashmap that contains all the association of the client node name and the name assigned by the server
-//		int index = 0;
-//		for(NodeDescriptor node: nffg.getNodes()) {
-//			nodeResponseMap.put(node, responseGraph.getNodes().getNode().get(index).getName());
-//			index++;
-//		}
-
-        //List<RestrictedNodeType> nodesList = responseGraph.getNodes().getNode();
+        NffgGraphType responseGraph = serviceManager.postNffg(graphToBeDeployed);
 
         DeployedNffg deployedNffg = new DeployedNffgImpl(responseGraph.getNffgName(), serviceManager);
-        nffgMap.put(responseGraph.getNffgName(), deployedNffg);
+        nffgCounter++;
 
         return deployedNffg;
     }
 
     @Override
     public DeployedNffg getDeployedNffg(String name) throws UnknownEntityException, ServiceException {
-        DeployedNffg nffg = nffgMap.get(name);
 
-        if (nffg == null)
-            throw new UnknownEntityException();
+        if (name == null)
+            throw new ServiceException();
 
-        return nffg;
+        NffgGraphType retrievedGraph = serviceManager.getGraph(name);
+        return new DeployedNffgImpl(retrievedGraph.getNffgName(), serviceManager);
     }
 
 }

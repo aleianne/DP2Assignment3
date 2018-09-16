@@ -37,7 +37,11 @@ public class Neo4jServiceManager {
 
     public Neo4jServiceManager() {
         client = ClientBuilder.newClient();
-        simpleXmlURL = System.getProperty("it.polito.dp2.NFV.lab3.Neo4JSimpleXMLURL").concat("/data");
+        if (System.getProperty("it.polito.dp2.NFV.lab3.Neo4JSimpleXMLURL") == null) {
+            simpleXmlURL = "http://localhost:8080/Neo4JSimpleXML/rest/data";
+        } else {
+            simpleXmlURL = System.getProperty("it.polito.dp2.NFV.lab3.Neo4JSimpleXMLURL").concat("/data");
+        }
     }
 
     public static Neo4jServiceManager getInstance() {

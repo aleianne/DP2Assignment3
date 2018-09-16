@@ -70,7 +70,7 @@ public class NodeReaderImpl implements NodeReader {
     @Override
     public Set<LinkReader> getLinks() {
         Set<LinkReader> lrSet = new HashSet<LinkReader>();
-        for (ExtendedLinkType link : nffg.getLinks().getLink()) {
+        for (LinkType link : nffg.getLinks().getLink()) {
             LinkReader lr = new LinkReaderImpl(link, nffg, nfvHelper);
             lrSet.add(lr);
         }

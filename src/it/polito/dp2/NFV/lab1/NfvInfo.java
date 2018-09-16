@@ -8,7 +8,8 @@ import java.util.Set;
 import it.polito.dp2.NFV.*;
 
 
-public class NfvInfo {
+public class  // add a new node into the nffg representation saved into the client
+        //newGraph.getNodes().getNode().add(resNode);NfvInfo {
     private NfvReader monitor;
     private DateFormat dateFormat;
 

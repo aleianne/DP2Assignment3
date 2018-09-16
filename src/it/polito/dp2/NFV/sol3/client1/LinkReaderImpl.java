@@ -1,11 +1,12 @@
 package it.polito.dp2.NFV.sol3.client1;
 
+import java.math.BigInteger;
 import java.util.function.Predicate;
 
 import it.polito.dp2.NFV.LinkReader;
 import it.polito.dp2.NFV.NodeReader;
 import it.polito.dp2.NFV.lab3.ServiceException;
-import it.polito.dp2.NFV.sol3.service.ServiceXML.ExtendedLinkType;
+import it.polito.dp2.NFV.sol3.service.ServiceXML.LinkType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.NffgGraphType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.RestrictedNodeType;
 
@@ -13,12 +14,12 @@ import javax.ws.rs.NotFoundException;
 
 public class LinkReaderImpl implements LinkReader {
 
-    private ExtendedLinkType link;
+    private LinkType link;
     private String nffgId;
     private Predicate<RestrictedNodeType> linkPredicate;
     private NfvDeployerServiceManager serviceManager;
 
-    protected LinkReaderImpl(ExtendedLinkType link, String nffgId, NfvDeployerServiceManager serviceManager) {
+    protected LinkReaderImpl(LinkType link, String nffgId, NfvDeployerServiceManager serviceManager) {
         this.link = link;
         this.serviceManager = serviceManager;
         this.nffgId = nffgId;
@@ -34,6 +35,7 @@ public class LinkReaderImpl implements LinkReader {
 
         try {
             RestrictedNodeType retrievedNode = serviceManager.getNodeIntoGraph(nffgId, link.getDestinationNode());
+            System.out.println("the destination node is " + retrievedNode.getName());
             return new NodeReaderImpl(retrievedNode, serviceManager);
         } catch (ServiceException se) {
             System.err.println(se.getMessage());
@@ -50,6 +52,10 @@ public class LinkReaderImpl implements LinkReader {
 
     @Override
     public int getLatency() {
+
+        if (link.getLatency() == null)
+            return 0;
+
         return link.getLatency().intValue();
     }
 
@@ -57,7 +63,8 @@ public class LinkReaderImpl implements LinkReader {
     public NodeReader getSourceNode() {
 
         try {
-            RestrictedNodeType retrievedNode = serviceManager.getNodeIntoGraph(nffgId, link.getDestinationNode());
+            RestrictedNodeType retrievedNode = serviceManager.getNodeIntoGraph(nffgId, link.getSourceNode());
+            System.out.println("the source node is: " + retrievedNode.getName());
             return new NodeReaderImpl(retrievedNode, serviceManager);
         } catch (ServiceException se) {
              System.err.println(se.getMessage());
@@ -76,6 +83,10 @@ public class LinkReaderImpl implements LinkReader {
 
     @Override
     public float getThroughput() {
+
+        if (link.getThroughput() == null)
+            return 0;
+
         return link.getThroughput();
     }
 

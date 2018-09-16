@@ -19,6 +19,9 @@ public class ConnectionPerformanceReaderImpl implements ConnectionPerformanceRea
 
     @Override
     public float getThroughput() {
+
+        System.out.println("this is the throughput " + conn.getThroughput());
+
         return conn.getThroughput();
     }
 

@@ -14,20 +14,15 @@ import it.polito.dp2.NFV.sol3.client1.NfvDeployerServiceManager;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.DateConverter;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
+import java.util.Optional;
+
 public class NffgReaderImpl implements NffgReader {
 
-    // private NfvDeployerServiceManager serviceManager;
     private NffgGraphType nffg;
     private NfvHelper nfvHelper;
 
     protected NffgReaderImpl(NffgGraphType nffg, NfvHelper nfvHelper) {
         this.nffg = nffg;
-//        try {
-//            this.nffg = serviceManager.getGraph(nffgId);
-//        } catch (ServiceException se) {
-//            System.err.println("impossible to implement the nffg reader interface");
-//            System.err.println(se.getMessage());
-//        }
         this.nfvHelper = nfvHelper;
     }
 
@@ -49,14 +44,14 @@ public class NffgReaderImpl implements NffgReader {
     @Override
     public NodeReader getNode(String nodeName) {
         // filter the node list in order to get the node
-        RestrictedNodeType node = nffg.getNodes().getNode().stream().filter(p -> p.getName() == nodeName).findFirst().get();
+        Optional<RestrictedNodeType> node = nffg.getNodes().getNode().stream().filter(p -> p.getName().compareTo(nodeName) == 0).findFirst();
 
-        if (node == null) {
+        if (!node.isPresent()) {
             System.out.println("node " + nodeName + " doesn't exist");
             return null;
         }
 
-        return new NodeReaderImpl(node, nfvHelper);
+        return new NodeReaderImpl(node.get(), nfvHelper);
     }
 
     @Override

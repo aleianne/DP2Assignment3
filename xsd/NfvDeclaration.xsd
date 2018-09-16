@@ -94,7 +94,7 @@
 			<xsd:element name="links">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="link" type="nfv:extendedLinkType" maxOccurs="unbounded"/>
+						<xsd:element name="link" type="nfv:linkType" maxOccurs="unbounded"/>
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
@@ -109,7 +109,7 @@
 
 	<xsd:complexType name="linksType">
 		<xsd:sequence>
-			<xsd:element name="link" type="nfv:extendedLinkType" maxOccurs="unbounded"/>
+			<xsd:element name="link" type="nfv:linkType" maxOccurs="unbounded"/>
 		</xsd:sequence>
 	</xsd:complexType>
 	

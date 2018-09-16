@@ -12,11 +12,13 @@
 	<property name="xsd.dir" location="${basedir}/xsd"/>
 	<property name="custom.dir" location="${basedir}/custom"/>
 	<property name="gen.dir" location="${basedir}/generated"/>
+	<property name="gen2.dir" location="${basedir}/generated2"/>
 	<property name="build.dir" location="${basedir}/build"/>
 	<property name="src.dir" location="${basedir}/src"/>
 	<property name="lib.dir" location="${basedir}/lib"/>
 	<property name="web_content.dir" location="${basedir}/WebContent"/>
-	
+
+	<property name="service.dir" location="${src.dir}/it/polito/dp2/NFV/sol3/service"/>
 	<property name="client1.dir" location="${src.dir}/it/polito/dp2/NFV/sol3/client1"/>
 	<property name="client2.dir" location="${src.dir}/it/polito/dp2/NFV/sol3/client2"/>
 
@@ -31,10 +33,9 @@
 	<property name="debuglevel" value="source,lines,vars" />
 	<property name="target" value="1.8" />
 	<property name="source" value="1.8" />
-	
 
 	<!-- The classpath to be used for compilation of the solution -->
-	<path id="sol.classpath">
+	<path id="sol.server.classpath">
 		<pathelement location="${lib.dir}/NFV.jar"/>
 		<pathelement location="${lib.dir}/lab3.jar"/>
 		<pathelement location= "${lib.dir}/swagger-annotations-1.5.0.jar"/>
@@ -48,24 +49,28 @@
 		<pathelement location="${ext.lib.dir}/jersey-core-1.19.1.jar"/>
 	</path>
 
-	<!-- The classpath that includes only the NFV.jar -->
-	<path id="NFV.classpath">
+	<path id ="sol.client.classpath">
 		<pathelement location="${lib.dir}/NFV.jar"/>
+		<pathelement location="${lib.dir}/lab3.jar"/>
+		<pathelement location="${ext.lib.dir}/javax.ws.rs-api-2.0.1.jar"/>
+		<pathelement location="${ext.lib.dir}/jersey-client-1.19.1.jar"/>
+		<pathelement location="${ext.lib.dir}/jersey-core-1.19.1.jar"/>
 	</path>
+
 	
 	<!-- init target -->
-    <target name="init">
-        <mkdir dir="bin"/>
-        <copy includeemptydirs="false" todir="bin">
-            <fileset dir="src">
-                <exclude name="**/*.java"/>
-            </fileset>
-        </copy>
-    </target>
+    <!--<target name="init">-->
+        <!--<mkdir dir="bin"/>-->
+        <!--<copy includeemptydirs="false" todir="bin">-->
+            <!--<fileset dir="src">-->
+                <!--<exclude name="**/*.java"/>-->
+            <!--</fileset>-->
+        <!--</copy>-->
+    <!--</target>-->
 
 
 	<!-- Generate all the artifacts needed to build the service -->
-	<target depends="init" name="generate-artifacts">
+	<target name="generate-artifacts-for-service">
 		
 		<echo>create a generate folder</echo>
 		<mkdir dir="${gen.dir}"/>
@@ -88,44 +93,53 @@
 		</exec>
 		<touch file="${custom.dir}/.flagfile" />
 	</target>
-	
 
-	<target name="build-service" depends="generate-artifacts">
+	<!-- Generate all the artifacts needed to build the service -->
+	<target name="generate-artifacts-for-client">
+
+		<echo>create a generate folder</echo>
+		<mkdir dir="${gen2.dir}"/>
+
+		<exec executable="xjc" failonerror="true" >
+			<arg value="-d" />
+			<arg value="${gen2.dir}" />
+			<arg value="-p" />
+			<arg value="it.polito.dp2.NFV.sol3.ServiceXML" />
+			<arg value="${xsd.dir}/NfvDeclaration.xsd" />
+		</exec>
+		<touch file="${custom.dir}/.flagfile" />
+	</target>
+
+
+	<target name="build-service" depends="generate-artifacts-for-service">
 		<echo>Building the submitted solution (if needed)...</echo>
 		<javac destdir="${build.dir}" debug="${debug}" debuglevel="${debuglevel}" source="${source}" target="${target}" includeantruntime="false">
 			<src path="${src.dir}"/>
 			<src path="${gen.dir}"/>
 			<include name="it/polito/dp2/NFV/sol3/**" />
 			 <classpath>
-				<path refid="sol.classpath" />
+				<path refid="sol.server.classpath" />
 			</classpath>
 		</javac>
+		<echo>delete XML mapped class</echo>
+		<delete dir="${gen.dir}"/>
 		<echo>Done.</echo>
-		<echo>delete the generate folder...</echo>
-		<delete dir= "${gen.dir}"/>
-		
-		
-		<echo>Copy the schema file from the xsd directory into the web-inf folder</echo>
-		<copy file="${xsd.dir}/NfvDeclaration.xsd" todir="${web-inf.dir}"></copy>
-		
 	</target>
 	
-	
-	<target name="build-client" depends="generate-artifacts">
-		<echo>Bilding the client number 1 and number 2</echo>
+	<target name="build-client" depends="generate-artifacts-for-client">
+		<echo>Building the client number 1 and number 2</echo>
 		<javac destdir="${build.dir}" debug="${debug}" debuglevel="${debuglevel}" source="${source}" target="${target}" includeantruntime="false">
 			<src path="${client1.dir}"/>
 			<src path="${client2.dir}"/>
-			<src path="${gen.dir}"/>
-			<include name="it/polito/dp2/NFV/sol3/**" />
+			<src path="${gen2.dir}"/>
+			<include name="it/polito/dp2/NFV/sol3/**"/>
 			 <classpath>
-				<path refid="sol.classpath" />
+				<path refid="sol.client.classpath"/>
 			</classpath>
 		</javac>
+		<echo>delete XML mapped class</echo>
+		<delete dir="${gen2.dir}"/>
 		<echo>Done.</echo>
-		<echo>delete the generate folder...</echo>
-		<delete dir= "${gen.dir}"/>
-		
 	</target>
 	
 </project>

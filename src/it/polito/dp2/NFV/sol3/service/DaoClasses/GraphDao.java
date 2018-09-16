@@ -2,7 +2,6 @@ package it.polito.dp2.NFV.sol3.service.DaoClasses;
 
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 import it.polito.dp2.NFV.sol3.service.Exceptions.GraphNotFoundException;
-import it.polito.dp2.NFV.sol3.service.Exceptions.UnknowNodeException;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
 import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.*;
 
@@ -15,9 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
-import java.util.logging.Level;
 
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
 
 import it.polito.dp2.NFV.lab3.LinkAlreadyPresentException;
@@ -49,6 +46,7 @@ public class GraphDao {
      * allocate the graph into the system and put it into the neo4j database and into the hashmap
      */
     public String createNffg(NffgGraphType newNffg) throws ServiceException {
+
         // this map convert the name given by the user into a name assigned by this server
         Map<String, String> nodeNameResolverMap = new HashMap<>();
 
@@ -69,7 +67,7 @@ public class GraphDao {
         }
 
         // update the list of links with the new name
-        for (ExtendedLinkType link : newNffg.getLinks().getLink()) {
+        for (LinkType link : newNffg.getLinks().getLink()) {
             String linkName = linkBaseName.concat(Integer.toString(linkCounter.incrementAndGet()));
 
             link.setDestinationNode(nodeNameResolverMap.get(link.getDestinationNode()));
@@ -78,44 +76,13 @@ public class GraphDao {
         }
 
         graphMap.put(nffgName, newNffg);
-
-        neo4jXMLclient = Neo4jServiceManager.getInstance();
-
-        // forward the graph to the remote database
-        Node neo4jNode = new Node();
-        Labels nodeLabel = new Labels();
-        Property nodeProperty = new Property();
-        Relationship neo4jRelationship = new Relationship();
-
-        // declare a new property inside the neo4jNode
-        neo4jNode.setProperties(new Properties());
-        neo4jNode.getProperties().getProperty().add(nodeProperty);
-
-        nodeLabel.getLabel().add(nodeLabelName);
-
-        for (RestrictedNodeType node : newNffg.getNodes().getNode()) {
-            // create a neo4j node for the forwarding ;
-            neo4jNode.getProperties().getProperty().get(0).setName("name");
-            neo4jNode.getProperties().getProperty().get(0).setValue(node.getName());
-
-            neo4jXMLclient.postNode(neo4jNode, nodeLabel);
-
-            // set the relationship info between the node and the host
-            neo4jRelationship.setDstNode(node.getHostname());
-            neo4jRelationship.setSrcNode(node.getName());
-            neo4jRelationship.setType(hostRelationshipLabel);
-            neo4jXMLclient.postRelationship(neo4jRelationship);
-        }
-
-        for (ExtendedLinkType link : newNffg.getLinks().getLink()) {
-            // set link information
-            neo4jRelationship.setDstNode(link.getDestinationNode());
-            neo4jRelationship.setSrcNode(link.getSourceNode());
-            neo4jRelationship.setType(nodeRelatioshipLabel);
-            neo4jXMLclient.postRelationship(neo4jRelationship);
-        }
-
+        forwardGraphToNfvSimpleXml(newNffg);
         return nffgName;
+    }
+
+    public void createFirstNffg(NffgGraphType graph) throws ServiceException {
+        graphMap.put(graph.getNffgName(), graph);
+        forwardGraphToNfvSimpleXml(graph);
     }
 
     /*
@@ -193,11 +160,11 @@ public class GraphDao {
             // synchronize the access to the single graph where the link should allocated
             synchronized (queryResultGraph) {
 
-                List<ExtendedLinkType> graphLinkList = queryResultGraph.getLinks().getLink();
+                List<LinkType> graphLinkList = queryResultGraph.getLinks().getLink();
                 List<RestrictedNodeType> GraphNodeList = queryResultGraph.getNodes().getNode();
 
                 // filter the list in order to obtain all the links that have a specified source node and a specified destination node
-                Predicate<ExtendedLinkType> linkPredicate = p -> p.getDestinationNode().compareTo(newLink.getDestinationNode()) == 0 && p.getSourceNode().compareTo(newLink.getSourceNode()) == 0;
+                Predicate<LinkType> linkPredicate = p -> p.getDestinationNode().compareTo(newLink.getDestinationNode()) == 0 && p.getSourceNode().compareTo(newLink.getSourceNode()) == 0;
                 // filter the node list, check if there are the nodes specified
                 Predicate<RestrictedNodeType> nodePredicate = p -> p.getName().compareTo(newLink.getDestinationNode()) == 0;
                 Predicate<RestrictedNodeType> nodePredicate2 = p -> p.getName().compareTo(newLink.getSourceNode()) == 0;
@@ -206,13 +173,12 @@ public class GraphDao {
                         || !GraphNodeList.stream().filter(nodePredicate2).findFirst().isPresent())
                     throw new NoNodeException();
 
-                Optional<ExtendedLinkType> retrievedLink = graphLinkList.stream().filter(linkPredicate).findFirst();
+                Optional<LinkType> retrievedLink = graphLinkList.stream().filter(linkPredicate).findFirst();
                 if (retrievedLink.isPresent()) {
-                	ExtendedLinkType link = retrievedLink.get();
-                	if (!link.isOverwrite())
+                    LinkType link = retrievedLink.get();
+                	if (!newLink.isOverwrite())
                         throw new LinkAlreadyPresentException();
                 	else {
-                		link.setOverwrite(newLink.isOverwrite());
                 		link.setThroughput(newLink.getThroughput());
                 		link.setLatency(newLink.getLatency());
                 	}
@@ -250,5 +216,43 @@ public class GraphDao {
      */
     public RestrictedNodeType queryGraph(String nodename) {
         return nodeIDMap.get(nodename);
+    }
+
+    private void forwardGraphToNfvSimpleXml(NffgGraphType graph) throws ServiceException {
+        neo4jXMLclient = Neo4jServiceManager.getInstance();
+
+        // forward the graph to the remote database
+        Node neo4jNode = new Node();
+        Labels nodeLabel = new Labels();
+        Property nodeProperty = new Property();
+        Relationship neo4jRelationship = new Relationship();
+
+        // declare a new property inside the neo4jNode
+        neo4jNode.setProperties(new Properties());
+        neo4jNode.getProperties().getProperty().add(nodeProperty);
+
+        nodeLabel.getLabel().add(nodeLabelName);
+
+        for (RestrictedNodeType node : graph.getNodes().getNode()) {
+            // create a neo4j node for the forwarding ;
+            neo4jNode.getProperties().getProperty().get(0).setName("name");
+            neo4jNode.getProperties().getProperty().get(0).setValue(node.getName());
+
+            neo4jXMLclient.postNode(neo4jNode, nodeLabel);
+
+            // set the relationship info between the node and the host
+            neo4jRelationship.setDstNode(node.getHostname());
+            neo4jRelationship.setSrcNode(node.getName());
+            neo4jRelationship.setType(hostRelationshipLabel);
+            neo4jXMLclient.postRelationship(neo4jRelationship);
+        }
+
+        for (LinkType link : graph.getLinks().getLink()) {
+            // set link information
+            neo4jRelationship.setDstNode(link.getDestinationNode());
+            neo4jRelationship.setSrcNode(link.getSourceNode());
+            neo4jRelationship.setType(nodeRelatioshipLabel);
+            neo4jXMLclient.postRelationship(neo4jRelationship);
+        }
     }
 }

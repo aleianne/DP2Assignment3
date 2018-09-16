@@ -6,12 +6,14 @@ import java.util.Set;
 import it.polito.dp2.NFV.HostReader;
 import it.polito.dp2.NFV.NodeReader;
 import it.polito.dp2.NFV.lab3.ServiceException;
+import it.polito.dp2.NFV.lab3.UnknownEntityException;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.DeployedNodeType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.ExtendedHostType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.HostType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.NffgGraphType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.NodesType;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.RestrictedNodeType;
+
 
 public class HostReaderImpl implements HostReader {
 
@@ -54,7 +56,7 @@ public class HostReaderImpl implements HostReader {
                 NodeReader newNodeReader = new NodeReaderImpl(deployedNode, serviceManager);
                 nodeReaderSet.add(newNodeReader);
             }
-        } catch (ServiceException se) {
+        } catch (ServiceException | UnknownEntityException se) {
             System.err.println(se.getMessage());
         }
 

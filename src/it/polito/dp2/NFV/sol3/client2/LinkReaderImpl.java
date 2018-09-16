@@ -9,17 +9,19 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.math.BigInteger;
 
 public class LinkReaderImpl implements LinkReader {
 
     //private NfvDeployerServiceManager serviceManager;
-    private ExtendedLinkType link;
+    private LinkType link;
     private NffgGraphType nffg;
     private NfvHelper nfvHelper;
 
-    protected LinkReaderImpl(ExtendedLinkType link, NffgGraphType nffg, NfvHelper nfvHelper) {
+    protected LinkReaderImpl(LinkType link, NffgGraphType nffg, NfvHelper nfvHelper) {
         this.link = link;
         this.nfvHelper = nfvHelper;
+        this.nffg = nffg;
     }
 
     @Override
@@ -41,7 +43,13 @@ public class LinkReaderImpl implements LinkReader {
 
     @Override
     public int getLatency() {
-        return link.getLatency().intValue();
+
+        BigInteger latency = link.getLatency();
+
+        if (latency == null)
+            return 0;
+
+        return latency.intValue();
     }
 
     @Override
@@ -55,6 +63,7 @@ public class LinkReaderImpl implements LinkReader {
 //            NodeReader nr = new NodeReaderImpl(node, serviceManager);
 //            return nr;
 //        }
+
         List<RestrictedNodeType> nodeList = nffg.getNodes().getNode();
         Optional<RestrictedNodeType> retrievedSourceNode = nodeList.stream().filter(p -> p.getName().compareTo(link.getSourceNode()) == 0).findFirst();
 
@@ -68,6 +77,10 @@ public class LinkReaderImpl implements LinkReader {
 
     @Override
     public float getThroughput() {
+
+        if (link.getThroughput() == null)
+            return 0;
+
         return link.getThroughput();
     }
 

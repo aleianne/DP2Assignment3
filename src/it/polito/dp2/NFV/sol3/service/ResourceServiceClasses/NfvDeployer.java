@@ -1,6 +1,8 @@
 package it.polito.dp2.NFV.sol3.service.ResourceServiceClasses;
 
 import it.polito.dp2.NFV.sol3.service.DaoClasses.ConnectionDao;
+import it.polito.dp2.NFV.sol3.service.DaoClasses.GraphDao;
+import it.polito.dp2.NFV.sol3.service.DaoClasses.HostDao;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.VnfDao;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
@@ -13,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.ext.Provider;
+import javax.xml.datatype.DatatypeConfigurationException;
 
 import org.glassfish.jersey.server.monitoring.ApplicationEvent;
 import org.glassfish.jersey.server.monitoring.ApplicationEventListener;
@@ -74,7 +77,7 @@ public class NfvDeployer implements ApplicationEventListener {
             for (HostReader hr : monitor.getHosts()) {
                 ExtendedHostType newHost = objFactory.createExtendedHostType();
 
-                // incapsulate the data from the reader interface into the ExtendedHostType instance
+                // encapsulate the data from the reader interface into the ExtendedHostType instance
                 newHost.setAvailableMemory(BigInteger.valueOf(hr.getAvailableMemory()));
                 newHost.setAvailableStorage(BigInteger.valueOf(hr.getAvailableStorage()));
                 newHost.setHostname(hr.getName());
@@ -123,7 +126,7 @@ public class NfvDeployer implements ApplicationEventListener {
                         newConnection.setHostname1(host1.getName());
                         newConnection.setHostname2(host2.getName());
                         newConnection.setLatency(BigInteger.valueOf(connReader.getLatency()));
-                        newConnection.setThroughput(Float.valueOf(connReader.getLatency()));
+                        newConnection.setThroughput(connReader.getThroughput());
                         connList.add(newConnection);
                     }
                 }
@@ -133,37 +136,10 @@ public class NfvDeployer implements ApplicationEventListener {
 
             logger.log(Level.INFO, "all the connection between host are loaded in memory");
 
-            // deploy the first graph
+            // deploy first graph
             NffgReader nfgr = monitor.getNffg("Nffg0");
-            NffgGraphType newGraph = new NffgGraphType();
-
-            newGraph.setNodes(new NffgGraphType.Nodes());
-            newGraph.setLinks(new NffgGraphType.Links());
-
-            List<RestrictedNodeType> nodeList = newGraph.getNodes().getNode();
-            List<ExtendedLinkType> linkList = newGraph.getLinks().getLink();
-
-            for (NodeReader nr : nfgr.getNodes()) {
-                RestrictedNodeType newNode = new RestrictedNodeType();
-                newNode.setHostname(nr.getHost().getName());
-                newNode.setVNF(nr.getFuncType().getName());
-                newNode.setName(nr.getName());
-                nodeList.add(newNode);
-
-                for (LinkReader lr : nr.getLinks()) {
-                    ExtendedLinkType newLink = new ExtendedLinkType();
-
-                    newLink.setDestinationNode(lr.getDestinationNode().getName());
-                    newLink.setSourceNode(lr.getSourceNode().getName());
-                    newLink.setLatency(BigInteger.valueOf(lr.getLatency()));
-                    newLink.setThroughput(lr.getThroughput());
-                    newLink.setLinkName(lr.getName());
-                    newLink.setOverwrite(false);
-                    linkList.add(newLink);
-                }
-            }
-
-            nffgServer.deployNewNffgGraph(newGraph);
+            deployFirstGraph(nfgr);
+            //nffgServer.deployNewNffgGraph(newGraph);
             logger.log(Level.INFO, "Nffg-0  is loaded");
 
         } catch (NfvReaderException ne) {
@@ -174,6 +150,73 @@ public class NfvDeployer implements ApplicationEventListener {
             logger.log(Level.SEVERE, "Impossible to allocate the first graph");
         }
 
+    }
+
+    private void deployFirstGraph(NffgReader nfgr) throws AllocationException, ServiceException {
+
+        NffgGraphType newGraph = new NffgGraphType();
+        String nffgName = nfgr.getName();
+
+        newGraph.setNodes(new NffgGraphType.Nodes());
+        newGraph.setLinks(new NffgGraphType.Links());
+        newGraph.setNffgName(nffgName);
+
+        List<RestrictedNodeType> nodeList = newGraph.getNodes().getNode();
+        List<LinkType> linkList = newGraph.getLinks().getLink();
+
+        List<FunctionType> vnfList = new ArrayList<FunctionType> ();
+        List<ExtendedHostType> hostList = new ArrayList<ExtendedHostType> (HostDao.getInstance().readAllHosts());
+        FunctionType function;
+
+        for (NodeReader nr : nfgr.getNodes()) {
+            RestrictedNodeType newNode = new RestrictedNodeType();
+            newNode.setHostname(nr.getHost().getName());
+            newNode.setVNF(nr.getFuncType().getName());
+            newNode.setName(nr.getName());
+            newNode.setNfFg(nffgName);
+            nodeList.add(newNode);
+
+            // search the function
+            function = VnfDao.getInstance().readVnf(nr.getFuncType().getName());
+
+            if (function == null)
+                throw new AllocationException();
+
+            vnfList.add(function);
+
+            for (LinkReader lr : nr.getLinks()) {
+                LinkType newLink = new LinkType();
+
+                newLink.setDestinationNode(lr.getDestinationNode().getName());
+                newLink.setSourceNode(lr.getSourceNode().getName());
+                newLink.setLatency(BigInteger.valueOf(lr.getLatency()));
+                newLink.setThroughput(lr.getThroughput());
+                newLink.setLinkName(lr.getName());
+                linkList.add(newLink);
+            }
+        }
+
+        GraphAllocator allocator = new GraphAllocator();
+        HostDao hostDao = HostDao.getInstance();
+        allocator.findSelectedHost(vnfList, nodeList, hostDao);
+
+        // if the vnf are already allocated don't do anything
+        if (!vnfList.isEmpty())
+            allocator.findBestHost(vnfList, hostList);
+
+        try {
+            DateConverter dateConverter = new DateConverter();
+            newGraph.setDeployDate(dateConverter.getCurrentXmlDate());
+        } catch (DatatypeConfigurationException dce) {
+            logger.log(Level.WARNING, "impossible to create a new XML Gregorian Calendar: " + dce.getMessage());
+            newGraph.setDeployDate(null);
+        }
+
+        // update a new host into the database
+        allocator.changeHostnameValueInGraph(nodeList);
+        allocator.allocateGraph(nodeList, hostDao);
+
+        GraphDao.getInstance().createFirstNffg(newGraph);
     }
 
 }

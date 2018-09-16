@@ -8,6 +8,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import it.polito.dp2.NFV.NffgReader;
 import it.polito.dp2.NFV.NodeReader;
 import it.polito.dp2.NFV.lab3.ServiceException;
+import it.polito.dp2.NFV.lab3.UnknownEntityException;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.DateConverter;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
@@ -85,7 +86,7 @@ public class NffgReaderImpl implements NffgReader {
             for (RestrictedNodeType node : nodes.getNode())
                 nodeSet.add(new NodeReaderImpl(node, serviceManager));
 
-        } catch (ServiceException se) {
+        } catch (ServiceException | UnknownEntityException se) {
             System.err.println(se.getMessage());
         }
 

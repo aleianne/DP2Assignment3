@@ -56,7 +56,7 @@ public class NffgResourceService {
         return retrievedGraph.getNodes().getNode();
     }
 
-    public List<ExtendedLinkType> getLinkList(String nffgId) {
+    public List<LinkType> getLinkList(String nffgId) {
         NffgGraphType retrievedGraph = GraphDao.getInstance().readGraph(nffgId);
 
         if (retrievedGraph == null)
@@ -185,5 +185,4 @@ public class NffgResourceService {
 
         return graphName;
     }
-
 }

@@ -198,7 +198,8 @@ public class NFVTests {
     }
 
     // creates an instance of the NfvReader under test
-    private NfvReader createTestNfvReader() throws NfvReaderException, FactoryConfigurationError {
+    private NfvReader
+    createTestNfvReader() throws NfvReaderException, FactoryConfigurationError {
         // Create client under test
         System.setProperty("it.polito.dp2.NFV.NfvReaderFactory", "it.polito.dp2.NFV.sol3.client2.NfvReaderFactory");
         NfvReader testNfvReader = NfvReaderFactory.newInstance().newNfvReader();

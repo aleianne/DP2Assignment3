@@ -33,8 +33,8 @@ public class HostResourceService {
         ExtendedHostType host = HostDao.getInstance().readHost(hostname);
 
         // if the database doesn't contain the host return null
-        if (host == null)
-            return null;
+        if (host == null || host.getDeployedNodes() == null || host.getDeployedNodes().getNode().isEmpty())
+            return nodeList;
 
         for (DeployedNodeType deployed_node : host.getDeployedNodes().getNode()) {
             RestrictedNodeType node = GraphDao.getInstance().queryGraph(deployed_node.getNodeName());

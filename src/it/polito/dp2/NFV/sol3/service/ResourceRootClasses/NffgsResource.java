@@ -210,6 +210,7 @@ public class NffgsResource {
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Created"),
             @ApiResponse(code = 403, message = "Forbidden"),
+            @ApiResponse(code = 404, message = "Not Found"),
             @ApiResponse(code = 500, message = "Internal Server Error")
     })
     @Produces(MediaType.APPLICATION_XML)
@@ -293,7 +294,7 @@ public class NffgsResource {
         if (nffgId == null)
             throw new BadRequestException();
 
-        List<ExtendedLinkType> retrievedLinkList = nffgServer.getLinkList(nffgId);
+        List<LinkType> retrievedLinkList = nffgServer.getLinkList(nffgId);
 
         if (retrievedLinkList == null) {
             logger.log(Level.SEVERE, "the nffg " + nffgId + " doesn't exist");
@@ -439,10 +440,9 @@ public class NffgsResource {
             logger.log(Level.SEVERE,  "return status code 404");
             throw new NotFoundException();
         } catch (LinkAlreadyPresentException le) {
-            // TODO lanciare un errore 409
         	logger.log(Level.SEVERE, "the link already exists and cannot be overwritten");
         	logger.log(Level.SEVERE, "return status code 409");
-            throw new NotFoundException();
+            return Response.status(Response.Status.CONFLICT).build();
         }
     }
 

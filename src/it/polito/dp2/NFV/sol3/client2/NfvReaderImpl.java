@@ -83,6 +83,7 @@ public class NfvReaderImpl implements NfvReader {
     @Override
     public Set<NffgReader> getNffgs(Calendar date) {
         Set<NffgReader> nrSet = new HashSet<NffgReader>();
+        NffgReader nr;
 
 //        try {
 //            NffgsInfoType nffgs = serviceManager.getGraphs(date);
@@ -95,9 +96,16 @@ public class NfvReaderImpl implements NfvReader {
 //            System.err.println(se.getMessage());
 //        }
 
+        if (date == null) {
+            for (NffgGraphType graph : nfvHelper.getGraphList()) {
+                nr = new NffgReaderImpl(graph, nfvHelper);
+                nrSet.add(nr);
+            }
+            return nrSet;
+        }
+
         try {
             XMLGregorianCalendar xmlDate = CalendarXMLconverter.toXMLGregorianCalendar(date);
-            NffgReader nr;
             for (NffgGraphType graph : nfvHelper.getGraphList()) {
                 int res = graph.getDeployDate().compare(xmlDate);
                 if (res == DatatypeConstants.GREATER || res == DatatypeConstants.EQUAL) {
