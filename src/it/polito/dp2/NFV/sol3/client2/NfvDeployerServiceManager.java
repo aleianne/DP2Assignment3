@@ -1,25 +1,21 @@
-package it.polito.dp2.NFV.sol3.client1;
-
-import java.net.URI;
-
-import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.ResponseProcessingException;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.xml.bind.JAXBElement;
-import javax.xml.ws.Service;
+package it.polito.dp2.NFV.sol3.client2;
 
 import it.polito.dp2.NFV.lab3.*;
 import it.polito.dp2.NFV.sol3.ServiceXML.*;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.ResponseProcessingException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.xml.bind.JAXBElement;
+import java.net.URI;
+
 public class NfvDeployerServiceManager {
 
+    private static final String url = "http://localhost:8080/NfvDeployer/rest";
     private Client client;
     private String serviceURL;
     private Response serverResponse;
@@ -29,13 +25,8 @@ public class NfvDeployerServiceManager {
         client = ClientBuilder.newClient();
         serviceURL = System.getProperty("it.polito.dp2.NFV.lab3.URL");
 
-        if (serviceURL == null) {
-            String servicePort = System.getProperty("PORT");
-            if (servicePort == null) {
-                servicePort = "8080";
-            }
-            serviceURL = "http://localhost:" + servicePort + "/NfvDeployer/rest";
-        }
+        if (serviceURL == null)
+            serviceURL = url;
 
         objectFactory = new ObjectFactory();
     }
@@ -143,6 +134,7 @@ public class NfvDeployerServiceManager {
 //                default:
 //                    throw new ServiceException("unknown status code");
 //            }
+
             checkResponse(serverResponse.getStatusInfo().getStatusCode());
             return serverResponse.readEntity(ExtendedLinkType.class);
 

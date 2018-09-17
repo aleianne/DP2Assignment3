@@ -1,5 +1,6 @@
 package it.polito.dp2.NFV.sol3.service.ResourceServiceClasses;
 
+import it.polito.dp2.NFV.sol3.service.Exceptions.*;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.*;
 
@@ -14,9 +15,6 @@ import javax.ws.rs.InternalServerErrorException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.XMLGregorianCalendar;
-
-import it.polito.dp2.NFV.lab3.AllocationException;
-import it.polito.dp2.NFV.lab3.ServiceException;
 
 public class NffgResourceService {
 

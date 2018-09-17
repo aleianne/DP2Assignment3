@@ -37,7 +37,6 @@
 	<!-- The classpath to be used for compilation of the solution -->
 	<path id="sol.server.classpath">
 		<pathelement location="${lib.dir}/NFV.jar"/>
-		<pathelement location="${lib.dir}/lab3.jar"/>
 		<pathelement location= "${lib.dir}/swagger-annotations-1.5.0.jar"/>
 		<pathelement location= "${lib.dir}/swagger-core-1.5.0.jar"/>
 		<pathelement location= "${lib.dir}/swagger-core-jaxrs-1.5.0.jar"/>
@@ -57,7 +56,7 @@
 		<pathelement location="${ext.lib.dir}/jersey-core-1.19.1.jar"/>
 	</path>
 
-	
+
 	<!-- init target -->
     <!--<target name="init">-->
         <!--<mkdir dir="bin"/>-->
@@ -80,7 +79,7 @@
 			<arg value="${gen.dir}" />
 			<arg value="-p" />
 			<arg value="it.polito.dp2.NFV.sol3.service.ServiceXML" />
-			<arg value="${xsd.dir}/NfvDeclaration.xsd" />
+			<arg value="${xsd.dir}/NfvDeployer.xsd" />
 		</exec>
 		<touch file="${custom.dir}/.flagfile" />
 		
@@ -105,7 +104,7 @@
 			<arg value="${gen2.dir}" />
 			<arg value="-p" />
 			<arg value="it.polito.dp2.NFV.sol3.ServiceXML" />
-			<arg value="${xsd.dir}/NfvDeclaration.xsd" />
+			<arg value="${xsd.dir}/NfvDeployer.xsd" />
 		</exec>
 		<touch file="${custom.dir}/.flagfile" />
 	</target>
@@ -113,10 +112,13 @@
 
 	<target name="build-service" depends="generate-artifacts-for-service">
 		<echo>Building the submitted solution (if needed)...</echo>
+		<copy file="${xsd.dir}/NfvDeployer.xsd" tofile="${web_content.dir}/WEB-INF/classes/xsd/NfvDeployer.xsd"/>
 		<javac destdir="${build.dir}" debug="${debug}" debuglevel="${debuglevel}" source="${source}" target="${target}" includeantruntime="false">
 			<src path="${src.dir}"/>
 			<src path="${gen.dir}"/>
 			<include name="it/polito/dp2/NFV/sol3/**" />
+			<exclude name="it/polito/dp2/NFV/sol3/client1/**"/>
+			<exclude name="it/polito/dp2/NFV/sol3/client2/**"/>
 			 <classpath>
 				<path refid="sol.server.classpath" />
 			</classpath>
@@ -129,10 +131,10 @@
 	<target name="build-client" depends="generate-artifacts-for-client">
 		<echo>Building the client number 1 and number 2</echo>
 		<javac destdir="${build.dir}" debug="${debug}" debuglevel="${debuglevel}" source="${source}" target="${target}" includeantruntime="false">
-			<src path="${client1.dir}"/>
-			<src path="${client2.dir}"/>
+			<src path="${src.dir}"/>
 			<src path="${gen2.dir}"/>
 			<include name="it/polito/dp2/NFV/sol3/**"/>
+			<exclude name="it/polito/dp2/NFV/sol3/service/**"/>
 			 <classpath>
 				<path refid="sol.client.classpath"/>
 			</classpath>

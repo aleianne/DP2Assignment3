@@ -5,12 +5,11 @@
 	xmlns:nfv="http://www.example.com/nfv" 
 	elementFormDefault="qualified">
 
-	<!--<xsd:include schemaLocation="nfvInfo.xsd"/>-->
 	
 	<xsd:annotation>
 		<xsd:documentation>
 		
-				This is the declaration of the root element
+				This is the declaration of the root element into the NFV
 			
 		</xsd:documentation>
 	</xsd:annotation>

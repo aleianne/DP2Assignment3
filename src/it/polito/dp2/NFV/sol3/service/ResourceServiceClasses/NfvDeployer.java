@@ -4,6 +4,8 @@ import it.polito.dp2.NFV.sol3.service.DaoClasses.ConnectionDao;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.GraphDao;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.HostDao;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.VnfDao;
+import it.polito.dp2.NFV.sol3.service.Exceptions.AllocationException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.ServiceException;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
@@ -31,8 +33,6 @@ import it.polito.dp2.NFV.NfvReaderException;
 import it.polito.dp2.NFV.NfvReaderFactory;
 import it.polito.dp2.NFV.NodeReader;
 import it.polito.dp2.NFV.VNFTypeReader;
-import it.polito.dp2.NFV.lab3.AllocationException;
-import it.polito.dp2.NFV.lab3.ServiceException;
 
 @Provider
 public class NfvDeployer implements ApplicationEventListener {

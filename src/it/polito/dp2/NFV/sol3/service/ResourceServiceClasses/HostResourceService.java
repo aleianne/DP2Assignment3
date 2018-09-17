@@ -1,5 +1,6 @@
 package it.polito.dp2.NFV.sol3.service.ResourceServiceClasses;
 
+import it.polito.dp2.NFV.sol3.service.Exceptions.ServiceException;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.*;
 
@@ -7,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.InternalServerErrorException;
-
-import it.polito.dp2.NFV.lab3.ServiceException;
 
 public class HostResourceService {
 

@@ -2,7 +2,7 @@ package it.polito.dp2.NFV.sol3.client1;
 
 import it.polito.dp2.NFV.FunctionalType;
 import it.polito.dp2.NFV.VNFTypeReader;
-import it.polito.dp2.NFV.sol3.service.ServiceXML.FunctionType;
+import it.polito.dp2.NFV.sol3.ServiceXML.FunctionType;
 
 public class VNFTypeReaderImpl implements VNFTypeReader {
 

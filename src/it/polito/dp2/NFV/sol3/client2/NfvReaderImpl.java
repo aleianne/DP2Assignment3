@@ -7,10 +7,14 @@ import it.polito.dp2.NFV.HostReader;
 import it.polito.dp2.NFV.NffgReader;
 import it.polito.dp2.NFV.NfvReader;
 import it.polito.dp2.NFV.VNFTypeReader;
-import it.polito.dp2.NFV.lab3.ServiceException;
-import it.polito.dp2.NFV.sol3.client1.NfvDeployerServiceManager;
+import it.polito.dp2.NFV.sol3.client2.NfvDeployerServiceManager;
 
-import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
+import it.polito.dp2.NFV.sol3.ServiceXML.ConnectionType;
+import it.polito.dp2.NFV.sol3.ServiceXML.HostType;
+import it.polito.dp2.NFV.sol3.ServiceXML.FunctionType;
+import it.polito.dp2.NFV.sol3.ServiceXML.NffgGraphType;
+
+
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeConstants;
@@ -21,11 +25,9 @@ import java.util.Optional;
 
 public class NfvReaderImpl implements NfvReader {
 
-    private NfvDeployerServiceManager serviceManager;
     private NfvHelper nfvHelper;
 
     public NfvReaderImpl() {
-        serviceManager = new NfvDeployerServiceManager();
         nfvHelper = new NfvHelper();
     }
 

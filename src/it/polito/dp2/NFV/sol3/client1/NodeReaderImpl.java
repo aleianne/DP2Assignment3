@@ -10,7 +10,7 @@ import it.polito.dp2.NFV.NodeReader;
 import it.polito.dp2.NFV.VNFTypeReader;
 import it.polito.dp2.NFV.lab3.ServiceException;
 import it.polito.dp2.NFV.lab3.UnknownEntityException;
-import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
+import it.polito.dp2.NFV.sol3.ServiceXML.*;
 
 public class NodeReaderImpl implements NodeReader {
 
@@ -34,7 +34,7 @@ public class NodeReaderImpl implements NodeReader {
 
         try {
             vnfReader = new VNFTypeReaderImpl(serviceManager.getFunction(node.getVNF()));
-        } catch (ServiceException se) {
+        } catch (ServiceException | UnknownEntityException se) {
             System.err.println(se.getMessage());
         }
 
@@ -48,7 +48,7 @@ public class NodeReaderImpl implements NodeReader {
         try {
             HostType host = (HostType) serviceManager.getHost(node.getHostname());
             hostReader = new HostReaderImpl(host, serviceManager);
-        } catch (ServiceException se) {
+        } catch (ServiceException | UnknownEntityException se) {
             System.err.println(se.getMessage());
         }
 
@@ -67,7 +67,7 @@ public class NodeReaderImpl implements NodeReader {
                 if (link.getSourceNode() == node.getName())
                     linkReaderSet.add(new LinkReaderImpl(link, node.getNfFg(), serviceManager));
             }
-        } catch (ServiceException se) {
+        } catch (ServiceException | UnknownEntityException se) {
             System.err.println(se.getMessage());
         }
 

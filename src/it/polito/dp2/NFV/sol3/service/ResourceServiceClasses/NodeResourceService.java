@@ -9,12 +9,12 @@ import java.util.logging.Logger;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 
-import it.polito.dp2.NFV.lab3.AllocationException;
-import it.polito.dp2.NFV.lab3.ServiceException;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.GraphDao;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.HostDao;
 import it.polito.dp2.NFV.sol3.service.DaoClasses.VnfDao;
-import it.polito.dp2.NFV.sol3.service.Exceptions.GraphNotFoundException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.AllocationException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.ServiceException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.UnknownEntityException;
 import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.Node;
 import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.Nodes;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
@@ -23,7 +23,8 @@ public class NodeResourceService {
 
     private static Logger logger = Logger.getLogger(NodeResourceService.class.getName());
 
-    public String addNode(String graphId, RestrictedNodeType newNode) throws ServiceException, AllocationException, InternalServerErrorException, GraphNotFoundException {
+    public String addNode(String graphId, RestrictedNodeType newNode) throws ServiceException, AllocationException,
+            InternalServerErrorException, UnknownEntityException {
 
         /*
          * in this method use the same class used for the graph allocation

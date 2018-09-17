@@ -1,7 +1,11 @@
 package it.polito.dp2.NFV.sol3.service.ResourceRootClasses;
 
+import it.polito.dp2.NFV.sol3.service.Exceptions.LinkAlreadyPresentException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.NoNodeException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.ServiceException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.UnknownEntityException;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
-import it.polito.dp2.NFV.sol3.service.Exceptions.GraphNotFoundException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.*;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
 
 import java.util.Calendar;
@@ -19,10 +23,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import it.polito.dp2.NFV.lab3.AllocationException;
-import it.polito.dp2.NFV.lab3.LinkAlreadyPresentException;
-import it.polito.dp2.NFV.lab3.NoNodeException;
-import it.polito.dp2.NFV.lab3.ServiceException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.AllocationException;
 
 /*
  * root class for the nffg resource
@@ -65,7 +66,7 @@ public class NffgsResource {
                 nffgServer.deployNewNffgGraph(nffgXmlElement);
                 JAXBElement<NffgGraphType> xmlResponse = objFactory.createNffg(nffgXmlElement);
                 // TODO: cambiare la risposta in modo da restituire l'uri della risorsa
-                return Response.ok(xmlResponse, MediaType.APPLICATION_XML).build();
+                return Response.ok(xmlResponse, MediaType.APPLICATION_XML).status(Response.Status.CREATED).build();
             } else {
                 logger.log(Level.SEVERE, "impossible to deploy a graph, the xml representation is empty");
                 logger.log(Level.SEVERE, "return status code 400");
@@ -226,7 +227,7 @@ public class NffgsResource {
             if (nodeXmlElement != null) {
                 NodeResourceService nodeServer = new NodeResourceService();
                 nodeServer.addNode(nffgId, nodeXmlElement);
-                return Response.ok(objFactory.createNode(nodeXmlElement), MediaType.APPLICATION_XML).build();
+                return Response.ok(objFactory.createNode(nodeXmlElement), MediaType.APPLICATION_XML).status(Response.Status.CREATED).build();
             } else {
                 logger.log(Level.SEVERE, "the xml element is null");
                 logger.log(Level.SEVERE, "return status code 400");
@@ -241,7 +242,7 @@ public class NffgsResource {
             logger.log(Level.SEVERE, "impossible to allocate all the nodes");
             logger.log(Level.SEVERE, "return status code 403");
             throw new ForbiddenException();
-        } catch (GraphNotFoundException gne) {
+        } catch (UnknownEntityException ue) {
             logger.log(Level.SEVERE, "graph not found", nffgId);
             logger.log(Level.SEVERE, "return status code 404");
             throw new ForbiddenException();
@@ -420,7 +421,7 @@ public class NffgsResource {
                 LinkResourceService linkServer = new LinkResourceService();
                 linkServer.addLink(nffgId, link);
                 JAXBElement<ExtendedLinkType> xmlLinkElement = objFactory.createLink(link);
-                return Response.ok(xmlLinkElement, MediaType.APPLICATION_XML).build();
+                return Response.ok(xmlLinkElement, MediaType.APPLICATION_XML).status(Response.Status.CREATED).build();
             } else {
                 logger.log(Level.SEVERE, "there isn't any type of data inside the request element");
                 logger.log(Level.SEVERE, "return status code 404");
@@ -435,7 +436,7 @@ public class NffgsResource {
             logger.log(Level.SEVERE, "the node specified doesn't exist");
             logger.log(Level.SEVERE, "return status code 403");
             throw new ForbiddenException();
-        } catch (GraphNotFoundException gfe) {
+        } catch (UnknownEntityException ue) {
             logger.log(Level.SEVERE, "the graph specified doesn't exist");
             logger.log(Level.SEVERE,  "return status code 404");
             throw new NotFoundException();

@@ -50,7 +50,7 @@ public class NfvValidationProvider implements MessageBodyReader<JAXBElement<?>> 
 
         try {
             //InputStream schemaStream1 = NfvValidationProvider.class.getResourceAsStream("/xsd/nfvInfo.xsd");
-            InputStream schemaStream2 = NfvValidationProvider.class.getResourceAsStream("/xsd/NfvDeclaration.xsd");
+            InputStream schemaStream2 = NfvValidationProvider.class.getResourceAsStream("/xsd/NfvDeployer.xsd");
             if (schemaStream2 == null) {
                 logger.log(Level.SEVERE, "xml schema file Not found.");
                 throw new IOException();

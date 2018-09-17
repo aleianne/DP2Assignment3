@@ -20,7 +20,6 @@ public class DateConverter {
     public DateConverter() {
     }
 
-    // TODO to be changed the date format
     public XMLGregorianCalendar getCurrentXmlDate() throws DatatypeConfigurationException {
 //        DateFormat dateFormat = new SimpleDateFormat(dateFormatString);
 //        int utcOffset = TimeZone.getDefault().getRawOffset();
@@ -42,10 +41,6 @@ public class DateConverter {
         return toXMLGregorianCalendar(cal);
     }
 
-//	// this function compare the
-//	public boolean compareCalendar(Calendar inputDate1, Calendar inputDate2) {
-//		return inputDate1.compareTo(inputDate2) <= 0;
-//	}
 
     // convert a xml gregorian calendar date to a calendar instance
     public Calendar fromXMLGregorianCalendar(XMLGregorianCalendar xc)

@@ -1,7 +1,10 @@
 package it.polito.dp2.NFV.sol3.service.DaoClasses;
 
+import it.polito.dp2.NFV.sol3.service.Exceptions.LinkAlreadyPresentException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.NoNodeException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.ServiceException;
+import it.polito.dp2.NFV.sol3.service.Exceptions.UnknownEntityException;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
-import it.polito.dp2.NFV.sol3.service.Exceptions.GraphNotFoundException;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.*;
 import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.*;
 
@@ -14,19 +17,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.ws.rs.InternalServerErrorException;
-
-import it.polito.dp2.NFV.lab3.LinkAlreadyPresentException;
-import it.polito.dp2.NFV.lab3.NoNodeException;
-import it.polito.dp2.NFV.lab3.ServiceException;
 
 public class GraphDao {
 
     private static final String nodeBaseName = "Node";
     private static final String linkBaseName = "Link";
-    //private static Map<String, ExtendedLinkType> linkIDMap = new HashMap<String, ExtendedLinkType>();
     private static final String nffgBaseName = "Nffg";
+    private static final String propertyName = "name";
     private static final String nodeLabelName = "Node";
     private static final String hostRelationshipLabel = "AllocatedOn";
     private static final String nodeRelatioshipLabel = "ForwardTo";
@@ -35,6 +36,7 @@ public class GraphDao {
     private static AtomicInteger linkCounter = new AtomicInteger(0);
     private static AtomicInteger nodeCounter = new AtomicInteger(0);
     private static AtomicInteger nffgCounter = new AtomicInteger(0);
+    private static Logger logger = Logger.getLogger(GraphDao.class.getName());
     private static GraphDao graphDao = new GraphDao();
     private Neo4jServiceManager neo4jXMLclient;
 
@@ -66,7 +68,7 @@ public class GraphDao {
             nodeIDMap.put(newNodeName, node);
         }
 
-        // update the list of links with the new name
+        // update the link list with a new name
         for (LinkType link : newNffg.getLinks().getLink()) {
             String linkName = linkBaseName.concat(Integer.toString(linkCounter.incrementAndGet()));
 
@@ -102,7 +104,7 @@ public class GraphDao {
     /*
      * update the node list of a specific graph
      */
-    public void updateGraph(String nffgId, RestrictedNodeType newNode) throws ServiceException, GraphNotFoundException {
+    public void updateGraph(String nffgId, RestrictedNodeType newNode) throws ServiceException, UnknownEntityException {
         // search the nffg into the hashmap
         NffgGraphType queryResultGraph = graphMap.get(nffgId);
 
@@ -121,7 +123,7 @@ public class GraphDao {
 
             // synchronize here the query result graph
             synchronized (queryResultGraph) {
-                nodeProperty.setName("name");
+                nodeProperty.setName(propertyName);
                 nodeProperty.setValue(newNode.getName());
 
                 nodeLabels.getLabel().add(nodeLabelName);
@@ -146,13 +148,15 @@ public class GraphDao {
             return;
         }
 
-        throw new GraphNotFoundException("the graph " + nffgId + "doesn't exist");
+        throw new UnknownEntityException("the graph " + nffgId + "doesn't exist");
     }
 
     /*
      * insert into a specific graph a new link
      */
-    public void updateGraph(String nffgId, ExtendedLinkType newLink) throws ServiceException, LinkAlreadyPresentException, InternalServerErrorException, GraphNotFoundException, NoNodeException {
+    public void updateGraph(String nffgId, ExtendedLinkType newLink) throws LinkAlreadyPresentException, ServiceException,
+            InternalServerErrorException, UnknownEntityException, NoNodeException {
+
         // search the graph by its ID
         NffgGraphType queryResultGraph = graphMap.get(nffgId);
 
@@ -201,7 +205,7 @@ public class GraphDao {
             return;
         }
 
-        throw new GraphNotFoundException("the graph " + nffgId + " doesn't exist into the database");
+        throw new UnknownEntityException("the graph " + nffgId + " doesn't exist into the database");
     }
 
     /*
@@ -219,6 +223,7 @@ public class GraphDao {
     }
 
     private void forwardGraphToNfvSimpleXml(NffgGraphType graph) throws ServiceException {
+        // instantiate a new neo4j client
         neo4jXMLclient = Neo4jServiceManager.getInstance();
 
         // forward the graph to the remote database
@@ -235,7 +240,7 @@ public class GraphDao {
 
         for (RestrictedNodeType node : graph.getNodes().getNode()) {
             // create a neo4j node for the forwarding ;
-            neo4jNode.getProperties().getProperty().get(0).setName("name");
+            neo4jNode.getProperties().getProperty().get(0).setName(propertyName);
             neo4jNode.getProperties().getProperty().get(0).setValue(node.getName());
 
             neo4jXMLclient.postNode(neo4jNode, nodeLabel);
@@ -254,5 +259,6 @@ public class GraphDao {
             neo4jRelationship.setType(nodeRelatioshipLabel);
             neo4jXMLclient.postRelationship(neo4jRelationship);
         }
+
     }
 }

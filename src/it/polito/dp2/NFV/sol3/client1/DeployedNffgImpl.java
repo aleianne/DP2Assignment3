@@ -6,7 +6,7 @@ import it.polito.dp2.NFV.NodeReader;
 import it.polito.dp2.NFV.VNFTypeReader;
 import it.polito.dp2.NFV.lab3.*;
 
-import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
+import it.polito.dp2.NFV.sol3.ServiceXML.*;
 
 public class DeployedNffgImpl implements DeployedNffg {
 
@@ -47,11 +47,15 @@ public class DeployedNffgImpl implements DeployedNffg {
         xmlLink.setSourceNode(source.getName());
         xmlLink.setOverwrite(overwrite);
 
-        // forward the link to the service
-        LinkType link = (LinkType) serviceManager.postLink(xmlLink, nffgId);
-
-        // create a new link reader interface  in order to read the link infos
-        return new LinkReaderImpl(link, nffgId, serviceManager);
+        try {
+            // forward the link to the service
+            LinkType link = (LinkType) serviceManager.postLink(xmlLink, nffgId);
+            // create a new link reader interface  in order to read the link infos
+            return new LinkReaderImpl(link, nffgId, serviceManager);
+        } catch (UnknownEntityException ue) {
+            System.out.println("the nffg doesn't exist");
+            throw new ServiceException();
+        }
     }
 
     @Override

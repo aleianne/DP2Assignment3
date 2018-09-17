@@ -7,10 +7,8 @@ import it.polito.dp2.NFV.sol3.service.DaoClasses.VnfDao;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -36,7 +34,7 @@ public class CatalogResource {
      * GET operation performed on the catalog resource, return back the list of all VNFs available into the NFV system
      */
     @GET
-    @ApiOperation(value = "get the catalog", notes = "return to client the entire catalog of VNF that are available into web service")
+    @ApiOperation(value = "get entire functions catalog", notes = "return to client the entire catalog of VNF that are available into web service")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 204, message = "No Content"),
@@ -73,6 +71,7 @@ public class CatalogResource {
 
         if (function == null) {
             logger.log(Level.SEVERE, "the virtual function " + vnfId + " doesn't exist");
+            logger.log(Level.SEVERE, "return status code 404");
             throw new NotFoundException();
         }
 

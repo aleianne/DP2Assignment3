@@ -7,7 +7,8 @@ import it.polito.dp2.NFV.NodeReader;
 import it.polito.dp2.NFV.lab3.ServiceException;
 import it.polito.dp2.NFV.sol3.client1.NfvDeployerServiceManager;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.NfvDeployer;
-import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
+import it.polito.dp2.NFV.sol3.ServiceXML.HostType;
+import it.polito.dp2.NFV.sol3.ServiceXML.RestrictedNodeType;
 
 import java.util.List;
 

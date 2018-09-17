@@ -12,7 +12,7 @@ public class ConnectionResourceService {
 
     }
 
-    // insert the connection info into the database at the server startup
+    // insert the connection info into the database at server startup
     public void setConnectionsAtStartup(List<ConnectionType> connList) {
         for (ConnectionType connection : connList) {
             ConnectionDao.getInstance().createConnection(connection);

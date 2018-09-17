@@ -6,9 +6,10 @@ import java.util.function.Predicate;
 import it.polito.dp2.NFV.LinkReader;
 import it.polito.dp2.NFV.NodeReader;
 import it.polito.dp2.NFV.lab3.ServiceException;
-import it.polito.dp2.NFV.sol3.service.ServiceXML.LinkType;
-import it.polito.dp2.NFV.sol3.service.ServiceXML.NffgGraphType;
-import it.polito.dp2.NFV.sol3.service.ServiceXML.RestrictedNodeType;
+import it.polito.dp2.NFV.lab3.UnknownEntityException;
+import it.polito.dp2.NFV.sol3.ServiceXML.LinkType;
+import it.polito.dp2.NFV.sol3.ServiceXML.NffgGraphType;
+import it.polito.dp2.NFV.sol3.ServiceXML.RestrictedNodeType;
 
 import javax.ws.rs.NotFoundException;
 
@@ -40,7 +41,7 @@ public class LinkReaderImpl implements LinkReader {
         } catch (ServiceException se) {
             System.err.println(se.getMessage());
             return null;
-        } catch (NotFoundException nfe) {
+        } catch (UnknownEntityException nfe) {
             System.err.println();
             return null;
         }
@@ -69,7 +70,7 @@ public class LinkReaderImpl implements LinkReader {
         } catch (ServiceException se) {
              System.err.println(se.getMessage());
              return null;
-        } catch (NotFoundException nfe) {
+        } catch (UnknownEntityException nfe) {
             System.err.println("impossible to find node " + link.getSourceNode());
             return null;
         }

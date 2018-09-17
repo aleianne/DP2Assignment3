@@ -7,6 +7,7 @@ import it.polito.dp2.NFV.sol3.service.ServiceXML.RestrictedNodeType;
 import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.*;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
+import it.polito.dp2.NFV.sol3.service.Exceptions.ServiceException;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -22,9 +23,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.InternalServerErrorException;
-
-
-import it.polito.dp2.NFV.lab3.ServiceException;
 
 public class HostDao {
 

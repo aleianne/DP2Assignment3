@@ -10,7 +10,7 @@ import it.polito.dp2.NFV.NodeReader;
 import it.polito.dp2.NFV.lab3.ServiceException;
 import it.polito.dp2.NFV.lab3.UnknownEntityException;
 import it.polito.dp2.NFV.sol3.service.ResourceServiceClasses.DateConverter;
-import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
+import it.polito.dp2.NFV.sol3.ServiceXML.*;
 
 public class NffgReaderImpl implements NffgReader {
 
@@ -54,7 +54,7 @@ public class NffgReaderImpl implements NffgReader {
         } catch (ServiceException se) {
             System.err.println(se.getMessage());
             return null;
-        } catch (NotFoundException nfe) {
+        } catch (UnknownEntityException nfe) {
             System.err.println("node "+ nodeName + " not found");
             return null;
         }

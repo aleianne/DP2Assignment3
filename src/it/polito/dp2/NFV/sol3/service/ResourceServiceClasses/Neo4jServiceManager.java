@@ -1,13 +1,12 @@
 package it.polito.dp2.NFV.sol3.service.ResourceServiceClasses;
 
+import it.polito.dp2.NFV.sol3.service.Exceptions.ServiceException;
 import it.polito.dp2.NFV.sol3.service.Neo4jSimpleXML.*;
 
-import java.rmi.ServerException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -17,7 +16,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
-import it.polito.dp2.NFV.lab3.ServiceException;
 
 public class Neo4jServiceManager {
 
@@ -61,7 +59,6 @@ public class Neo4jServiceManager {
             if (resCode == 400 || resCode == 500)
                 throw new ServiceException("Neo4jSimpleXml returned an error, response status code: " + resCode);
 
-            //checkResponse(serverResponse);														// check the response of the server
             Node nodeResponse = serverResponse.readEntity(Node.class);                              // convert the response into a Node class instance
             String nodeID = nodeResponse.getId();
 
@@ -75,7 +72,6 @@ public class Neo4jServiceManager {
             if (resCode == 400 || resCode == 500 || resCode == 404)
                 throw new ServiceException("Neo4jSimpleXml returned an error, response status code: " + resCode);
 
-            //checkResponse(labelPostResponse);
             neo4jNodeMap.put(node.getProperties().getProperty().get(0).getValue(), nodeID);
         } catch (ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
             throw new ServiceException("Neo4JSimpleXML client raised an exception: " + e.getMessage());
@@ -94,7 +90,7 @@ public class Neo4jServiceManager {
             relationship.setSrcNode(srcNodeID);
             relationship.setDstNode(destNodeID);
 
-            serverResponse = client.target(UriBuilder.fromUri(simpleXmlURL).path("node/" + srcNodeID + "/relationships").build())
+            serverResponse = client.target(UriBuilder.fromUri(simpleXmlURL).path("/node/" + srcNodeID + "/relationships").build())
                     .request()
                     .accept(MediaType.APPLICATION_XML)
                     .post(Entity.xml(relationship));
@@ -124,19 +120,18 @@ public class Neo4jServiceManager {
             if (resCode == 400 || resCode == 404 || resCode == 500)
                 throw new ServiceException("Neo4jSimpleXml returned an error, response status code: " + resCode);
 
-            //checkResponse(serverResponse);
             return serverResponse.readEntity(Nodes.class);
         } catch (ResponseProcessingException rpe) {
             throw new ServiceException("Neo4jSimpleXML client raised an exception: " + rpe.getMessage());
         }
     }
 
-    private void checkResponse(Response res) throws ServiceException {
-        Response.StatusType resStatus = res.getStatusInfo();
-        if (resStatus.getStatusCode() != 200 &&
-                resStatus.getStatusCode() != 204 &&
-                resStatus.getStatusCode() != 201) {
-            throw new ServiceException("Neo4jSimpleXML server returned an error: " + resStatus.getStatusCode() + " " + resStatus.getReasonPhrase());
-        }
-    }
+//    private void checkResponse(Response res) throws ServiceException {
+//        Response.StatusType resStatus = res.getStatusInfo();
+//        if (resStatus.getStatusCode() != 200 &&
+//                resStatus.getStatusCode() != 204 &&
+//                resStatus.getStatusCode() != 201) {
+//            throw new ServiceException("Neo4jSimpleXML server returned an error: " + resStatus.getStatusCode() + " " + resStatus.getReasonPhrase());
+//        }
+//    }
 }

@@ -28,18 +28,4 @@ public class StringPair {
 
         return Objects.hash(key1, key2);
     }
-    //	@Override
-//	public int hashCode() {								// for the hashcode generation is used the concatenation of the two keys and then the hashcode on the result
-//		String cat = key1.concat(key2);
-//		return cat.hashCode();
-//	}
-//
-//	@Override
-//	public boolean equals(Object obj) {					// return true only if the two keys are equal
-//		StringPair pair2 = (StringPair) obj;
-//
-//		if (pair2.key1.equals(this.key1) && pair2.key2.equals(this.key2))  return true;
-//
-//		return false;
-//	}
 }

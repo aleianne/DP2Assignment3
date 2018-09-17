@@ -70,18 +70,19 @@ public class ConnectionResource {
     })
     @Produces(MediaType.APPLICATION_XML)
     public Response getConnections(@PathParam("host1Id") String host1, @PathParam("host2Id") String host2) {
+
         if (host1 == null || host2 == null) {
             logger.log(Level.WARNING, "one of the parameters is null", new Object[]{host1, host2});
             throw new BadRequestException();
         }
+
         ConnectionResourceService connectionService = new ConnectionResourceService();
         ConnectionType connectionXmlElement = connectionService.getConnection(host1, host2);
-        if (connectionXmlElement == null) {
+
+        if (connectionXmlElement == null)
             throw new NotFoundException();
-        } else {
-            JAXBElement<ConnectionType> connectionElement = objFactory.createConnection(connectionService.getConnection(host1, host2));
-            return Response.ok(connectionElement, MediaType.APPLICATION_XML).build();
-        }
+
+        return Response.ok(objFactory.createConnection(connectionService.getConnection(host1, host2)), MediaType.APPLICATION_XML).build();
     }
 
 }

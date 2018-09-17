@@ -13,11 +13,11 @@ import it.polito.dp2.NFV.lab3.NodeDescriptor;
 import it.polito.dp2.NFV.lab3.ServiceException;
 import it.polito.dp2.NFV.lab3.UnknownEntityException;
 
-import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
+import it.polito.dp2.NFV.sol3.ServiceXML.*;
 
 public class Client1Impl implements NfvClient {
 
-    private Map<String, DeployedNffg> nffgMap;
+//    private Map<String, DeployedNffg> nffgMap;
     private NfvDeployerServiceManager serviceManager;
     private int nffgCounter;
     private static final String nffgNameLabel = "Nffg";

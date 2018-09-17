@@ -2,7 +2,7 @@ package it.polito.dp2.NFV.sol3.client2;
 
 import it.polito.dp2.NFV.ConnectionPerformanceReader;
 
-import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
+import it.polito.dp2.NFV.sol3.ServiceXML.ConnectionType;
 
 public class ConnectionPerformanceReaderImpl implements ConnectionPerformanceReader {
 
@@ -19,9 +19,6 @@ public class ConnectionPerformanceReaderImpl implements ConnectionPerformanceRea
 
     @Override
     public float getThroughput() {
-
-        System.out.println("this is the throughput " + conn.getThroughput());
-
         return conn.getThroughput();
     }
 

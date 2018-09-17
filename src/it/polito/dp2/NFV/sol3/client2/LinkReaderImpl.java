@@ -5,7 +5,7 @@ import java.util.function.Predicate;
 import it.polito.dp2.NFV.LinkReader;
 import it.polito.dp2.NFV.NodeReader;
 import it.polito.dp2.NFV.sol3.client1.NfvDeployerServiceManager;
-import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
+import it.polito.dp2.NFV.sol3.ServiceXML.*;
 
 import java.util.List;
 import java.util.Optional;

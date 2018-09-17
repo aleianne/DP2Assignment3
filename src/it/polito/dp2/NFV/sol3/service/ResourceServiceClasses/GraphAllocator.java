@@ -1,6 +1,7 @@
 package it.polito.dp2.NFV.sol3.service.ResourceServiceClasses;
 
 import it.polito.dp2.NFV.sol3.service.DaoClasses.*;
+import it.polito.dp2.NFV.sol3.service.Exceptions.AllocationException;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 import java.util.ArrayList;
@@ -14,79 +15,26 @@ import java.util.logging.Logger;
 
 import javax.ws.rs.InternalServerErrorException;
 
-import it.polito.dp2.NFV.lab3.AllocationException;
-
 public class GraphAllocator {
 
     private static Logger logger = Logger.getLogger(GraphAllocator.class.getName());
-    private Map<String, Integer> targetHostMap;
+
     private Map<Integer, String> reverseTargetHostMap;
+    // this map is used to associate each hostname to a list of possible function to be deployed
+    // has been used an hashmap instead of a list because there isn't an order of node allocation
     private Map<String, List<FunctionType>> vnfAllocatedIntoHostMap;
 
     public GraphAllocator() {
-        vnfAllocatedIntoHostMap = new HashMap<String, List<FunctionType>>();
-        // has been used an hashmap instead of a list because there isn't an order of node allocation
-        reverseTargetHostMap = new HashMap<Integer, String> ();
+        vnfAllocatedIntoHostMap = new HashMap<>();
+        reverseTargetHostMap = new HashMap<>();
     }
-	
-	/*public boolean findSuitableHost(FunctionType functionToBeDeployed, RestrictedNodeType newNode) {
-		int minNode;
-		int reqStorage = functionToBeDeployed.getRequiredStorage().intValue();
-		int reqMemory = functionToBeDeployed.getRequiredMemory().intValue();
-		
-		ExtendedHostType hostFound = null;
-		// if the node have an hostname use it, if is it possible
-		if(newNode.getHostname() != null) {
-			hostFound= hostDao.readHost(newNode.getHostName());
-			if(hostFound != null &&  hostFound.getRequiredStorage() > reqStorage && hostFound.getRequiredMemory() > reqMemory) {
-				// update the host that has been found by the server
-				targetHosts.add(hostFound.getHostname());
-				targetFunctions.add(functionToBeDeployed);
-				newNode.setHostname(hostFound.getHostname());
-				return true;
-			}
-		}
-		
-		Set<ExtendedHostType> selectedHost = new HashSet<ExtendedHostType>(hostDao.queryHost(reqStorage, reqMemory));
-		
-		if(!selectedHost.isEmpty()) {
-			minNode = Integer.MAX_VALUE;
-			
-			// find the host that have the minimum number of deployed network node
-			for(ExtendedHostType host: selectedHost) {
-				if(minNode > host.getTotalDeployedNode().intValue() &&
-						host.getTotalDeployedNode().intValue() < host.getMaxVNF().intValue()) {
-	
-					hostFound = host;
-					minNode = host.getTotalDeployedNode().intValue();
-				}
-			}
-			
-			// if hostFound is null no one host has been found 
-			if(hostFound == null) {
-				logger.log(Level.INFO, "no suitable host");
-				return false;
-			} else {
-				// update the host that has been found by the server
-				targetHosts.add(hostFound.getHostname());
-				targetFunctions.add(functionToBeDeployed);
-				newNode.setHostname(hostFound.getHostname());
-				return true;
-			}
-		} 
-		// if the database query return an empty set return false
-		logger.log(Level.INFO, "the set is empty");
-		return false;
-	}*/
 
     /*
      *  this method search if the host specified into the node is available
      */
     public void findSelectedHost(List<FunctionType> vnfList, List<RestrictedNodeType> nodeList, HostDao hostDao) {
 
-        /*
-         * in those arrays at the same position there is a correspondence between the node and his virtual function
-         */
+        // in those arrays at the same position there is a correspondence between the node and his virtual function
 
         int index = 0;
         int usedStorage, usedMemory, totalVNF;
@@ -256,56 +204,4 @@ public class GraphAllocator {
             allocatedVnfList.add(virtualFunction);
         }
     }
-	
-	/*
-	public void commit(List<String> nodeNameList) throws AllocationException {
-		int index = 0;
-		
-		if(targetHosts.isEmpty()) 
-			throw new AllocationException();
-		
-		for(String host: targetHosts) {
-			hostDao.updateHostDeployedNode(host, nodeNameList.get(index)); 
-		}
-	}
-	
-	public void rollback() {
-		int index = 0;
-		
-		// deallocate for each host the virtual function
-		for(String hostname: targetHosts) {
-			hostDao.updateHostDetail(hostname, targetFunctions.get(index), false);
-		}
-	}
-	
-	public String createNewNffg() {
-		String nffgId = "Nffg";
-		int nffgIdCounter;
-		
-		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-		Calendar cal = Calendar.getInstance();
-		
-
-		nffgIdCounter = nffgDao.readNffgId();
-		nffgId.concat(Integer.toString(nffgIdCounter));
-		
-		NffgType newNffg = new NffgType();
-		newNffg.setName(nffgId);
-		
-		try {
-			newNffg.setDeployTime(DatatypeFactory.newInstance().newXMLGregorianCalendar(dateFormat.format(cal.getTime())));
-		} catch (DatatypeConfigurationException e) {
-			// impossible to covert the data
-			newNffg.setDeployTime(null);
-			e.printStackTrace();
-		}
-		
-		nffgDao.createNffg(newNffg);
-	
-		return nffgId;
-	}
-	
-	public void addNewGraphToDB(GraphType graph) throws ServiceException {
-		graphDao.createGraph(graph);
-	}*/
 }

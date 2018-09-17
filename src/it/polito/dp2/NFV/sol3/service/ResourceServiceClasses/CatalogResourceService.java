@@ -4,6 +4,7 @@ import it.polito.dp2.NFV.sol3.service.DaoClasses.*;
 import it.polito.dp2.NFV.sol3.service.ServiceXML.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -14,9 +15,14 @@ public class CatalogResourceService {
 
     // read the vnf catalog from the dao class
     public CatalogType getCatalog() {
-        List<FunctionType> vnfList = new ArrayList<FunctionType>(VnfDao.getInstance().readAllVnfs());
+
+        Collection<FunctionType> retrievedCatalogCollection = VnfDao.getInstance().readAllVnfs();
         CatalogType catalog = new CatalogType();
-        catalog.getFunction().addAll(vnfList);
+
+        if (((Collection) retrievedCatalogCollection).size() == 0)
+            return catalog;
+
+        catalog.getFunction().addAll(retrievedCatalogCollection);
         return catalog;
     }
 
