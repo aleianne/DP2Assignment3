@@ -86,24 +86,6 @@ public class Client1Impl implements NfvClient {
                 counter++;
             }
         }
-        
-//        System.out.println("nffg name "  + newGraph.getNffgName());
-//
-//        for (RestrictedNodeType node : newGraph.getNodes().getNode()) {
-//        	System.out.println("node " + node.getName());
-//        	System.out.println("host " + node.getHostname());
-//        	System.out.println("vnf " + node.getVNF());
-//        	System.out.println("nffg " + node.getNfFg());
-//        }
-//
-//
-//        for (ExtendedLinkType link : newGraph.getLinks().getLink()) {
-//        	System.out.println("link " +link.getLinkName());
-//        	System.out.println("src node " + link.getDestinationNode());
-//        	System.out.println("dest node " + link.getSourceNode());
-//        	System.out.println("throughput " + link.getThroughput());
-//        	System.out.println("latency " + link.getLatency());
-//        }
 
         // forward the graph to the remote service
         NffgGraphType responseGraph = serviceManager.postNffg(graphToBeDeployed);

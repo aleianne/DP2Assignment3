@@ -83,6 +83,9 @@ public class GraphDao {
     }
 
     public void createFirstNffg(NffgGraphType graph) throws ServiceException {
+        for (RestrictedNodeType node : graph.getNodes().getNode()) {
+            nodeIDMap.put(node.getName(), node);
+        }
         graphMap.put(graph.getNffgName(), graph);
         forwardGraphToNfvSimpleXml(graph);
     }
@@ -121,19 +124,14 @@ public class GraphDao {
             Property nodeProperty = new Property();
             Labels nodeLabels = new Labels();
 
-            // synchronize here the query result graph
-            synchronized (queryResultGraph) {
-                nodeProperty.setName(propertyName);
-                nodeProperty.setValue(newNode.getName());
+            nodeProperty.setName(propertyName);
+            nodeProperty.setValue(newNode.getName());
 
-                nodeLabels.getLabel().add(nodeLabelName);
-                nodeLabels.getLabel().add(nffgId);
+            nodeLabels.getLabel().add(nodeLabelName);
+            nodeLabels.getLabel().add(nffgId);
 
-                neo4jNode.setProperties(new Properties());
-                neo4jNode.getProperties().getProperty().add(nodeProperty);
-
-                queryResultGraph.getNodes().getNode().add(newNode);
-            }
+            neo4jNode.setProperties(new Properties());
+            neo4jNode.getProperties().getProperty().add(nodeProperty);
 
             // forward the node to the database
             neo4jXMLclient.postNode(neo4jNode, nodeLabels);
@@ -144,6 +142,13 @@ public class GraphDao {
             neo4jRelationship.setSrcNode(newNode.getName());
             neo4jRelationship.setType(hostRelationshipLabel);
             neo4jXMLclient.postRelationship(neo4jRelationship);
+
+            // synchronize here the query result graph
+            synchronized (queryResultGraph) {
+                queryResultGraph.getNodes().getNode().add(newNode);
+            }
+
+            nodeIDMap.put(newNode.getName(), newNode);
 
             return;
         }
@@ -187,6 +192,13 @@ public class GraphDao {
                 		link.setLatency(newLink.getLatency());
                 	}
                 } else {
+                    // forward the relationship to Neo4j Database
+                    Relationship neo4jRelationship = new Relationship();
+                    neo4jRelationship.setDstNode(newLink.getDestinationNode());
+                    neo4jRelationship.setSrcNode(newLink.getSourceNode());
+                    neo4jRelationship.setType(nodeRelatioshipLabel);
+                    neo4jXMLclient.postRelationship(neo4jRelationship);
+
                 	 // assign to the link a new name
                     String linkName = linkBaseName;
                     newLink.setLinkName(linkName.concat(Integer.toString(linkCounter.incrementAndGet())));
@@ -194,13 +206,6 @@ public class GraphDao {
                 }
                 	
             }
-
-            // forward the relationship to Neo4j Database
-            Relationship neo4jRelationship = new Relationship();
-            neo4jRelationship.setDstNode(newLink.getDestinationNode());
-            neo4jRelationship.setSrcNode(newLink.getSourceNode());
-            neo4jRelationship.setType(nodeRelatioshipLabel);
-            neo4jXMLclient.postRelationship(neo4jRelationship);
 
             return;
         }

@@ -53,16 +53,6 @@ public class HostReaderImpl implements HostReader {
             nrSet.add(nr);
         }
 
-//        try {
-//            NodesType nodes = serviceManager.getHostNode(host.getHostname());
-//            for (RestrictedNodeType node : nodes.getNode()) {
-//                NodeReader nr = new NodeReaderImpl(node, serviceManager);
-//                nrSet.add(nr);
-//            }
-//        } catch (ServiceException se) {
-//            System.err.println("impossible to implement the node reader");
-//            System.err.println(se.getMessage());
-//        }
         return nrSet;
     }
 

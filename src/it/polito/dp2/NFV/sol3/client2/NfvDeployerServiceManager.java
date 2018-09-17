@@ -56,9 +56,9 @@ public class NfvDeployerServiceManager {
 
             try {
                 checkResponse(serverResponse.getStatusInfo().getStatusCode());
-            } catch (UnknownEntityException ue) {
+            } catch (NoNodeException ue) {
                 throw new AllocationException();
-            } catch (LinkAlreadyPresentException | NoNodeException e) {
+            } catch (LinkAlreadyPresentException | UnknownEntityException e) {
                 throw new ServiceException();
             }
 

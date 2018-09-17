@@ -27,8 +27,8 @@ public class NfvReaderImpl implements NfvReader {
 
     private NfvHelper nfvHelper;
 
-    public NfvReaderImpl() {
-        nfvHelper = new NfvHelper();
+    public NfvReaderImpl(NfvHelper nfvHelper) {
+        this.nfvHelper = nfvHelper;
     }
 
     @Override
@@ -46,6 +46,7 @@ public class NfvReaderImpl implements NfvReader {
 
     @Override
     public HostReader getHost(String host1) {
+
         List<HostType> hostList = nfvHelper.getHostList();
         Optional<HostType> retrievedHost = hostList.stream().filter(p -> p.getHostname().compareTo(host1) == 0).findFirst();
 
@@ -72,6 +73,7 @@ public class NfvReaderImpl implements NfvReader {
 
     @Override
     public NffgReader getNffg(String nffgId) {
+
         List<NffgGraphType> nffgList = nfvHelper.getGraphList();
         Optional<NffgGraphType> retrievedNffg = nffgList.stream().filter(p -> p.getNffgName().compareTo(nffgId) == 0).findFirst();
 
@@ -84,19 +86,8 @@ public class NfvReaderImpl implements NfvReader {
 
     @Override
     public Set<NffgReader> getNffgs(Calendar date) {
-        Set<NffgReader> nrSet = new HashSet<NffgReader>();
+        Set<NffgReader> nrSet = new HashSet<>();
         NffgReader nr;
-
-//        try {
-//            NffgsInfoType nffgs = serviceManager.getGraphs(date);
-//            for (NffgsInfoType.NffgInfo info : nffgs.getNffgInfo()) {
-//                NffgReader nfgr = new NffgReaderImpl(info.getNffgName(), nfvHelper);
-//                nrSet.add(nfgr);
-//            }
-//        } catch (ServiceException se) {
-//            System.err.println("impossible to implement the host Reader interface");
-//            System.err.println(se.getMessage());
-//        }
 
         if (date == null) {
             for (NffgGraphType graph : nfvHelper.getGraphList()) {
@@ -125,7 +116,7 @@ public class NfvReaderImpl implements NfvReader {
 
     @Override
     public Set<VNFTypeReader> getVNFCatalog() {
-        Set<VNFTypeReader> vnfSet = new HashSet<VNFTypeReader>();
+        Set<VNFTypeReader> vnfSet = new HashSet<>();
         VNFTypeReader vnf;
 
         for (FunctionType function : nfvHelper.getFunctionList()) {

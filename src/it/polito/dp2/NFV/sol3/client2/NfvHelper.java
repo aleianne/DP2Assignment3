@@ -1,5 +1,6 @@
 package it.polito.dp2.NFV.sol3.client2;
 
+import it.polito.dp2.NFV.NfvReaderException;
 import it.polito.dp2.NFV.lab3.ServiceException;
 import it.polito.dp2.NFV.lab3.UnknownEntityException;
 import it.polito.dp2.NFV.sol3.client2.NfvDeployerServiceManager;
@@ -20,9 +21,14 @@ public class NfvHelper {
     private Map<String, List<RestrictedNodeType>> hostDeployedNodeMap;
     private Map<String, NffgGraphType> nffgMap;
 
-    protected NfvHelper() {
+    protected NfvHelper() throws NfvReaderException {
 
         serviceManager = new NfvDeployerServiceManager();
+
+        deployedGraphList = new ArrayList<NffgGraphType> ();
+        availableConnectionList = new ArrayList<ConnectionType> ();
+        availableFunctionList = new ArrayList<FunctionType> ();
+        availableHostList = new ArrayList<HostType> ();
 
         try {
             CatalogType catalog = serviceManager.getCatalog();
@@ -32,7 +38,6 @@ public class NfvHelper {
             ConnectionsType availableConnections = serviceManager.getConnections();
 
             NffgsInfoType deployedNffgs = serviceManager.getGraphs(null);
-            deployedGraphList = new ArrayList<NffgGraphType> ();
             nffgMap = new HashMap<String, NffgGraphType> ();
 
             for (NffgsInfoType.NffgInfo nffgInfo : deployedNffgs.getNffgInfo()) {
@@ -41,11 +46,11 @@ public class NfvHelper {
                 nffgMap.put(nffgInfo.getNffgName(), retrievedGraph);
             }
 
-            availableFunctionList = catalog.getFunction();
-            availableHostList = availableHosts.getHost();
-            availableConnectionList = availableConnections.getConnection();
+            availableFunctionList.addAll(catalog.getFunction());
+            availableHostList.addAll(availableHosts.getHost());
+            availableConnectionList.addAll(availableConnections.getConnection());
 
-            hostDeployedNodeMap = new HashMap<String, List<RestrictedNodeType>>();
+            hostDeployedNodeMap = new HashMap<>();
 
             for (HostType host : availableHostList) {
                 NodesType hostDeployedNode = serviceManager.getHostNode(host.getHostname());
@@ -54,6 +59,7 @@ public class NfvHelper {
 
         } catch (ServiceException | UnknownEntityException se) {
             System.err.println(se.getMessage());
+            throw new NfvReaderException();
         }
 
     }

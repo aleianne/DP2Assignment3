@@ -54,10 +54,7 @@ public class Neo4jServiceManager {
                     .accept(MediaType.APPLICATION_XML)
                     .post(Entity.xml(node));
 
-            int resCode = serverResponse.getStatusInfo().getStatusCode();
-
-            if (resCode == 400 || resCode == 500)
-                throw new ServiceException("Neo4jSimpleXml returned an error, response status code: " + resCode);
+            checkResponse(serverResponse.getStatusInfo().getStatusCode());
 
             Node nodeResponse = serverResponse.readEntity(Node.class);                              // convert the response into a Node class instance
             String nodeID = nodeResponse.getId();
@@ -67,10 +64,7 @@ public class Neo4jServiceManager {
                     .accept(MediaType.APPLICATION_XML)
                     .post(Entity.xml(nodeLabels));
 
-            resCode = labelPostResponse.getStatusInfo().getStatusCode();
-
-            if (resCode == 400 || resCode == 500 || resCode == 404)
-                throw new ServiceException("Neo4jSimpleXml returned an error, response status code: " + resCode);
+            checkResponse(labelPostResponse.getStatusInfo().getStatusCode());
 
             neo4jNodeMap.put(node.getProperties().getProperty().get(0).getValue(), nodeID);
         } catch (ResponseProcessingException | IllegalArgumentException | IllegalStateException e) {
@@ -95,10 +89,7 @@ public class Neo4jServiceManager {
                     .accept(MediaType.APPLICATION_XML)
                     .post(Entity.xml(relationship));
 
-            int resCode = serverResponse.getStatusInfo().getStatusCode();
-
-            if (resCode == 400 || resCode == 500)
-                throw new ServiceException("Neo4jSimpleXml returned an error, response status code: " + resCode);
+            checkResponse(serverResponse.getStatusInfo().getStatusCode());
 
         } catch (ResponseProcessingException | IllegalStateException | IllegalArgumentException e) {
             throw new ServiceException("Neo4JSimpleXML client raised an exception: " + e.getMessage());
@@ -115,10 +106,7 @@ public class Neo4jServiceManager {
                     .accept(MediaType.APPLICATION_XML)
                     .get();
 
-            int resCode = serverResponse.getStatusInfo().getStatusCode();
-
-            if (resCode == 400 || resCode == 404 || resCode == 500)
-                throw new ServiceException("Neo4jSimpleXml returned an error, response status code: " + resCode);
+            checkResponse(serverResponse.getStatusInfo().getStatusCode());
 
             return serverResponse.readEntity(Nodes.class);
         } catch (ResponseProcessingException rpe) {
@@ -126,12 +114,9 @@ public class Neo4jServiceManager {
         }
     }
 
-//    private void checkResponse(Response res) throws ServiceException {
-//        Response.StatusType resStatus = res.getStatusInfo();
-//        if (resStatus.getStatusCode() != 200 &&
-//                resStatus.getStatusCode() != 204 &&
-//                resStatus.getStatusCode() != 201) {
-//            throw new ServiceException("Neo4jSimpleXML server returned an error: " + resStatus.getStatusCode() + " " + resStatus.getReasonPhrase());
-//        }
-//    }
+    private void checkResponse(int statusCode) throws ServiceException {
+        if (statusCode >= 400 && statusCode <= 599) {
+            throw new ServiceException("Neo4jSimpleXML server returned an error: " + statusCode);
+        }
+    }
 }
